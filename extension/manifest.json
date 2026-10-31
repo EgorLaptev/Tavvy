@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Tavvy — Tabs Group",
+  "version": "0.2.0",
+  "description": "Tab groups and workspaces for Firefox",
+  "permissions": [
+    "tabs",
+    "tabHide",
+    "storage",
+    "sessions",
+    "alarms",
+    "downloads"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "action": {
+    "default_title": "Tavvy",
+    "default_popup": "popup.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "tavvy@local.extension",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  }
+}

@@ -1,0 +1,276 @@
+/* Native browser popups own their placement; preview offsets do not apply here. */
+html.extension-mode,
+html.extension-mode body {
+  margin: 0;
+  padding: 0 !important;
+  min-height: 0;
+  background: transparent;
+  display: block;
+}
+.extension-mode .popup {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  width: var(--panel-width, 440px);
+  max-height: min(var(--panel-height, 300px), 600px);
+}
+.extension-mode .group[hidden],
+.extension-mode .new-group-form[hidden],
+.extension-mode .create[hidden] {
+  display: none;
+}
+.extension-mode .extension-status:empty {
+  display: none;
+}
+.extension-status {
+  padding: 8px 12px;
+  color: #ef716b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.new-group-form input {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+}
+.extension-mode .tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.extension-mode .tab-favicon {
+  object-fit: contain;
+}
+.extension-mode .tab-close svg,
+.extension-mode .restore-button svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Keep Firefox's outer popup size stable while only the inner view changes. */
+.extension-mode .popup {
+  height: min(var(--panel-height, 300px), 600px);
+  max-height: 600px;
+}
+.extension-mode .settings-view:not([hidden]),
+.extension-mode .theme-view:not([hidden]),
+.extension-mode .backup-view:not([hidden]),
+.extension-mode .layout-view:not([hidden]) {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+.extension-mode .extension-status {
+  flex: none;
+}
+/* Long tab titles fade out without wrapping; site icons have no backing. */
+.tab-row .tab-title,
+.tab-row > span:nth-child(2),
+.recent-row .recent-title,
+.group-header strong {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  mask-image: linear-gradient(
+    to right,
+    #000 calc(100% - 20px),
+    transparent 100%
+  );
+}
+.tab-row .tab-favicon,
+.tabs .tabs-inner .tab-favicon,
+.recent-row .tab-favicon {
+  background: transparent;
+}
+.new-group-form input:focus {
+  outline: none;
+  border-color: #555;
+}
+/* More compact spacing inside the extension panel. */
+.extension-mode .popup {
+  padding: 10px;
+}
+.extension-mode .group-header {
+  padding-inline: 10px;
+}
+.extension-mode .group > .group-controls,
+.extension-mode .new-group-form > .group-controls { position: relative; }
+.extension-mode .group-color-input {
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  width: 20px;
+  height: 24px;
+  transform: translateY(-50%);
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.extension-mode .group-controls:has(.group-color-input:focus-visible) .marker {
+  outline: 2px solid #888;
+  outline-offset: 3px;
+}
+.group-color-palette[hidden] { display: none; }
+.group-color-palette {
+  position: fixed;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: repeat(7, 24px);
+  gap: 3px;
+  padding: 7px;
+  border: 1px solid #2b2b2b;
+  border-radius: 11px;
+  background: #181818;
+  box-shadow: 0 8px 24px #0008;
+}
+.group-color-swatch {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+}
+.group-color-swatch::before {
+  content: "";
+  width: 13px;
+  height: 13px;
+  border-radius: var(--swatch-radius, 70% 30% 64% 36% / 35% 68% 32% 65%);
+  rotate: var(--swatch-rotation, 0deg);
+  background: var(--swatch-color);
+}
+.group-color-swatch[data-color="#000000"]::before { box-shadow: 0 0 0 1px #666; }
+.group-color-swatch[data-color="#ffffff"]::before { box-shadow: 0 0 0 1px #888; }
+html[data-marker-style="circle"] .group-color-swatch::before {
+  border-radius: 50%;
+  rotate: 0deg;
+}
+html[data-marker-style="square"] .group-color-swatch::before {
+  border-radius: 25%;
+  rotate: 0deg;
+}
+html[data-marker-style="diamond"] .group-color-swatch::before {
+  border-radius: 20%;
+  rotate: 45deg;
+}
+html[data-marker-style="none"] .group-color-swatch::before {
+  border-radius: 50%;
+  rotate: 0deg;
+}
+html[data-marker-style="letters"] .group-color-swatch::before,
+html[data-marker-style="letters2"] .group-color-swatch::before {
+  content: var(--swatch-label, "ABC");
+  width: auto;
+  height: auto;
+  background: transparent;
+  color: var(--swatch-color);
+  rotate: 0deg;
+  font-size: 8px;
+  font-weight: 700;
+}
+html[data-marker-style="letters2"] .group-color-swatch::before { content: var(--swatch-label2, "AB"); }
+html:is([data-marker-style="letters"], [data-marker-style="letters2"]) .group-color-swatch:is([data-color="#000000"], [data-color="#ffffff"])::before { box-shadow: none; -webkit-text-stroke: 0.3px #888; }
+.group-color-swatch:hover,
+.group-color-swatch[aria-pressed="true"] { background: #ffffff20; }
+.group-color-swatch:focus-visible { outline: 2px solid #aaa; outline-offset: -2px; }
+.light-theme .group-color-palette { background: #f5f5f5; border-color: #ddd; }
+.light-theme .group-color-swatch:hover,
+.light-theme .group-color-swatch[aria-pressed="true"] { background: #00000018; }
+.extension-mode .group-toggle {
+  padding-right: 10px;
+}
+.extension-mode .tabs {
+  padding: 0 10px 6px 28px;
+}
+.extension-mode .tabs.is-closed {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.extension-mode .setting,
+.extension-mode .theme-option {
+  padding: 5px 10px;
+}
+.extension-mode .search,
+.extension-mode .settings-back,
+.extension-mode .archive-back {
+  padding-inline: 10px;
+}
+.extension-mode .bottom-bar,
+.extension-mode .settings-bar,
+.extension-mode .archive-bar {
+  margin-top: 8px;
+}
+/* Nested groups follow the expansion state of their direct parent. */
+.extension-mode .group > .subgroups {
+  display: none;
+}
+.extension-mode
+  .group:has(> .group-controls > .group-toggle[aria-expanded="true"])
+  > .subgroups {
+  display: block;
+}
+.extension-mode .tabs .tabs-inner > .tab-row {
+  height: 30px;
+  min-height: 30px;
+  box-sizing: border-box;
+  line-height: 16px;
+}
+.extension-mode .tabs .tabs-inner > .tab-spacer {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  pointer-events: none;
+}
+/* Large expanded groups must contribute their full virtual height to scrolling. */
+.extension-mode .group {
+  max-height: none;
+  overflow: visible;
+}
+
+.extension-mode :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view) {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+.extension-mode :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view)::-webkit-scrollbar {
+  width: 2px;
+}
+.extension-mode :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view)::-webkit-scrollbar-track {
+  background: transparent;
+}
+.extension-mode :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view)::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: #202020;
+}
+.extension-mode.light-theme :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view)::-webkit-scrollbar-thumb {
+  background-color: #d0d0d0;
+}
+.extension-mode .popup.has-compact-scrollbar { position: relative; }
+.has-compact-scrollbar :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view) { scrollbar-width: none; }
+.has-compact-scrollbar :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view)::-webkit-scrollbar { display: none; }
+.compact-scrollbar[hidden] { display: none; }
+.compact-scrollbar { position: absolute; z-index: 10; width: 12px; touch-action: none; cursor: pointer; }
+.compact-scrollbar-thumb { width: 2px; height: 56px; margin-left: 5px; border-radius: 8px; background: #282828; pointer-events: auto; }
+.light-theme .compact-scrollbar-thumb { background: #bdbdbd; }
+
+/* Let Firefox draw its own popup background in the standard theme. */
+.extension-mode.standard-theme .popup,
+.extension-mode.standard-theme .group,
+.extension-mode.standard-theme .create { background: transparent; }
+.extension-mode.standard-theme .group.active { background: rgb(255 255 255 / 0.06); }
+.extension-mode.standard-theme.light-theme .group.active { background: rgb(0 0 0 / 0.06); }

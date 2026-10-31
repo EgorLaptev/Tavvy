@@ -1,0 +1,24 @@
+{
+  "name": "tavvy",
+  "version": "0.1.0",
+  "license": "GPL-3.0-only",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "dev": "node scripts/dev.js",
+    "test": "npm run build && npm run build:firefox && node --test",
+    "format": "prettier --write src styles scripts tests index.html",
+    "build:firefox": "node scripts/build-extension.js",
+    "lint:firefox": "npm run build:firefox && web-ext lint --source-dir build/firefox",
+    "package:firefox": "npm run build:firefox && web-ext build --source-dir build/firefox --artifacts-dir build/packages --overwrite-dest",
+    "smoke:firefox": "npm run build:firefox && node scripts/smoke-firefox.js",
+    "benchmark": "npm run build:firefox && node scripts/benchmark.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.6.0",
+    "web-ext": "^10.8.0"
+  }
+}
