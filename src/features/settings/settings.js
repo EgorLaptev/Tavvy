@@ -19,6 +19,7 @@ export function mountSettings({
   );
   const animationInput = document.querySelector('input[aria-label="Анимации"]');
   const groupPinnedInput = document.querySelector('input[aria-label="Закреплённые вкладки по группам"]');
+  const dynamicIconInput = document.querySelector('input[aria-label="Динамическая иконка"]');
   const backupInput = document.querySelector('input[aria-label="Автоматические копии"]');
   const backupFrequency = document.querySelector('select[aria-label="Частота копирования"]');
   const backupFrequencyRow = document.querySelector(".backup-frequency");
@@ -121,6 +122,7 @@ export function mountSettings({
     animationInput.checked = Boolean(savedSettings.animations);
     languageSelect.value = savedSettings.language || "en";
     groupPinnedInput.checked = Boolean(savedSettings.groupPinnedTabs);
+    dynamicIconInput.checked = savedSettings.dynamicIcon !== false;
     backupInput.checked = Boolean(savedSettings.backupEnabled);
     backupFrequency.value = savedSettings.backupFrequency || "daily";
     backupFolder.value = savedSettings.backupFolder || "Tavvy";
@@ -183,6 +185,10 @@ export function mountSettings({
   listen(groupPinnedInput, "change", () => {
     savedSettings.groupPinnedTabs = groupPinnedInput.checked;
     applySettings();
+    saveSettings();
+  });
+  listen(dynamicIconInput, "change", () => {
+    savedSettings.dynamicIcon = dynamicIconInput.checked;
     saveSettings();
   });
   listen(backupInput, "change", () => {

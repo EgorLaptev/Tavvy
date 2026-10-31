@@ -45,4 +45,11 @@ test("toolbar updates are cached per window and titles follow group selection", 
   assert.equal(calls.length, 8);
   await toolbar.update(1, { ...group, id: "b", title: "Личное" });
   assert.equal(calls.at(-1)[1].title, "Tavvy — Личное");
+  await toolbar.setDynamic(false);
+  assert.deepEqual(calls.filter(([kind, value]) => kind === "icon" && value.path === "icon.svg").map(([, value]) => value.windowId).sort(), [1, 2]);
+  await toolbar.update(1, { ...group, id: "c", title: "Another group" });
+  assert.equal(calls.at(-2)[1].path, "icon.svg");
+  const beforeReenable = calls.length;
+  await toolbar.setDynamic(true);
+  assert.equal(calls.slice(beforeReenable).filter(([kind, value]) => kind === "icon" && value.imageData).length, 2);
 });

@@ -38,7 +38,7 @@ before disabling or removing the extension so Tavvy can restore their pinned
 state.
 
 For more detail, see [architecture](docs/architecture.md) and
-[performance](docs/performance.md).
+[performance](docs/performance.md). Release notes are in the [changelog](CHANGELOG.md).
 
 ## License
 

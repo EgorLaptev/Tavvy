@@ -44,6 +44,7 @@ const html = (await readFile("index.html", "utf8"))
   .replace("dist/app.js", "popup.js");
 await writeFile(`${out}/popup.html`, html);
 await copyFile("extension/manifest.json", `${out}/manifest.json`);
+await copyFile("extension/icon.svg", `${out}/icon.svg`);
 console.log(`Firefox extension: ${out}/manifest.json`);
 
 for (const file of ["local-file.html", "local-file.css"])

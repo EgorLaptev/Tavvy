@@ -2,6 +2,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   theme: "Чёрная",
   language: "en",
   markerStyle: "blob",
+  dynamicIcon: true,
   animations: true,
   discardInactiveTabs: false,
   groupPinnedTabs: false,
@@ -32,6 +33,7 @@ export function normalizeSettings(input) {
   return {
     theme: THEMES.includes(value.theme) ? value.theme : DEFAULT_SETTINGS.theme,
     language: value.language === "ru" ? "ru" : "en",
+    dynamicIcon: typeof value.dynamicIcon === "boolean" ? value.dynamicIcon : true,
     markerStyle: ["blob", "circle", "square", "diamond", "none", "letters", "letters2"].includes(
       value.markerStyle,
     )

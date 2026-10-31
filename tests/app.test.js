@@ -19,6 +19,7 @@ test("settings validate untrusted imports and clamp sizes", () => {
       theme: "Чёрная",
       language: "en",
       markerStyle: "blob",
+      dynamicIcon: true,
       animations: true,
       discardInactiveTabs: false,
       groupPinnedTabs: false,

@@ -243,6 +243,7 @@ export function createWorkspaceService(
     }
     const tabs = sorted.ids.map((id) => recordsById.get(id)).filter(Boolean);
     const activeGroupId = await active(windowId);
+    await toolbar?.setDynamic?.(state.settings?.dynamicIcon !== false).catch(console.error);
     await toolbar?.setStyle?.(state.settings.markerStyle).catch(console.error);
     await toolbar?.update(windowId, group(activeGroupId)).catch(console.error);
     return {
@@ -710,6 +711,7 @@ export function createWorkspaceService(
       if (refreshPending) return refreshPending;
       refreshPending = queue(async () => {
         const records = await scan();
+        await toolbar?.setDynamic?.(state.settings?.dynamicIcon !== false).catch(console.error);
         const windowIds = [...new Set(records.map((tab) => tab.windowId))];
         for (const windowId of windowIds) {
           const selected = records.find(
