@@ -128,6 +128,17 @@ test("switching groups manages real tabs in only one window and preserves pinned
   await service.dispatch({ type: "activateGroup", groupId: "inbox" }, 1);
   assert.equal(f.records.find((t) => t.id === 1).hidden, false);
 });
+test("private tabs are excluded from storage, snapshots, archives and backups", async () => {
+  const f = fixture();
+  f.records.push({ id: 99, windowId: 9, incognito: true, title: "private-secret", url: "https://private.invalid/secret", active: true, index: 0 });
+  const service = f.service();
+  const snapshot = await service.dispatch({ type: "snapshot" }, 1);
+  const backup = await service.dispatch({ type: "exportBackup" }, 1);
+  assert.equal(JSON.stringify(snapshot).includes("private-secret"), false);
+  assert.equal(JSON.stringify(backup).includes("private.invalid"), false);
+  assert.equal([...f.tags.keys()].some((key) => key.startsWith("99:")), false);
+  assert.equal(JSON.stringify(await f.api.storage.local.get("tavvy:known:v1")).includes("private.invalid"), false);
+});
 test("nested groups keep ancestor tabs visible, including grouped pinned tabs", async () => {
   const f = fixture();
   const service = f.service();

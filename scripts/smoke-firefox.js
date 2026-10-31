@@ -9,6 +9,11 @@ await cp("build/firefox", dir, { recursive: true });
 let resolveReport;
 const report = new Promise((resolve) => (resolveReport = resolve));
 const server = createServer((req, res) => {
+  if (req.url === "/test-favicon.png") {
+    res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "no-store" });
+    res.end(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=", "base64"));
+    return;
+  }
   if (req.method === "GET") {
     res.writeHead(200, { "Content-Type": "text/html" });
     res.end("<!doctype html><title>Tavvy smoke tab</title>Tab");
@@ -30,6 +35,8 @@ await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const port = server.address().port;
 const manifest = JSON.parse(await readFile(`${dir}/manifest.json`, "utf8"));
 manifest.host_permissions = ["http://127.0.0.1/*"];
+// The smoke harness reports its result to a local test server.
+manifest.content_security_policy.extension_pages = manifest.content_security_policy.extension_pages.replace("connect-src 'none'", "connect-src http://127.0.0.1:*");
 await writeFile(`${dir}/manifest.json`, JSON.stringify(manifest));
 await writeFile(
   `${dir}/background.js`,
@@ -47,6 +54,8 @@ await build({
  const results=[];
  function check(value,label){if(!value)throw new Error(label);results.push(label);}
  try {
+ const loadedIcon = await new Promise((resolve) => { const img = new Image(); img.onload = () => resolve(true); img.onerror = () => resolve(false); img.src = 'http://127.0.0.1:${port}/test-favicon.png'; });
+ check(loadedIcon,'remote favicon loads in extension page');
  const {id:windowId}=await browser.windows.getCurrent();
  async function command(command){ const result=await browser.runtime.sendMessage({channel:'tavvy-command',windowId,command});if(!result?.ok)throw new Error(result?.error || 'No background response');return result.snapshot; }
  let state=await command({type:'snapshot'});check(state.groups.some(g=>g.id==='inbox'),'background snapshot');

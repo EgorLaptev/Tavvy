@@ -33,7 +33,12 @@ npm run package:firefox # Build an unsigned extension ZIP
 The preview uses demo data and does not manage browser tabs.
 
 Automatic backups are enabled by default and saved under `Tavvy` in Firefox's
-Downloads folder. If you enable grouped pinned tabs, turn that setting off
+Downloads folder. They contain tab addresses and titles and can be disabled in
+settings. Tavvy does not support private windows. Displaying favicons may load
+images from their original websites. See the [privacy notice](PRIVACY.md) for
+details.
+
+If you enable grouped pinned tabs, turn that setting off
 before disabling or removing the extension so Tavvy can restore their pinned
 state.
 

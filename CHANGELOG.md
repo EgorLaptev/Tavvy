@@ -5,6 +5,9 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Restrict extension network access to favicon images and exclude private windows to protect browsing data.
+- Add privacy and Firefox review documentation.
+
 ## 0.2.1 — Sleepy Tabosaurus — 2026-10-31
 
 ### Added
