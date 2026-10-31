@@ -1,11 +1,12 @@
 import en from "./en.json";
 import ru from "./ru.json";
+import zhCN from "./zh-CN.json";
 
 let language = "en";
 const originals = new WeakMap();
-export function setLanguage(value) { language = value === "ru" ? "ru" : "en"; document.documentElement.lang = language; }
+export function setLanguage(value) { language = ["en", "ru", "zh-CN"].includes(value) ? value : "en"; document.documentElement.lang = language; }
 export function getLanguage() { return language; }
-export function t(key) { return (language === "ru" ? ru[key] : en[key]) ?? key; }
+export function t(key) { return ({ en, ru, "zh-CN": zhCN }[language][key]) ?? key; }
 export function format(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? "")); }
 export function translateStatic(root) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);

@@ -6,7 +6,7 @@ A minimal tab group manager for Firefox.
 - Search, reorder and restore recently closed tabs.
 - Customize themes and group markers.
 - Back up groups and tabs, or import a Simple Tab Groups backup.
-- Use the interface in English or Russian.
+- Use the interface in English, Russian or Simplified Chinese.
 
 ## Try the extension
 
@@ -29,6 +29,12 @@ npm test                # Build and run tests
 npm run lint:firefox    # Validate the extension
 npm run package:firefox # Build an unsigned extension ZIP
 ```
+
+`npm install` installs a Git pre-commit hook that checks staged whitespace,
+runs the tests and validates the Firefox extension. The checks use the working
+tree, so keep it consistent with the changes being committed. To install the
+hook manually, run `npm run hooks:install`. Existing custom Git hook paths are
+left untouched.
 
 The preview uses demo data and does not manage browser tabs.
 

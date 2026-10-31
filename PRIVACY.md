@@ -20,6 +20,9 @@ backup. Firefox may request these images from their hosting websites when they
 are not cached. The hosting server can see the requested image URL and the
 user's IP address; Tavvy sets a no-referrer policy for the image. Opening a tab
 or clicking the GitHub link navigates Firefox to the selected website as expected.
+Depending on browser settings and cookie policies, image requests may also
+include cookies for the image's host. Icon URLs from an imported backup may
+contain their own query parameters.
 
 Private windows are unavailable to Tavvy. Uninstalling the extension removes its
 Firefox extension storage, but does not delete backup files in Downloads.

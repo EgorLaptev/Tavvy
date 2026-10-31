@@ -82,3 +82,28 @@ for (const n of [100, 500, 1000])
       f.close();
     }
   });
+
+test("starting a group drag collapses the group, but a click does not", async () => {
+  const f = await page(100);
+  try {
+    const group = f.document.querySelector(".group");
+    const toggle = group.querySelector(".group-toggle");
+    const header = group.querySelector(".group-header");
+    header.setPointerCapture = () => {};
+    f.document.elementFromPoint = () => null;
+    f.dom.window.Element.prototype.animate = () => ({ finished: Promise.resolve() });
+    toggle.click();
+    assert.equal(toggle.getAttribute("aria-expanded"), "true");
+    header.dispatchEvent(new f.dom.window.MouseEvent("pointerdown", { bubbles: true, button: 0, clientX: 10, clientY: 10 }));
+    header.dispatchEvent(new f.dom.window.MouseEvent("pointermove", { bubbles: true, clientX: 12, clientY: 12 }));
+    await pause(30);
+    assert.equal(toggle.getAttribute("aria-expanded"), "true");
+    header.dispatchEvent(new f.dom.window.MouseEvent("pointermove", { bubbles: true, clientX: 30, clientY: 30 }));
+    await pause(30);
+    assert.equal(toggle.getAttribute("aria-expanded"), "false");
+    assert.equal(group.querySelector(".tabs").classList.contains("is-closed"), true);
+    header.dispatchEvent(new f.dom.window.MouseEvent("pointercancel", { bubbles: true }));
+  } finally {
+    f.close();
+  }
+});

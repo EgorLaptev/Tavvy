@@ -3,6 +3,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   language: "en",
   markerStyle: "blob",
   dynamicIcon: true,
+  archiveEnabled: true,
   animations: true,
   discardInactiveTabs: false,
   groupPinnedTabs: false,
@@ -32,8 +33,9 @@ export function normalizeSettings(input) {
   const value = input && typeof input === "object" ? input : {};
   return {
     theme: THEMES.includes(value.theme) ? value.theme : DEFAULT_SETTINGS.theme,
-    language: value.language === "ru" ? "ru" : "en",
+    language: ["en", "ru", "zh-CN"].includes(value.language) ? value.language : "en",
     dynamicIcon: typeof value.dynamicIcon === "boolean" ? value.dynamicIcon : true,
+    archiveEnabled: typeof value.archiveEnabled === "boolean" ? value.archiveEnabled : true,
     markerStyle: ["blob", "circle", "square", "diamond", "none", "letters", "letters2"].includes(
       value.markerStyle,
     )

@@ -5,6 +5,15 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.2 — Pajama Tapir — 2026-10-31
+
+- Add Simplified Chinese interface translation.
+- Allow disabling the recently closed tabs archive; clear previous entries when it is enabled again.
+- Show the archive delete icon in red only when hovered.
+- Collapse an expanded group when its drag begins.
+
+- Add a pre-commit hook for tests and Firefox extension validation.
+- Declare potential browsing activity exposure from favicon requests in Firefox's data consent prompt.
 - Restrict extension network access to favicon images and exclude private windows to protect browsing data.
 - Add privacy and Firefox review documentation.
 

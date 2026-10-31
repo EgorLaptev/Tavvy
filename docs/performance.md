@@ -1,86 +1,89 @@
-# Производительность Tavvy
+# Tavvy performance
 
-Дата: 31 октября 2026. Оптимизации выполнены после подтверждения аудита.
-React в проекте отсутствует: оптимизировался собственный DOM-renderer.
-Специализированных установленных skills для JavaScript/WebExtension performance
-в доступном каталоге нет; результаты основаны на коде и проверках проекта.
+Date: October 31, 2026. Optimizations were made after the audit was approved.
+The project does not use React; its custom DOM renderer was optimized. No
+specialized JavaScript or WebExtension performance skills were available in
+the installed catalog, so the results are based on project code and checks.
 
-## Проблемы и выполненные изменения
+## Problems and changes
 
-| Приоритет | Проблема | Изменение и эффект |
+| Priority | Problem | Change and effect |
 | --- | --- | --- |
-| Высокий | Повторные полные query и sessions-чтения | Индекс вкладок за время жизни background, дельты событий, точечные сверки. Снижает IPC и повторную обработку всех вкладок. |
-| Высокий | Повторная сверка для каждого окна | Общий scan и объединение refresh. Работа не умножается на число окон при каждом запросе. |
-| Высокий | Создание DOM всех вкладок | Закрытые группы не создают строки. Списки более 120 строк виртуализированы: высота 30px, запас 8 строк. Снижает DOM/layout и число обработчиков. |
-| Высокий | Сохранение при чтении и массовом закрытии | Snapshot не пишет storage; удаления объединяются в пакеты. Снижает сериализацию и записи. |
-| Средний | Большой known внутри общего состояния | Компактные описания в отдельном ключе, собственная dirty-ревизия. Изменение настроек не сериализует все вкладки. Старая схема мигрирует при сохранении. |
-| Средний | Повторные фильтрации/сортировки и построение дерева | Индексы по группе и ID, нормализованные строки поиска, кэш порядка отдельно от заголовков. Поиск линейный; debounce 180ms сохранён. |
-| Средний | Полная пересборка интерфейса | Переиспользование карточек/маркеров, обновление изменённых полей, версия снимка вместо двойного JSON.stringify. Сохраняет фокус и уменьшает работу DOM. |
-| Средний | Pointermove и измерения layout | Перетаскивание обрабатывается раз в animation frame; placeholder меняется только при смене позиции; ограничено число измерений FLIP. |
-| Средний | Удержание ресурсов закрытого popup | На pagehide удаляются runtime listeners, таймеры, rAF, drag-ссылки и UI-кэши. Обработчики настроек имеют общий disposer. |
-| Низкий | Дублирование макета и расширения | Общие renderer и workspace-service; старые реализации вынесены в prototype, вне production bundle. |
-| Низкий | Неминифицированная сборка | Production minification JS/CSS. Уменьшает передачу и объём исходного кода для разбора. |
+| High | Repeated full queries and session reads | A background-lifetime tab index, event deltas and targeted reconciliation reduce IPC and repeated processing of all tabs. |
+| High | Repeated reconciliation per window | A shared scan and coalesced refreshes prevent work from multiplying by window count on each request. |
+| High | Creating DOM for every tab | Closed groups create no rows. Lists over 120 rows are virtualized with 30 px rows and an overscan of eight, reducing DOM, layout and handlers. |
+| High | Writes on reads and bulk closure | Snapshots do not write storage; removals are batched, reducing serialization and writes. |
+| Medium | Large `known` data in shared state | Compact records use a separate key and dirty revision. Changing settings does not serialize all tabs; the old format migrates on save. |
+| Medium | Repeated filtering, sorting and tree construction | Group and ID indexes, normalized search strings and ordering cached separately from titles. Search remains linear with a 180 ms debounce. |
+| Medium | Full UI rebuilds | Cards and markers are reused, changed fields are updated, and a snapshot version replaces double `JSON.stringify`. This preserves focus and reduces DOM work. |
+| Medium | Pointer movement and layout measurement | Dragging is processed once per animation frame, the placeholder changes only with its position, and FLIP measurements are bounded. |
+| Medium | Resources retained after popup closure | `pagehide` removes runtime listeners, timers, animation frames, drag references and UI caches. Settings handlers share a disposer. |
+| Low | Duplicate mockup and extension | Shared renderer and workspace service; old implementations moved to `prototype`, outside the production bundle. |
+| Low | Unminified build | Production JS and CSS are minified, reducing file size and code to parse. |
 
-## Счётчики API
+## API call counts
 
-Синтетическая модель, 1000 вкладок, состояние уже загружено. До изменений
-счётчики были сняты на исходной реализации. Это число вызовов, а не время API.
+Synthetic model with 1000 tabs and already-loaded state. Before counts were
+recorded on the original implementation. These are call counts, not timings.
 
-| Действие | tabs.query до → после | sessions.getTabValue до → после |
+| Action | tabs.query before → after | sessions.getTabValue before → after |
 | --- | --- | --- |
-| Повторный snapshot | 1 → 0 | 2000 → 0 |
-| Refresh, одно окно | 2 → 0 | 4000 → 0 |
-| Refresh, пять окон | 6 → 0 | 12000 → 0 |
-| Переключение группы | 3 → 0 | 6000 → 0 |
+| Repeated snapshot | 1 → 0 | 2000 → 0 |
+| Refresh, one window | 2 → 0 | 4000 → 0 |
+| Refresh, five windows | 6 → 0 | 12000 → 0 |
+| Switch group | 3 → 0 | 6000 → 0 |
 
-Переключение в модели теперь использует по одному show, update, hide и
-setWindowValue. Показ назначения выполняется перед активацией/скрытием.
-Повторный snapshot не пишет storage. Первый refresh после read-only snapshot
-может сохранить начальный checkpoint и выбранные группы окон.
+In the model, switching uses one call each to `show`, `update`, `hide` and
+`setWindowValue`. The destination is shown before activation and hiding.
+Repeated snapshots do not write storage. The first refresh after a read-only
+snapshot may save the initial checkpoint and selected groups for windows.
 
-Холодная загрузка остаётся: один tabs.query, два storage.get и 2N
-sessions.getTabValue (200/1000/2000 при 100/500/1000 вкладках). Первичная гидратация
-обрабатывает до 16 вкладок одновременно. После выгрузки event page кэш строится
-заново. События переноса/изменения порядка требуют query затронутых окон;
-неизвестная вкладка — tabs.get. Live-проверки перед discard сохранены.
+A cold load still requires one `tabs.query`, two `storage.get` calls and 2N
+`sessions.getTabValue` calls (200, 1000 and 2000 for 100, 500 and 1000 tabs).
+Initial hydration processes up to 16 tabs concurrently. The cache is rebuilt
+after the event page unloads. Move and reorder events require querying affected
+windows; an unknown tab requires `tabs.get`. Live checks before discard remain.
 
-Компактный checkpoint в тесте 1000 вкладок без favicon занимает около 128 KB
-сериализованных записей против примерно 205 KB прежних известных вкладок.
-Реальный размер зависит от URL, заголовков и favicon; это не измерение heap.
+In the 1000-tab test without favicons, the compact checkpoint occupies about
+128 KB of serialized records versus approximately 205 KB for the previous
+known-tab records. Actual size depends on URLs, titles and favicons; this is not
+a heap measurement.
 
-## Сборка
+## Build
 
-Размеры в байтах, gzip для сравнения сжатого кода (расширение исполняет JS).
+Sizes are in bytes; gzip is included for compressed-code comparison. The
+extension executes the JavaScript itself.
 
-| Файл | До | После | gzip до | gzip после |
+| File | Before | After | gzip before | gzip after |
 | --- | ---: | ---: | ---: | ---: |
 | background.js | 27065 | 21857 | 6989 | 7648 |
 | popup.js | 43397 | 27669 | 10109 | 8848 |
 | import.js | 9316 | 6997 | 2762 | 2285 |
-| JS суммарно | 79778 | 56523 | 19860 | 18781 |
+| Total JS | 79778 | 56523 | 19860 | 18781 |
 | popup.css | 40092 | 32728 | 6724 | 6325 |
 
-JS уменьшился на 29% без сжатия и на 5% с gzip. Фоновый gzip вырос из-за
-добавленного индекса; основной выигрыш здесь — устранение повторных API-чтений.
+JavaScript decreased by 29% uncompressed and 5% with gzip. The compressed
+background script grew because of the new index; the main benefit is avoiding
+repeated API reads.
 
-## Проверки
+## Checks
 
-- 27 тестов Node/jsdom: изоляция окон, импорт, архив, переключение, выгрузка,
-  DOM на 100/500/1000 вкладках, сохранение фокуса, поиск и объединение событий.
-- Массовое закрытие 1000 вкладок окна: не более одной записи storage в
-  синхронной серии и отсутствие заполнения архива закрытым окном.
-- Настоящий headless Firefox в отдельном временном профиле: реальные операции
-  над вкладками, pinned, archive/restore, STG import, settings, nesting, discard.
-- Production renderer в Firefox с моделью 1000 вкладок: 18 DOM-строк в открытом
-  большом списке, 0 в закрытом; последняя вкладка доступна; 100 циклов
-  раскрытия/сворачивания; 0 runtime listeners после dispose.
-- web-ext lint: 0 errors, 0 warnings, 0 notices.
+- 27 Node/jsdom tests: window isolation, import, archive, switching, unloading,
+  DOM at 100/500/1000 tabs, focus preservation, search and event coalescing.
+- Bulk closure of a 1000-tab window: at most one storage write in a synchronous
+  batch and no archive entries for the closed window.
+- Real headless Firefox in a separate temporary profile: real tab operations,
+  pinned tabs, archive and restore, STG import, settings, nesting and discard.
+- Production renderer in Firefox with a 1000-tab model: 18 DOM rows in an open
+  large list, zero when closed; the last tab is reachable; 100 open/close cycles;
+  zero runtime listeners after disposal.
+- web-ext lint: zero errors, warnings or notices.
 
-Модель 1000 вкладок проверяет алгоритмы и интерфейс, а не загрузку 1000 настоящих
-сайтов. RAM Firefox, CPU, GC, FPS и задержки p95 отдельно не профилировались.
-Нельзя выводить из числа API-вызовов процент экономии памяти всего браузера.
+The 1000-tab model tests algorithms and UI, not loading 1000 real sites. Firefox
+RAM, CPU, GC, FPS and p95 latency were not separately profiled. API call counts
+cannot establish a percentage reduction in total browser memory.
 
-## Воспроизведение и оставшиеся ограничения
+## Reproduction and remaining limitations
 
 ```sh
 npm test
@@ -90,12 +93,13 @@ npm run smoke:firefox
 npm run package:firefox
 ```
 
-Для Firefox вне PATH задаётся FIREFOX_BINARY. Smoke использует временный профиль.
+Set `FIREFOX_BINARY` if Firefox is not on PATH. Smoke tests use a temporary profile.
 
-Снимки сообщений всё ещё содержат все вкладки окна, а индекс хранит их описания:
-это O(N) памяти. Поиск после изменения снимка также O(N), а не полнотекстовый
-индекс. Checkpoint known переписывается целиком при изменении сохраняемых
-описаний; архив и группы пока без виртуализации. Каскад CSS сохранён, его полная
-консолидация не входила в этот этап. Следующее измерение на пользовательском
-профиле должно проверить холодный старт и серии загрузок favicon/title,
-память после повторных открытий popup, поиск и drag при 1000 реальных вкладках.
+Message snapshots still contain all tabs in a window, and the index stores their
+descriptions: O(N) memory. Search after a snapshot change is also O(N), not a
+full-text index. The `known` checkpoint is rewritten in full when persisted tab
+descriptions change; the archive and groups are not yet virtualized. The CSS
+cascade was retained; full consolidation was outside this phase. Future
+measurements on a user profile should cover cold starts and bursts of favicon
+and title updates, memory after repeated popup openings, search and dragging
+with 1000 real tabs.

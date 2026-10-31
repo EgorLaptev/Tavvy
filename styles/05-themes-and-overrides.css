@@ -248,6 +248,9 @@ html[data-marker-style="letters2"] .group-color-input { width: 35px; }
 .light-theme .restore-button:hover {
   color: #087dc1;
 }
+.light-theme .archive-delete-button:hover {
+  color: #d33;
+}
 .light-theme .create,
 .light-theme .recent-button,
 .light-theme .archive-back,

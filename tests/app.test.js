@@ -6,6 +6,18 @@ import { normalizeSettings } from "../src/domain/settings.js";
 import { createSettingsRepository } from "../src/platform/settings-repository.js";
 import { versionLabel } from "../src/domain/version-names.js";
 
+test("Simplified Chinese covers every interface string and preserves placeholders", async () => {
+  const en = JSON.parse(await readFile("src/locales/en.json", "utf8"));
+  const zh = JSON.parse(await readFile("src/locales/zh-CN.json", "utf8"));
+  assert.deepEqual(Object.keys(zh).sort(), Object.keys(en).sort());
+  for (const key of Object.keys(en)) {
+    assert.ok(zh[key].trim(), key);
+    const placeholders = (text) => [...text.matchAll(/\{\w+\}/g)].map((match) => match[0]).sort();
+    assert.deepEqual(placeholders(zh[key]), placeholders(en[key]), key);
+  }
+  assert.equal(normalizeSettings({ language: "zh-CN" }).language, "zh-CN");
+});
+
 test("settings validate untrusted imports and clamp sizes", () => {
   assert.deepEqual(
     normalizeSettings({
@@ -20,6 +32,7 @@ test("settings validate untrusted imports and clamp sizes", () => {
       language: "en",
       markerStyle: "blob",
       dynamicIcon: true,
+      archiveEnabled: true,
       animations: true,
       discardInactiveTabs: false,
       groupPinnedTabs: false,
@@ -87,6 +100,22 @@ test("built app mounts and connects settings, groups, archive and navigation", a
   await new Promise((resolve) => setTimeout(resolve, 30));
   assert.equal(group.querySelector(".group-toggle").getAttribute("aria-expanded"), "true");
   assert.equal(group.querySelectorAll(".tab-row").length, 1);
+  document.querySelector(".settings-button").click();
+  const archiveSetting = document.querySelector('input[aria-label="Recently closed tabs"]');
+  assert.equal(archiveSetting.checked, true);
+  archiveSetting.checked = false;
+  archiveSetting.dispatchEvent(new window.Event("change"));
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.equal(document.querySelector(".recent-button").getAttribute("aria-hidden"), "true");
+  archiveSetting.checked = true;
+  archiveSetting.dispatchEvent(new window.Event("change"));
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.equal(document.querySelector(".recent-button").getAttribute("aria-hidden"), "true");
+  document.querySelector(".settings-back").click();
+  group.querySelector(".group-toggle").click();
+  group.querySelector(".tab-close").click();
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.equal(document.querySelector(".recent-button").getAttribute("aria-hidden"), "false");
   document.querySelector(".recent-button").click();
   assert.equal(document.querySelectorAll(".recent-row").length, 1);
   document.querySelector(".archive-back").click();
@@ -96,6 +125,13 @@ test("built app mounts and connects settings, groups, archive and navigation", a
   language.dispatchEvent(new window.Event("change", { bubbles: true }));
   assert.equal(document.querySelector(".theme-open strong").textContent, "Тема");
   assert.equal(document.querySelector(".create-group").textContent, "+ Новая группа");
+  language.value = "zh-CN";
+  language.dispatchEvent(new window.Event("change", { bubbles: true }));
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.equal(document.documentElement.lang, "zh-CN");
+  assert.equal(document.querySelector(".theme-open strong").textContent, "主题");
+  assert.equal(document.querySelector(".create-group").textContent, "+ 新建分组");
+  assert.equal(JSON.parse(window.localStorage.getItem("tavvy:settings:v1")).language, "zh-CN");
   language.value = "en";
   language.dispatchEvent(new window.Event("change", { bubbles: true }));
   assert.equal(document.querySelector(".theme-open strong").textContent, "Theme");

@@ -20,6 +20,7 @@ export function mountSettings({
   const animationInput = document.querySelector('input[aria-label="Анимации"]');
   const groupPinnedInput = document.querySelector('input[aria-label="Закреплённые вкладки по группам"]');
   const dynamicIconInput = document.querySelector('input[aria-label="Динамическая иконка"]');
+  const archiveInput = document.querySelector('input[aria-label="Архив закрытых вкладок"]');
   const backupInput = document.querySelector('input[aria-label="Автоматические копии"]');
   const backupFrequency = document.querySelector('select[aria-label="Частота копирования"]');
   const backupFrequencyRow = document.querySelector(".backup-frequency");
@@ -31,7 +32,7 @@ export function mountSettings({
   languageTitle.textContent = "Язык";
   const languageSelect = document.createElement("select");
   languageSelect.setAttribute("aria-label", "Язык");
-  for (const [value, label] of [["en", "English"], ["ru", "Русский"]]) {
+  for (const [value, label] of [["en", "English"], ["ru", "Русский"], ["zh-CN", "简体中文"]]) {
     const option = document.createElement("option");
     option.value = value;
     option.textContent = label;
@@ -123,6 +124,7 @@ export function mountSettings({
     languageSelect.value = savedSettings.language || "en";
     groupPinnedInput.checked = Boolean(savedSettings.groupPinnedTabs);
     dynamicIconInput.checked = savedSettings.dynamicIcon !== false;
+    archiveInput.checked = savedSettings.archiveEnabled !== false;
     backupInput.checked = Boolean(savedSettings.backupEnabled);
     backupFrequency.value = savedSettings.backupFrequency || "daily";
     backupFolder.value = savedSettings.backupFolder || "Tavvy";
@@ -189,6 +191,10 @@ export function mountSettings({
   });
   listen(dynamicIconInput, "change", () => {
     savedSettings.dynamicIcon = dynamicIconInput.checked;
+    saveSettings();
+  });
+  listen(archiveInput, "change", () => {
+    savedSettings.archiveEnabled = archiveInput.checked;
     saveSettings();
   });
   listen(backupInput, "change", () => {

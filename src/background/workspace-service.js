@@ -364,7 +364,7 @@ export function createWorkspaceService(
     }
   }
   function archive(record) {
-    if (!record || record.pinned) return;
+    if (state.settings?.archiveEnabled === false || !record || record.pinned) return;
     state.archive.unshift({
       id: id(),
       title: record.title,
@@ -631,6 +631,9 @@ export function createWorkspaceService(
       }
     } else if (type === "saveSettings") {
       const next = normalizeSettings(command.settings);
+      if (state.settings?.archiveEnabled === false && next.archiveEnabled) {
+        state.archive = [];
+      }
       const wasGrouped = !!state.settings?.groupPinnedTabs;
       if (!wasGrouped && next.groupPinnedTabs) {
         const records = await scan();

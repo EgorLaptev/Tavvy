@@ -277,6 +277,30 @@ test("external closure is archived; closing a window is not archived", async () 
   const snap = await service.dispatch({ type: "snapshot" }, 1);
   assert.equal(snap.archive.length, 1);
 });
+test("the archive is enabled by default and starts empty when re-enabled", async () => {
+  const f = fixture(), service = f.service();
+  let snap = await service.dispatch({ type: "snapshot" }, 1);
+  assert.equal(snap.settings.archiveEnabled, true);
+  snap = await service.dispatch({ type: "closeTab", tabId: 2 }, 1);
+  assert.equal(snap.archive.length, 1);
+  snap = await service.dispatch({ type: "saveSettings", settings: { ...snap.settings, archiveEnabled: false } }, 1);
+  snap = await service.dispatch({ type: "closeTab", tabId: 1 }, 1);
+  await f.api.tabs.remove(4);
+  await service.removed(4, false);
+  snap = await service.dispatch({ type: "snapshot" }, 1);
+  assert.equal(snap.archive.length, 1);
+  assert.equal(snap.settings.archiveEnabled, false);
+  const restarted = f.service();
+  snap = await restarted.dispatch({ type: "snapshot" }, 1);
+  assert.equal(snap.archive.length, 1);
+  assert.equal(snap.settings.archiveEnabled, false);
+  snap = await restarted.dispatch({ type: "saveSettings", settings: { ...snap.settings, archiveEnabled: true } }, 1);
+  assert.equal(snap.archive.length, 0);
+  assert.equal(snap.settings.archiveEnabled, true);
+  snap = await f.service().dispatch({ type: "snapshot" }, 1);
+  assert.equal(snap.archive.length, 0);
+  assert.equal(snap.settings.archiveEnabled, true);
+});
 test("commands are serialized and tab operations reject another window", async () => {
   const service = fixture().service();
   await Promise.all([

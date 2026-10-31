@@ -342,7 +342,7 @@ export async function mountApplication(api) {
       run({ type: "activateGroup", groupId: group.id }),
     );
     header.append(title);
-    const colorInput = button(`${getLanguage() === "en" ? "Group color" : "Цвет группы"}: ${group.title}`, "group-color-input", document.createTextNode(""), () => {
+    const colorInput = button(`${t("Цвет группы")}: ${group.title}`, "group-color-input", document.createTextNode(""), () => {
       if (paletteAnchor === colorInput) { closePalette(); return; }
       closePalette();
       paletteAnchor = colorInput;
@@ -504,6 +504,23 @@ export async function mountApplication(api) {
     mountDragDrop(dragActions);
   }
   const dragActions = {
+    onStartGroupDrag: (node) => {
+      const groupId = node.dataset.groupId;
+      if (!opened.has(groupId)) return;
+      for (const id of [...opened]) {
+        let current = id;
+        const visited = new Set();
+        while (current && !visited.has(current)) {
+          if (current === groupId) {
+            opened.delete(id);
+            break;
+          }
+          visited.add(current);
+          current = viewIndex.groups.get(current)?.parentId;
+        }
+      }
+      renderLists();
+    },
     onMoveGroup: (node) =>
       run({
         type: "moveGroup",
@@ -583,7 +600,7 @@ export async function mountApplication(api) {
         minutes < 1
           ? t("только что")
           : minutes < 60
-            ? getLanguage() === "ru" ? `${minutes} мин назад` : `${minutes} min ago`
+            ? format("{count} мин назад", { count: minutes })
             : new Date(entry.closedAt).toLocaleDateString(getLanguage());
       rows.push(item.row);
       live.add(entry.id);
@@ -594,10 +611,11 @@ export async function mountApplication(api) {
   }
   function render() {
     if (disposed) return;
-    recentButton.classList.toggle("is-visible", snapshot.archive.length > 0);
-    recentButton.setAttribute("aria-hidden", String(!snapshot.archive.length));
-    recentButton.tabIndex = snapshot.archive.length ? 0 : -1;
-    if (archiveOpen && !snapshot.archive.length) {
+    const archiveAvailable = snapshot.settings.archiveEnabled !== false && snapshot.archive.length > 0;
+    recentButton.classList.toggle("is-visible", archiveAvailable);
+    recentButton.setAttribute("aria-hidden", String(!archiveAvailable));
+    recentButton.tabIndex = archiveAvailable ? 0 : -1;
+    if (archiveOpen && !archiveAvailable) {
       archiveOpen = false;
       opened.clear();
       container.hidden = false;
@@ -626,7 +644,7 @@ export async function mountApplication(api) {
         view.marker.dataset.label = markerLetters(group.title);
         view.marker.dataset.label2 = markerLetters(group.title, 2);
         view.header.setAttribute("aria-label", group.id === "inbox" && group.title === "Основная" ? t(group.title) : group.title);
-        view.colorInput.setAttribute("aria-label", `${getLanguage() === "en" ? "Group color" : "Цвет группы"}: ${group.title}`);
+        view.colorInput.setAttribute("aria-label", `${t("Цвет группы")}: ${group.title}`);
       }
       if (view.color !== group.color) {
         view.marker.style.background = group.color;

@@ -5,7 +5,7 @@ let draggedTab = null,
   tabDropHandled = false,
   groupDrag = null,
   suppressGroupClick = false;
-export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab } = {}) {
+export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGroupDrag } = {}) {
   document.querySelectorAll(".group").forEach((group) => {
     if (boundGroups.has(group)) return;
     boundGroups.add(group);
@@ -84,12 +84,13 @@ export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab } = {}) {
         Math.hypot(event.clientX - d.x, event.clientY - d.y) > 6
       ) {
         d.active = true;
+        onStartGroupDrag?.(d.group);
         const rect = d.group.getBoundingClientRect();
         d.offsetX = d.x - rect.left;
         d.offsetY = d.y - rect.top;
         d.placeholder = document.createElement("div");
         d.placeholder.className = "group-placeholder";
-        d.placeholder.style.height = rect.height + "px";
+        d.placeholder.style.height = d.group.querySelector(":scope > .group-controls").getBoundingClientRect().height + "px";
         d.group.before(d.placeholder);
         d.ghost = d.group
           .querySelector(":scope > .group-controls")

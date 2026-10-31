@@ -1,13 +1,15 @@
 {
   "name": "tavvy",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "GPL-3.0-only",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node scripts/build.js",
     "dev": "node scripts/dev.js",
-    "test": "npm run build && npm run build:firefox && node --test",
+    "test": "npm run build && npm run build:firefox && node --test tests/*.test.js",
+    "prepare": "node scripts/install-hooks.js",
+    "hooks:install": "node scripts/install-hooks.js",
     "format": "prettier --write src styles scripts tests index.html",
     "build:firefox": "node scripts/build-extension.js",
     "lint:firefox": "npm run build:firefox && web-ext lint --source-dir build/firefox",

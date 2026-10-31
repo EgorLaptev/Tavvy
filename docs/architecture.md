@@ -1,98 +1,101 @@
-# Архитектура
+# Architecture
 
-## Два режима
+## Two modes
 
-`src/app.js` запускает memory-browser с демонстрационными данными.
-`src/extension/index.js` запускает Firefox-адаптер. Оба режима используют
-`src/ui/application.js` и один workspace-service. Раздельная реализация поиска,
-групп и архива удалена из production sources; исторические версии в prototype/.
-Режим задаётся точкой входа при сборке. Данные макета не загружаются в расширение.
+`src/app.js` starts the memory browser with demo data. `src/extension/index.js`
+starts the Firefox adapter. Both use `src/ui/application.js` and the same
+workspace service. Historical implementations are in `prototype/`, outside
+production sources. The build entry point selects the mode; demo data is not
+loaded by the extension.
 
-## Фоновый процесс — источник истины
+## Background process as the source of truth
 
-`src/background/index.js` регистрирует обработчики Firefox синхронно, чтобы
-браузер мог разбудить непостоянную фоновую страницу Manifest V3.
-`workspace-service.js` последовательно выполняет команды. Закрытие popup не
-останавливает операции. Каждый новый экземпляр сервиса загружает состояние
-из `browser.storage.local`: `tavvy:workspace:v1` содержит группы, архив,
-импорты и настройки; `tavvy:known:v1` содержит компактные описания вкладок.
-Предыдущая схема с known внутри workspace читается и переносится при сохранении.
-Snapshot не пишет storage. Отдельные dirty-ревизии исключают сериализацию и запись
-неизменённых описаний вкладок при настройке темы или переключении группы.
+`src/background/index.js` registers Firefox handlers synchronously so the
+browser can wake the non-persistent Manifest V3 background page.
+`workspace-service.js` runs commands sequentially; closing the popup does not
+stop operations. Each service instance loads state from `browser.storage.local`:
+`tavvy:workspace:v1` contains groups, archive, imports and settings, while
+`tavvy:known:v1` contains compact tab records. The previous format with `known`
+inside the workspace is read and migrated on save. Snapshots do not write to
+storage. Separate dirty revisions avoid serializing and writing unchanged tab
+records when changing settings or switching groups.
 
-Группы имеют UUID, parentId, title, color и порядок в массиве. Вкладки читаются
-через `tabs.query`, принадлежность хранится в `sessions.setTabValue`.
-Активная группа хранится отдельно для каждого окна через `sessions.setWindowValue`.
-Это позволяет не привязывать сохранённую группу к временному tabId Firefox.
-Счётчики вычисляются по реальным вкладкам текущего окна.
+Groups have a UUID, `parentId`, `title`, `color` and an order in the array.
+Tabs are read with `tabs.query`; group membership uses `sessions.setTabValue`.
+The active group is stored per window with `sessions.setWindowValue`, so saved
+groups are not tied to Firefox's temporary tab IDs. Counts reflect actual tabs
+in the current window.
 
-Основное состояние содержит version, groups, archive, settings и imports.
-Отдельный known — последнее описание открытых вкладок, необходимое для onRemoved,
-когда Firefox уже не позволяет получить закрытую вкладку через tabs.get.
-Приватные вкладки не включаются. Архив сериализуемый, без DOM-ссылок.
+The main state contains `version`, `groups`, `archive`, `settings` and
+`imports`. Separate `known` records hold the latest descriptions of open tabs,
+used by `onRemoved` when Firefox no longer allows `tabs.get` on a closed tab.
+Private tabs are excluded. The archive is serializable, with no DOM references.
 
-Команды: snapshot, createGroup, activateGroup, createTab, activateTab, closeTab,
-moveTab, restoreTab, clearArchive, moveGroup, deleteGroup, saveSettings.
-Ответ: `{ok:true,snapshot}` или `{ok:false,error}`. Отправитель проверяется по ID
-расширения. Изменения уведомляют открытые popup; сообщения snapshot не рассылают
-новое уведомление, чтобы избежать бесконечного цикла.
+Commands include `snapshot`, `createGroup`, `activateGroup`, `createTab`,
+`activateTab`, `closeTab`, `moveTab`, `restoreTab`, `clearArchive`, `moveGroup`,
+`deleteGroup` and `saveSettings`. The response is `{ok:true,snapshot}` or
+`{ok:false,error}`. The sender is checked against the extension ID. Changes
+notify open popups; snapshot messages do not trigger another notification.
 
-## Правила
+## Rules
 
-- Переключение затрагивает текущее окно. Закреплённые вкладки общие.
-- Сначала показывается и активируется вкладка назначения, затем скрываются остальные.
-- Пустая группа получает новую вкладку при активации.
-- При выборе вложенной группы видны её вкладки и вкладки всех родительских групп. При выборе родительской группы вкладки дочерних групп скрываются.
-- Запрещены циклы и операции над вкладками другого окна.
-- Удаление группы не закрывает страницы. Дети переходят к её родителю.
-- Закрытие через UI и нативный onRemoved не создают две архивные записи.
-- Если Firefox не смог скрыть часть вкладок, ошибка видна в UI.
-- При неуспешной команде UI возвращается к последнему подтверждённому снимку.
+- Switching affects the current window. Pinned tabs are shared by default and
+  can optionally be managed per group.
+- The destination tab is shown and activated before other tabs are hidden.
+- An empty group receives a new tab when activated.
+- A nested group shows its own tabs and those of all its ancestors. Selecting a
+  parent hides its children's tabs.
+- Cycles and operations on tabs in another window are rejected.
+- Deleting a group does not close its pages; children move to its parent.
+- UI closure and native `onRemoved` do not create duplicate archive entries.
+- If Firefox cannot hide some tabs, the UI displays the error.
+- After a failed command, the UI returns to the last confirmed snapshot.
 
 ## UI
 
-Общий renderer передаёт команды через runtime.sendMessage (или memory-adapter).
-Он хранит состояние интерфейса и последний подтверждённый снимок. Индексы поиска
-строятся один раз на изменение снимка. DOM карточек переиспользуется, строки
-закрытых групп не создаются; группы свыше 120 строк используют виртуализацию
-фиксированных 30px строк с overscan 8. Runtime listeners и таймеры очищаются на pagehide. Настройки
-нормализуются общим модулем domain/settings.js. Репозиторий в popup — адаптер
-над фоновыми командами; localStorage используется только в предпросмотре.
+The shared renderer sends commands through `runtime.sendMessage` or the memory
+adapter. It stores UI state and the last confirmed snapshot. Search indexes are
+built once per snapshot change. Card DOM is reused, and rows for closed groups
+are not created. Groups with more than 120 rows use virtualization with fixed
+30 px rows and an overscan of eight. Runtime listeners and timers are cleaned up
+on `pagehide`. Shared `domain/settings.js` normalizes settings. The popup
+repository adapts background commands; `localStorage` is used only in preview.
 
-Перетаскивание использует общий модуль с callback-командами. CSS исторического
-макета сохраняет исходный каскад; его полная консолидация остаётся отдельной задачей.
-Браузерные операции отделены от компонентов интерфейса, сервис принимает API
-аргументом для тестирования без настоящего Firefox.
+Dragging uses a shared module with callback commands. CSS from the historical
+mockup retains its original cascade; full consolidation remains separate work.
+Browser operations are separated from UI components, and the service accepts
+an API argument for testing without Firefox.
 
-## Проверки
+## Verification
 
-Unit/integration проверяют очередь, изоляцию окон, закреплённые вкладки,
-сохранение и восстановление архива, закрытие вне UI, циклы и удаление групп.
-`scripts/smoke-firefox.js` загружает временную копию расширения в отдельный
-headless Firefox, проверяет реальные операции и UI, затем завершает только
-созданный runner с его дочерними процессами. Дополнительный доступ к локальному
-HTTP-серверу существует только в тестовой копии манифеста.
+Unit and integration tests cover the command queue, window isolation, pinned
+tabs, archive persistence and restoration, closure outside the UI, cycles and
+group deletion. `scripts/smoke-firefox.js` loads a temporary extension copy
+into a separate headless Firefox profile, tests real operations and UI, then
+stops only its own runner and child processes. Extra access to a local HTTP
+server exists only in the test manifest.
 
-## Документация Mozilla
+## Mozilla documentation
 
 - [Background scripts](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/background)
-- [tabs.hide и ограничения](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/hide)
+- [tabs.hide and its limitations](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/hide)
 - [sessions.setTabValue](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/sessions/setTabValue)
-- [Разрешения](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/permissions)
+- [Permissions](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/permissions)
 
-## Индекс браузера
+## Browser index
 
-`platform/tab-index.js` загружает вкладки и их sessions-метаданные один раз за
-жизнь event page. Гидратация ограничена 16 вкладками одновременно (до двух
-sessions-чтений на вкладку). Операции сервиса сразу обновляют индекс, native
-onUpdated/onActivated применяют дельты. Создание/неизвестная вкладка требует
-точечного get, изменение порядка/перенос — сверки затронутого окна.
-Повторные refresh объединяются; обновление без изменений не уведомляет popup.
-Порядок вкладок по окнам кэшируется отдельно от заголовков и favicon.
-Холодный старт event page по-прежнему требует исходной сверки с Firefox.
+`platform/tab-index.js` loads tabs and session metadata once per event-page
+lifetime. Hydration is limited to 16 concurrent tabs, with up to two session
+reads per tab. Service operations update the index immediately; native
+`onUpdated` and `onActivated` events apply deltas. New or unknown tabs require
+individual `get` calls, while reordering or moving tabs requires reconciling the
+affected window. Repeated refreshes are coalesced; an unchanged refresh does
+not notify the popup. Tab ordering per window is cached separately from titles
+and favicons. A cold event-page start still requires initial reconciliation with
+Firefox.
 
-Выгрузка сохраняет повторную live-проверку active/pinned/audible непосредственно
-перед discard, чтобы оптимизация кэша не ухудшала её безопасность.
+Unloading retains live checks of `active`, `pinned` and `audible` immediately
+before `discard`, so caching does not weaken the safety check.
 
-`npm run benchmark` воспроизводит счётчики API для 100/500/1000 вкладок.
-Ограничения и измерения — в [performance.md](performance.md).
+`npm run benchmark` reproduces API counts for 100, 500 and 1000 tabs. See
+[performance.md](performance.md) for measurements and limitations.
