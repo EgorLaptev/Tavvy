@@ -61,6 +61,9 @@ await build({
  let state=await command({type:'snapshot'});check(state.groups.some(g=>g.id==='inbox'),'background snapshot');
  const sample=await browser.tabs.create({url:'http://127.0.0.1:${port}/sample',active:false});
  for(let attempt=0;attempt<100;attempt++){const current=await browser.tabs.get(sample.id);if(current.status==='complete'&&current.url.includes('/sample'))break;await new Promise(resolve=>setTimeout(resolve,50));}
+ await browser.tabs.update(sample.id,{muted:true});await new Promise(resolve=>setTimeout(resolve,100));
+ await command({type:'toggleTabMute',tabId:sample.id});check(!(await browser.tabs.get(sample.id)).mutedInfo.muted,'tab unmute command changes Firefox state');
+ await command({type:'toggleTabMute',tabId:sample.id});check(!(await browser.tabs.get(sample.id)).mutedInfo.muted,'silent unmuted tab stays unmuted');
  const pinned=await browser.tabs.create({url:'about:blank',active:false,pinned:true});
  state=await command({type:'createGroup',title:'Firefox smoke'});const groupId=state.groups.find(g=>g.title==='Firefox smoke').id;
  await command({type:'moveTab',tabId:sample.id,groupId});

@@ -108,6 +108,51 @@ test("starting a group drag collapses the group, but a click does not", async ()
   }
 });
 
+test("tab status indicators update when Firefox reports changed states", async () => {
+  const f = await page(10);
+  try {
+    const send = (command) => f.api.runtime.sendMessage({ channel: "tavvy-command", windowId: 1, command });
+    let { snapshot } = await send({ type: "snapshot" });
+    await send({ type: "saveSettings", settings: { ...snapshot.settings, groupPinnedTabs: true } });
+    f.service.invalidate({ type: "updated", tabId: 1, changes: { pinned: true, audible: true, mutedInfo: { muted: false }, sharingState: { screen: "Screen", microphone: true, camera: true } } });
+    await send({ type: "renameGroup", groupId: "inbox", title: "Group 0" });
+    await pause(180);
+    f.document.querySelector('[data-group-id="inbox"] .group-toggle').click();
+    const row = f.document.querySelector('[data-tab-id="1"]');
+    assert.deepEqual([...row.querySelectorAll(".tab-status-icon")].map((el) => el.dataset.status), ["pinned", "audible", "screen", "microphone", "camera"]);
+    f.service.invalidate({ type: "updated", tabId: 1, changes: { pinned: false, audible: false, mutedInfo: { muted: true }, sharingState: { microphone: false, camera: false } } });
+    await send({ type: "renameGroup", groupId: "inbox", title: "Group 0" });
+    await pause(180);
+    assert.deepEqual([...row.querySelectorAll(".tab-status-icon")].map((el) => el.dataset.status), ["muted"]);
+    f.service.invalidate({ type: "updated", tabId: 1, changes: { mutedInfo: { muted: false }, audible: false } });
+    await send({ type: "renameGroup", groupId: "inbox", title: "Group 0" });
+    await pause(180);
+    assert.equal(row.querySelectorAll(".tab-status-icon").length, 0);
+  } finally { f.close(); }
+});
+
+test("closing a nested group keeps its ancestors open and closes descendants", async () => {
+  const f = await page(10);
+  try {
+    const send = (command) => f.api.runtime.sendMessage({ channel: "tavvy-command", windowId: 1, command });
+    await send({ type: "moveGroup", groupId: "g1", parentId: "inbox" });
+    let { snapshot } = await send({ type: "createGroup", title: "Nested", parentId: "g1" });
+    const childId = snapshot.groups.find((group) => group.title === "Nested").id;
+    await pause(180);
+    const toggle = (id) => f.document.querySelector(`[data-group-id="${id}"] > .group-controls .group-toggle`);
+    toggle("inbox").click();
+    toggle("g1").click();
+    toggle(childId).click();
+    assert.equal(toggle("inbox").getAttribute("aria-expanded"), "true");
+    toggle("g1").click();
+    assert.equal(toggle("inbox").getAttribute("aria-expanded"), "true");
+    assert.equal(toggle("g1").getAttribute("aria-expanded"), "false");
+    assert.equal(toggle(childId).getAttribute("aria-expanded"), "false");
+    toggle("g1").click();
+    assert.equal(toggle(childId).getAttribute("aria-expanded"), "false");
+  } finally { f.close(); }
+});
+
 test("nested group settings flatten and restore the existing hierarchy", async () => {
   const f = await page(100);
   try {

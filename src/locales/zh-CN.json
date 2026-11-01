@@ -67,8 +67,8 @@
       "circle": "圆形",
       "rounded_square": "圆角方形",
       "diamond": "菱形",
-      "first_two_letters": "前两个字",
-      "first_three_letters": "前三个字",
+      "first_two_letters": "两个字",
+      "first_three_letters": "三个字",
       "no_marker": "无标记"
     },
     "language": "语言",
@@ -92,6 +92,7 @@
     "closed_tabs_archive": "最近关闭的标签页"
   },
   "groups": {
+    "rename_group": "重命名分组",
     "delete_group": "删除分组",
     "create_group": "创建分组",
     "new_group_action": "+ 新建分组",
@@ -119,6 +120,19 @@
     "main": "主分组"
   },
   "tabs": {
+    "actions": {
+      "unpin": "取消固定标签页",
+      "mute": "静音标签页",
+      "unmute": "取消标签页静音"
+    },
+    "status": {
+      "pinned": "已固定的标签页",
+      "audible": "正在播放声音",
+      "muted": "声音已静音",
+      "screen": "正在共享屏幕",
+      "microphone": "正在使用麦克风",
+      "camera": "正在使用摄像头"
+    },
     "close_tab": "关闭标签页",
     "no_tabs": "没有标签页",
     "new_tab": "新建标签页"
@@ -129,7 +143,8 @@
     "pajama_tapir": "睡衣貘",
     "sleepy_raccoon": "困困浣熊",
     "lilac_platypus": "淡紫色鸭嘴兽",
-    "curious_capybara": "好奇的水豚"
+    "curious_capybara": "好奇的水豚",
+    "cosmic_wombat": "宇宙袋熊"
   },
   "errors": {
     "background_process_is_unavailable": "后台进程不可用",

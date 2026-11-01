@@ -4,8 +4,19 @@ const shapes = [
   [65, 35, 72, 28, 30, 62, 38, 70],
   [32, 68, 55, 45, 65, 30, 70, 35],
 ];
+const graphemeSegmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter(undefined, { granularity: "grapheme" }) : null;
+function graphemes(value) {
+  return graphemeSegmenter ? Array.from(graphemeSegmenter.segment(value), (item) => item.segment) : Array.from(value);
+}
 export function markerLetters(title, count = 3) {
-  return Array.from(String(title ?? "").trim()).slice(0, count).join("").toLocaleUpperCase();
+  const text = String(title ?? "").trim();
+  const words = text.match(/[\p{L}\p{N}\p{M}]+/gu) || [];
+  const letters = words.length === 2 && count === 3
+    ? graphemes(words[0]).slice(0, 2).join("") + graphemes(words[1])[0]
+    : words.length > 1
+      ? words.slice(0, count).map((word) => graphemes(word)[0]).join("")
+      : graphemes(words[0] || text).slice(0, count).join("");
+  return letters.toLocaleUpperCase();
 }
 export function groupMarker(id) {
   let hash = 2166136261;
@@ -22,10 +33,17 @@ export function drawMarker(ctx, id, color, size, style = "blob", title = "") {
   if (style === "letters" || style === "letters2") {
     ctx.save();
     ctx.fillStyle = color;
-    ctx.font = `600 ${size * 0.42}px sans-serif`;
+    const text = markerLetters(title, style === "letters2" ? 2 : 3);
+    let fontSize = size * (style === "letters2" ? 0.75 : 0.42);
+    ctx.font = `600 ${fontSize}px sans-serif`;
+    const width = ctx.measureText(text).width;
+    if (width > size * 0.95) {
+      fontSize *= (size * 0.95) / width;
+      ctx.font = `600 ${fontSize}px sans-serif`;
+    }
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(markerLetters(title, style === "letters2" ? 2 : 3), size / 2, size / 2, size * 0.95);
+    ctx.fillText(text, size / 2, size / 2);
     ctx.restore();
     return;
   }

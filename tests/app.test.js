@@ -101,6 +101,12 @@ test("built app mounts and connects settings, groups, archive and navigation", a
   assert.equal(document.querySelector(".theme-open strong").textContent, "Theme");
   assert.equal(document.querySelectorAll(".group").length, 12);
   const group = document.querySelectorAll(".group")[1];
+  group.querySelector(".group-rename").click();
+  const renameInput = group.querySelector(".group-rename-input");
+  renameInput.value = "Projects";
+  renameInput.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.equal(group.querySelector(".group-header strong").textContent, "Projects");
   const color = group.querySelector(".group-color-input");
   color.click();
   document.querySelector('.group-color-swatch[data-color="#00c98a"]').click();

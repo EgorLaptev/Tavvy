@@ -5,6 +5,7 @@ export const VERSION_NAMES = Object.freeze({
   "0.2.3": "Сонный енот",
   "0.2.4": "Сиреневый утконос",
   "0.2.5": "Любопытная капибара",
+  "0.2.6": "Космический вомбат",
 });
 
 export function versionLabel(version, translate = (text) => text) {

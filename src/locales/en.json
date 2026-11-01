@@ -67,8 +67,8 @@
       "circle": "Circle",
       "rounded_square": "Rounded square",
       "diamond": "Diamond",
-      "first_two_letters": "First two letters",
-      "first_three_letters": "First three letters",
+      "first_two_letters": "Two letters",
+      "first_three_letters": "Three letters",
       "no_marker": "No marker"
     },
     "language": "Language",
@@ -92,6 +92,7 @@
     "closed_tabs_archive": "Recently closed tabs"
   },
   "groups": {
+    "rename_group": "Rename group",
     "delete_group": "Delete group",
     "create_group": "Create group",
     "new_group_action": "+ New group",
@@ -119,6 +120,19 @@
     "main": "Main"
   },
   "tabs": {
+    "actions": {
+      "unpin": "Unpin tab",
+      "mute": "Mute tab",
+      "unmute": "Unmute tab"
+    },
+    "status": {
+      "pinned": "Pinned tab",
+      "audible": "Playing audio",
+      "muted": "Audio muted",
+      "screen": "Sharing screen",
+      "microphone": "Using microphone",
+      "camera": "Using camera"
+    },
     "close_tab": "Close tab",
     "no_tabs": "No tabs",
     "new_tab": "New tab"
@@ -129,7 +143,8 @@
     "pajama_tapir": "Pajama Tapir",
     "sleepy_raccoon": "Sleepy Raccoon",
     "lilac_platypus": "Lilac Platypus",
-    "curious_capybara": "Curious Capybara"
+    "curious_capybara": "Curious Capybara",
+    "cosmic_wombat": "Cosmic Wombat"
   },
   "errors": {
     "background_process_is_unavailable": "Background process is unavailable",

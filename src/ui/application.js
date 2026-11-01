@@ -50,6 +50,40 @@ function favicon(tab) {
   }
   return fallback;
 }
+const tabStatusIcons = [
+  ["pinned", "M6 2h4l-.5 3L12 8v1H9v4l-1 1-1-1V9H4V8l2.5-3L6 2Z"],
+  ["audible", "M2 6h3l4-3v10l-4-3H2V6Zm9-1c1.7 1.5 1.7 4.5 0 6m1.5-8c2.5 2.5 2.5 7.5 0 10"],
+  ["muted", "M2 6h3l4-3v10l-4-3H2V6Zm9 1 3 3m0-3-3 3"],
+  ["screen", "M2 3h12v8H2V3Zm4 10h4m-2-2v2"],
+  ["microphone", "M6 3a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0V3ZM4 7a4 4 0 0 0 8 0m-4 4v3m-2 0h4"],
+  ["camera", "M2 4h8v8H2V4Zm8 2 4-2v8l-4-2V6Z"],
+];
+function renderTabStatus(container, tab, run) {
+  const active = { pinned: tab.pinned || tab.managedPinned, audible: tab.audible && !tab.muted, muted: tab.muted, ...tab.sharingState };
+  const states = tabStatusIcons.filter(([name]) => active[name]);
+  const signature = states.map(([name]) => name).join(",") + ":" + getLanguage();
+  if (container.dataset.status === signature) return;
+  container.dataset.status = signature;
+  container.replaceChildren(...states.map(([name, path]) => {
+    const interactive = name === "pinned" || name === "audible" || name === "muted";
+    const indicator = element(interactive ? "button" : "span", "tab-status-icon");
+    indicator.dataset.status = name;
+    if (interactive) {
+      indicator.type = "button";
+      indicator.title = t(name === "pinned" ? "tabs.actions.unpin" : (name === "muted" ? "tabs.actions.unmute" : "tabs.actions.mute"));
+      indicator.addEventListener("click", (event) => {
+        event.stopPropagation();
+        run({ type: name === "pinned" ? "unpinTab" : "toggleTabMute", tabId: tab.id });
+      });
+    } else {
+      indicator.title = t(`tabs.status.${name}`);
+      indicator.setAttribute("role", "img");
+    }
+    indicator.setAttribute("aria-label", indicator.title);
+    indicator.append(icon(path));
+    return indicator;
+  }));
+}
 export async function mountApplication(api) {
   if (api.isDemo) document.documentElement.classList.add("preview-mode");
   document.documentElement.classList.add("extension-mode");
@@ -384,8 +418,9 @@ export async function mountApplication(api) {
         const closing = opened.has(group.id);
         for (const id of [...opened]) {
           const other = groupViews.get(id)?.node;
-          if (!closing && other?.contains(node)) continue;
-          opened.delete(id);
+          if (closing) {
+            if (id === group.id || (other && node.contains(other))) opened.delete(id);
+          } else if (!other?.contains(node)) opened.delete(id);
         }
         if (!closing) opened.add(group.id);
         render();
@@ -399,7 +434,41 @@ export async function mountApplication(api) {
       document.createTextNode("+"),
       () => run({ type: "createTab", groupId: group.id }),
     );
-    controls.append(header, colorInput, add, toggle);
+    const rename = button(t("groups.rename_group"), "group-rename", icon("M3 11.5V13h1.5l7.7-7.7-1.5-1.5L3 11.5Zm6.9-6.9 1.5 1.5"), (event) => {
+      event.stopPropagation();
+      if (controls.querySelector(".group-rename-input")) return;
+      const field = element("input", "group-rename-input");
+      const current = viewIndex.groups.get(group.id);
+      const original = current.id === "inbox" && current.title === "Основная" ? t("groups.main") : current.title;
+      field.value = original;
+      field.maxLength = 100;
+      field.setAttribute("aria-label", t("groups.rename_group"));
+      const bounds = controls.getBoundingClientRect();
+      const labelBounds = title.getBoundingClientRect();
+      field.style.left = `${labelBounds.left - bounds.left}px`;
+      field.style.width = `${labelBounds.width}px`;
+      title.style.visibility = "hidden";
+      controls.append(field);
+      let finished = false;
+      function finish(save) {
+        if (finished) return;
+        finished = true;
+        const next = field.value.trim();
+        field.remove();
+        title.style.visibility = "";
+        if (save && next && next !== original) run({ type: "renameGroup", groupId: group.id, title: next });
+      }
+      field.addEventListener("click", (e) => e.stopPropagation());
+      field.addEventListener("pointerdown", (e) => e.stopPropagation());
+      field.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); finish(true); }
+        if (e.key === "Escape") { e.preventDefault(); finish(false); }
+      });
+      field.addEventListener("blur", () => finish(true));
+      field.focus();
+      field.select();
+    });
+    controls.append(header, colorInput, rename, add, toggle);
     const tabs = element("div", "tabs is-closed"),
       inner = element("div", "tabs-inner"),
       children = element("div", "subgroups");
@@ -432,11 +501,12 @@ export async function mountApplication(api) {
           run({ type: "closeTab", tabId: tabId });
         },
       );
-    row.append(favicon(tab), label, close);
+    const statuses = element("span", "tab-statuses");
+    row.append(favicon(tab), label, statuses, close);
     row.addEventListener("click", () =>
       run({ type: "activateTab", tabId: tabId }),
     );
-    return { row, label, close, title: null, icon: tab.faviconUrl };
+    return { row, label, close, statuses, title: null, icon: tab.faviconUrl };
   }
   function renderLists() {
     if (disposed || !filterResult) return;
@@ -487,6 +557,7 @@ export async function mountApplication(api) {
           item.row.firstChild.replaceWith(favicon(tab));
           item.icon = tab.faviconUrl;
         }
+        renderTabStatus(item.statuses, tab, run);
         used.add(tab.id);
         desired.push(item.row);
       }

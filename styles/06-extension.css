@@ -93,6 +93,35 @@ html.extension-mode body {
 .extension-mode .tab-favicon {
   object-fit: contain;
 }
+.tab-statuses { display: flex; flex: none; align-items: center; color: #777; }
+.tab-statuses:empty { display: none; }
+.tab-status-icon { display: grid; place-items: center; flex: none; width: 14px; height: 14px; padding: 0; border: 0; background: transparent; color: inherit; }
+.tab-status-icon + .tab-status-icon { margin-left: 5px; }
+button.tab-status-icon { cursor: pointer; }
+button.tab-status-icon:hover { color: #ddd; }
+.tab-status-icon[data-status="muted"], button.tab-status-icon[data-status="muted"]:hover { color: #ef5350; }
+.tab-status-icon svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.tabs .tabs-inner > .tab-row { gap: 0; }
+.tab-row .tab-favicon { margin-right: 10px; }
+.tab-statuses:not(:empty) { margin-left: 10px; }
+.tab-row .tab-close {
+  width: 0;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  transform: translateX(4px);
+  pointer-events: none;
+  transition: width .2s ease, margin .2s ease, opacity .15s ease, transform .2s ease, color .15s ease;
+}
+.tab-row:hover .tab-close,
+.tab-row .tab-close:focus-visible {
+  width: 16px;
+  margin-left: 10px;
+  margin-right: 10px;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
 .extension-mode .tab-close svg,
 .extension-mode .restore-button svg {
   fill: none;
@@ -154,6 +183,25 @@ html.extension-mode body {
 }
 .extension-mode .group > .group-controls,
 .extension-mode .new-group-form > .group-controls { position: relative; }
+.group-rename {
+  display: grid;
+  place-items: center;
+  flex: none;
+  align-self: center;
+  width: 24px;
+  height: 24px;
+  padding: 5px;
+  border: 0;
+  background: transparent;
+  color: #666;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity .15s, color .15s;
+}
+.group-rename svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.group-controls:hover .group-rename, .group-rename:focus-visible { opacity: 1; }
+.group-rename:hover { color: #ccc; }
+.group-rename-input { position: absolute; top: 0; height: 100%; z-index: 2; min-width: 0; padding: 0; border: 0; outline: 0; background: transparent; color: inherit; font-family: inherit; font-size: 13px; font-weight: 500; }
 .extension-mode .group-color-input {
   position: absolute;
   left: 5px;
@@ -232,7 +280,7 @@ html[data-marker-style="letters2"] .group-color-swatch::before {
   font-size: 8px;
   font-weight: 700;
 }
-html[data-marker-style="letters2"] .group-color-swatch::before { content: var(--swatch-label2, "AB"); }
+html[data-marker-style="letters2"] .group-color-swatch::before { content: var(--swatch-label2, "AB"); font-size: 11px; }
 html:is([data-marker-style="letters"], [data-marker-style="letters2"]) .group-color-swatch:is([data-color="#000000"], [data-color="#ffffff"])::before { box-shadow: none; -webkit-text-stroke: 0.3px #888; }
 .group-color-swatch:hover,
 .group-color-swatch[aria-pressed="true"] { background: #ffffff20; }

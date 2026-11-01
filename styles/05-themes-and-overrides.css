@@ -115,6 +115,7 @@ html[data-marker-style="letters2"] .group-header .marker {
 }
 html[data-marker-style="letters"] .group-header .marker::after { content: attr(data-label); }
 html[data-marker-style="letters2"] .group-header .marker::after { content: attr(data-label2); }
+html[data-marker-style="letters2"] .group-header .marker { font-size: 11px; }
 html[data-marker-style="letters"] .group-color-input,
 html[data-marker-style="letters2"] .group-color-input { width: 35px; }
 

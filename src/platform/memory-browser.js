@@ -133,6 +133,7 @@ export function createMemoryBrowser({
           for (const item of records.values())
             if (item.windowId === tab.windowId) item.active = false;
         Object.assign(tab, options);
+        if (typeof options.muted === "boolean") tab.mutedInfo = { muted: options.muted };
         if (options.active) tab.discarded = false;
         return { ...tab };
       },

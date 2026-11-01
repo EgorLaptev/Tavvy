@@ -214,6 +214,8 @@ export function createWorkspaceService(
             index: tab.index,
             hidden: tab.hidden,
             audible: tab.audible,
+            muted: tab.mutedInfo?.muted === true,
+            sharingState: tab.sharingState,
             discarded: tab.discarded,
           };
           if (
@@ -251,7 +253,7 @@ export function createWorkspaceService(
         version: scanOrderVersion,
         groupPinnedTabs: !!state.settings?.groupPinnedTabs,
         ids: records
-          .filter((tab) => tab.windowId === windowId && (!tab.pinned || state.settings?.groupPinnedTabs))
+          .filter((tab) => tab.windowId === windowId)
           .sort((a, b) => a.index - b.index)
           .map((tab) => tab.id),
       };
@@ -551,6 +553,12 @@ export function createWorkspaceService(
         color: colors[state.groups.length % colors.length],
         parentId: command.parentId || null,
       });
+    } else if (type === "renameGroup") {
+      if (typeof command.title !== "string" || command.title.length > 100 || !command.title.trim())
+        throw new Error("Введите название группы");
+      const changedGroup = group(command.groupId);
+      changedGroup.title = command.title.trim();
+      await toolbar?.updateGroup?.(changedGroup).catch(console.error);
     } else if (type === "setGroupColor") {
       if (typeof command.color !== "string" || !/^#[0-9a-f]{6}$/i.test(command.color))
         throw new Error("Некорректный цвет группы");
@@ -566,16 +574,30 @@ export function createWorkspaceService(
       await activate(windowId, command.groupId, tab.id);
     } else if (
       type === "activateTab" ||
+      type === "toggleTabMute" ||
+      type === "unpinTab" ||
       type === "closeTab" ||
       type === "moveTab"
     ) {
       const tab = (await scan()).find(
         (tab) =>
-          tab.id === command.tabId && tab.windowId === windowId && (!tab.pinned || state.settings?.groupPinnedTabs),
+          tab.id === command.tabId && tab.windowId === windowId,
       );
       if (!tab)
         throw new Error("Вкладка уже закрыта или находится в другом окне");
-      if (type === "activateTab") await activate(windowId, tab.groupId, tab.id);
+      if (type === "activateTab") {
+        if (tab.pinned && !state.settings?.groupPinnedTabs) await api.tabs.update(tab.id, { active: true });
+        else await activate(windowId, tab.groupId, tab.id);
+      }
+      if (type === "toggleTabMute" && (tab.audible || tab.muted)) await api.tabs.update(tab.id, { muted: !tab.muted });
+      if (type === "unpinTab") {
+        if (tab.managedPinned) {
+          await api.sessions.setTabValue(tab.id, GROUP_PINNED, false);
+        } else if (tab.pinned) {
+          if (!state.settings?.groupPinnedTabs) await api.sessions.setTabValue(tab.id, TAG, await active(windowId));
+          await api.tabs.update(tab.id, { pinned: false });
+        }
+      }
       if (type === "closeTab") {
         await api.tabs.remove(tab.id);
         archive(tab);
@@ -737,6 +759,7 @@ export function createWorkspaceService(
       refreshPending = queue(async () => {
         const records = await scan();
         await toolbar?.setDynamic?.(state.settings?.dynamicIcon !== false).catch(console.error);
+        await toolbar?.setStyle?.(state.settings?.markerStyle).catch(console.error);
         const windowIds = [...new Set(records.map((tab) => tab.windowId))];
         for (const windowId of windowIds) {
           const selected = records.find(

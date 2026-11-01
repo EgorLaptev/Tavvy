@@ -79,6 +79,8 @@ browser.tabs.onUpdated.addListener(
       "pinned",
       "hidden",
       "audible",
+      "mutedInfo",
+      "sharingState",
       "discarded",
     ],
   },

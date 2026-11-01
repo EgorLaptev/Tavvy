@@ -5,6 +5,15 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.6 — Cosmic Wombat — 2026-11-01
+
+- Allow renaming groups without changing their tabs or nesting.
+- Show tab indicators for pinned, audio, screen sharing, microphone and camera states; mute audible tabs or unpin tabs from the list.
+- Animate the tab close button into view without reserving space when hidden.
+- Use word initials for multiword group markers and enlarge two-letter markers.
+- Restore the selected group marker in the toolbar before the popup is opened.
+- Keep parent groups expanded when collapsing a nested group.
+
 ## 0.2.5 — Curious Capybara — 2026-11-01
 
 - Show a one-time warning to disable other tab managers before using Tavvy.

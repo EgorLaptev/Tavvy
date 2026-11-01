@@ -85,6 +85,7 @@ function fixture() {
             .filter((t) => t.windowId === tab.windowId)
             .forEach((t) => (t.active = false));
         Object.assign(tab, options);
+        if (typeof options.muted === "boolean") tab.mutedInfo = { muted: options.muted };
         return { ...tab };
       },
       show: async (ids) =>
@@ -112,11 +113,31 @@ function fixture() {
   const service = () => createWorkspaceService(api, () => `id-${++counter}`);
   return { api, records, tags, service };
 }
+test("background refresh restores the saved toolbar marker before opening the popup", async () => {
+  const f = fixture();
+  const initial = f.service();
+  let snap = await initial.dispatch({ type: "snapshot" }, 1);
+  snap = await initial.dispatch({ type: "createGroup", title: "Work" }, 1);
+  const work = snap.groups[1];
+  snap = await initial.dispatch({ type: "activateGroup", groupId: work.id }, 1);
+  await initial.dispatch({ type: "saveSettings", settings: { ...snap.settings, markerStyle: "letters2" } }, 1);
+  const calls = [];
+  const toolbar = {
+    setDynamic: async (value) => calls.push(["dynamic", value]),
+    setStyle: async (value) => calls.push(["style", value]),
+    update: async (windowId, group) => calls.push(["update", windowId, group.id]),
+  };
+  const restarted = createWorkspaceService(f.api, undefined, toolbar);
+  await restarted.refresh();
+  assert.ok(calls.some((call) => call[0] === "style" && call[1] === "letters2"));
+  assert.ok(calls.some((call) => call[0] === "update" && call[1] === 1 && call[2] === work.id));
+  assert.ok(calls.findIndex((call) => call[0] === "style") < calls.findIndex((call) => call[0] === "update"));
+});
 test("switching groups manages real tabs in only one window and preserves pinned tabs", async () => {
   const f = fixture(),
     service = f.service();
   let snap = await service.dispatch({ type: "snapshot" }, 1);
-  assert.equal(snap.tabs.length, 2);
+  assert.equal(snap.tabs.length, 3);
   snap = await service.dispatch({ type: "createGroup", title: "Работа" }, 1);
   const groupId = snap.groups[1].id;
   snap = await service.dispatch({ type: "activateGroup", groupId }, 1);
@@ -127,6 +148,43 @@ test("switching groups manages real tabs in only one window and preserves pinned
   assert.equal(f.records.find((t) => t.id === 4).hidden, undefined);
   await service.dispatch({ type: "activateGroup", groupId: "inbox" }, 1);
   assert.equal(f.records.find((t) => t.id === 1).hidden, false);
+});
+test("tab mute and unpin commands work for audible and group-pinned tabs", async () => {
+  const f = fixture();
+  f.records[1].audible = true;
+  const service = f.service();
+  let snap = await service.dispatch({ type: "snapshot" }, 1);
+  assert.ok(snap.tabs.find((tab) => tab.id === 3).pinned);
+  snap = await service.dispatch({ type: "toggleTabMute", tabId: 2 }, 1);
+  assert.equal(snap.tabs.find((tab) => tab.id === 2).muted, true);
+  snap = await service.dispatch({ type: "toggleTabMute", tabId: 2 }, 1);
+  assert.equal(snap.tabs.find((tab) => tab.id === 2).muted, false);
+  await assert.rejects(service.dispatch({ type: "unpinTab", tabId: 4 }, 1));
+  snap = await service.dispatch({ type: "saveSettings", settings: { ...snap.settings, groupPinnedTabs: true } }, 1);
+  snap = await service.dispatch({ type: "createGroup", title: "Other" }, 1);
+  const other = snap.groups[1].id;
+  snap = await service.dispatch({ type: "activateGroup", groupId: other }, 1);
+  assert.equal(snap.tabs.find((tab) => tab.id === 3).managedPinned, true);
+  snap = await service.dispatch({ type: "unpinTab", tabId: 3 }, 1);
+  assert.equal(snap.tabs.find((tab) => tab.id === 3).managedPinned, false);
+  assert.equal(f.records.find((tab) => tab.id === 3).hidden, true);
+});
+test("renaming a group preserves its tabs and children across restarts", async () => {
+  const f = fixture();
+  let service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "Work" }, 1);
+  const groupId = snap.groups[1].id;
+  snap = await service.dispatch({ type: "createGroup", title: "Child", parentId: groupId }, 1);
+  const childId = snap.groups[2].id;
+  await service.dispatch({ type: "moveTab", tabId: 2, groupId }, 1);
+  snap = await service.dispatch({ type: "renameGroup", groupId, title: "  Projects  " }, 1);
+  assert.equal(snap.groups.find((g) => g.id === groupId).title, "Projects");
+  assert.equal(snap.groups.find((g) => g.id === childId).parentId, groupId);
+  assert.equal(snap.tabs.find((tab) => tab.id === 2).groupId, groupId);
+  service = f.service();
+  assert.equal((await service.dispatch({ type: "snapshot" }, 1)).groups.find((g) => g.id === groupId).title, "Projects");
+  await assert.rejects(service.dispatch({ type: "renameGroup", groupId, title: " " }, 1));
+  await assert.rejects(service.dispatch({ type: "renameGroup", groupId, title: "x".repeat(101) }, 1));
 });
 test("private tabs are excluded from storage, snapshots, archives and backups", async () => {
   const f = fixture();

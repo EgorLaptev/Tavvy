@@ -79,6 +79,7 @@
 .marker-preview-letters, .marker-preview-letters2 { width: auto; height: auto; background: transparent; color: #76aaff; font-size: 8px; font-weight: 700; }
 .marker-preview-letters::after { content: "ABC"; }
 .marker-preview-letters2::after { content: "AB"; }
+.marker-preview-letters2 { font-size: 11px; }
 .marker-preview-none { background: transparent; border: 1px solid #777; border-radius: 50%; position: relative; }
 .marker-preview-none::after { content: ""; position: absolute; width: 10px; height: 1px; background: #777; top: 4px; left: -1px; transform: rotate(-45deg); }
 .setting small {

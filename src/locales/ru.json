@@ -67,8 +67,8 @@
       "circle": "Круг",
       "rounded_square": "Скруглённый квадрат",
       "diamond": "Ромб",
-      "first_two_letters": "Первые две буквы",
-      "first_three_letters": "Первые три буквы",
+      "first_two_letters": "Две буквы",
+      "first_three_letters": "Три буквы",
       "no_marker": "Без метки"
     },
     "language": "Язык",
@@ -92,6 +92,7 @@
     "closed_tabs_archive": "Архив закрытых вкладок"
   },
   "groups": {
+    "rename_group": "Переименовать группу",
     "delete_group": "Удалить группу",
     "create_group": "Создать группу",
     "new_group_action": "+ Новая группа",
@@ -119,6 +120,19 @@
     "main": "Основная"
   },
   "tabs": {
+    "actions": {
+      "unpin": "Открепить вкладку",
+      "mute": "Выключить звук вкладки",
+      "unmute": "Включить звук вкладки"
+    },
+    "status": {
+      "pinned": "Закреплённая вкладка",
+      "audible": "Воспроизведение звука",
+      "muted": "Звук отключён",
+      "screen": "Демонстрация экрана",
+      "microphone": "Используется микрофон",
+      "camera": "Используется камера"
+    },
     "close_tab": "Закрыть вкладку",
     "no_tabs": "Нет вкладок",
     "new_tab": "Новая вкладка"
@@ -129,7 +143,8 @@
     "pajama_tapir": "Пижамный тапир",
     "sleepy_raccoon": "Сонный енот",
     "lilac_platypus": "Сиреневый утконос",
-    "curious_capybara": "Любопытная капибара"
+    "curious_capybara": "Любопытная капибара",
+    "cosmic_wombat": "Космический вомбат"
   },
   "errors": {
     "background_process_is_unavailable": "Фоновый процесс недоступен",
