@@ -87,8 +87,23 @@ await build({
  state=await command({type:'saveSettings',settings:{...state.settings,nestedGroups:true,nestedTabsVisibility:'parents'}});await command({type:'deleteGroup',groupId:visibilityChild});await command({type:'deleteGroup',groupId:visibilityParent});
 
  const frame=document.createElement('iframe');frame.src=browser.runtime.getURL('popup.html');document.documentElement.append(frame);
+ for(let attempt=0;attempt<100&&!frame.contentDocument?.querySelector('.compatibility-notice button');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ const notice=frame.contentDocument.querySelector('.compatibility-notice');check(Boolean(notice),'first launch shows compatibility notice');
+ check(!frame.contentDocument.querySelector('.group-header'),'groups are unavailable before acknowledgement');
+ const noticeLanguage=notice.querySelector('select');noticeLanguage.value='ru';noticeLanguage.dispatchEvent(new Event('change'));
+ check(notice.querySelector('h1').textContent==='Прежде чем начать'&&notice.querySelector('button').textContent==='Понятно','notice language updates immediately');
+ const noticeHeight=frame.contentDocument.querySelector('.popup').getBoundingClientRect().height;
+ const noticeBounds=notice.getBoundingClientRect();const popupStyle=frame.contentWindow.getComputedStyle(frame.contentDocument.querySelector('.popup'));
+ check(Math.abs(noticeHeight-noticeBounds.height-parseFloat(popupStyle.paddingTop)-parseFloat(popupStyle.paddingBottom))<1,'notice popup fits its content');
+ notice.querySelector('button').click();
  for(let attempt=0;attempt<100&&!frame.contentDocument?.querySelector('.group-header');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
  const ui=frame.contentDocument;check(Boolean(ui.querySelector('.group-header')),'live popup renders');
+ check((await command({type:'snapshot'})).settings.language==='ru'&&ui.documentElement.lang==='ru','notice language persists in settings');
+ check(ui.querySelector('.popup').getBoundingClientRect().height>noticeHeight,'normal popup height is restored after acknowledgement');
+ check((await browser.storage.local.get('tavvy:tab-manager-notice:v1'))['tavvy:tab-manager-notice:v1']===true,'notice acknowledgement is saved');
+ const reopened=document.createElement('iframe');reopened.src=browser.runtime.getURL('popup.html');document.documentElement.append(reopened);
+ for(let attempt=0;attempt<100&&!reopened.contentDocument?.querySelector('.group-header');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ check(Boolean(reopened.contentDocument.querySelector('.group-header'))&&!reopened.contentDocument.querySelector('.compatibility-notice'),'notice is not shown after reopening');reopened.remove();
  check(!ui.body.textContent.includes('Глубокое обучение'),'popup uses live data, not fixtures');
  const retainedGroup=ui.querySelector('.group'); const retainedMarker=retainedGroup.querySelector('.marker');
  const fixedHeight=ui.querySelector('.popup').getBoundingClientRect().height;ui.querySelector('.settings-button').click();ui.querySelector('.theme-open').click();check(Math.abs(ui.querySelector('.popup').getBoundingClientRect().height-fixedHeight)<1,'popup height stays fixed across settings screens');

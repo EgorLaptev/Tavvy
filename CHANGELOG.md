@@ -5,6 +5,11 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.5 — Curious Capybara — 2026-11-01
+
+- Show a one-time warning to disable other tab managers before using Tavvy.
+- Keep the accent color palette usable while settings finish scrolling.
+
 ## 0.2.4 — Lilac Platypus — 2026-11-01
 
 - Add a compact accent color picker using the group color palette.

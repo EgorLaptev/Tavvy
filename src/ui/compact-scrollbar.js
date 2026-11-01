@@ -68,6 +68,7 @@ export function mountCompactScrollbar(panel) {
     resize?.observe(el);
     el.addEventListener("scroll", schedule, { passive: true });
     el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("pointerdown", stopWheel, { passive: true });
   }
   const mutations = typeof MutationObserver === "undefined" ? null : new MutationObserver(schedule);
   for (const el of scrollers) mutations?.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden", "class", "style"] });
@@ -100,6 +101,7 @@ export function mountCompactScrollbar(panel) {
     for (const el of scrollers) {
       el.removeEventListener("scroll", schedule);
       el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("pointerdown", stopWheel);
     }
     panel.classList.remove("has-compact-scrollbar");
     track.remove();

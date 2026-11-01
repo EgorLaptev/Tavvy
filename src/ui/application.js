@@ -10,6 +10,7 @@ import { mountMarkers } from "../ui/markers.js";
 import { mountCompactScrollbar } from "../ui/compact-scrollbar.js";
 import { groupMarker, markerLetters } from "../domain/group-marker.js";
 import { GROUP_COLOR_PRESETS } from "../domain/colors.js";
+import { showCompatibilityNotice } from "./compatibility-notice.js";
 import { t, format, getLanguage, translateStatic, translateText } from "../locales/index.js";
 function element(tag, className, text) {
   const node = document.createElement(tag);
@@ -56,6 +57,7 @@ export async function mountApplication(api) {
   const windowId = windowInfo.id;
   if (windowInfo.incognito)
     throw new Error("Приватные окна пока не поддерживаются");
+  await showCompatibilityNotice(api, document.querySelector(".popup"), windowId);
   let viewIndex,
     filterResult,
     scrollFrame,

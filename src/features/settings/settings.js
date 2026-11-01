@@ -96,10 +96,8 @@ export function mountSettings({
     accentTrigger.setAttribute("aria-expanded", "false");
     if (restoreFocus) accentTrigger.focus();
   }
-  listen(accentTrigger, "click", () => {
-    if (!accentOptions.hidden) { closeAccentPalette(); return; }
-    accentOptions.hidden = false;
-    accentTrigger.setAttribute("aria-expanded", "true");
+  function positionAccentPalette() {
+    if (accentOptions.hidden) return;
     const anchor = accentTrigger.getBoundingClientRect();
     const bounds = popup.getBoundingClientRect();
     const palette = accentOptions.getBoundingClientRect();
@@ -108,6 +106,12 @@ export function mountSettings({
     const top = below + palette.height <= bounds.bottom - 4 ? below : anchor.top - palette.height - 4;
     accentOptions.style.left = `${left}px`;
     accentOptions.style.top = `${Math.max(bounds.top + 4, top)}px`;
+  }
+  listen(accentTrigger, "click", () => {
+    if (!accentOptions.hidden) { closeAccentPalette(); return; }
+    accentOptions.hidden = false;
+    accentTrigger.setAttribute("aria-expanded", "true");
+    positionAccentPalette();
     accentOptions.querySelector("input:checked")?.focus();
   });
   listen(document, "pointerdown", (event) => {
@@ -122,7 +126,7 @@ export function mountSettings({
       closeAccentPalette(true);
     }
   });
-  listen(document.querySelector(".settings-view"), "scroll", () => closeAccentPalette(), { passive: true });
+  listen(document.querySelector(".settings-view"), "scroll", positionAccentPalette, { passive: true });
   listen(window, "resize", () => closeAccentPalette());
   listen(accentOptions, "click", (event) => {
     if (event.target.matches('input[name="accent-color"]') && event.target.checked)

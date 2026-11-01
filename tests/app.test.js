@@ -180,6 +180,8 @@ test("built app mounts and connects settings, groups, archive and navigation", a
   accentTrigger.click();
   assert.equal(accentPalette.hidden, false);
   assert.equal(accentTrigger.getAttribute("aria-expanded"), "true");
+  document.querySelector(".settings-view").dispatchEvent(new window.Event("scroll"));
+  assert.equal(accentPalette.hidden, false, "scrolling must not dismiss the accent palette");
   const accents = [...document.querySelectorAll('input[name="accent-color"]')];
   assert.deepEqual(accents.map((input) => input.value), GROUP_COLOR_PRESETS.map(([, color]) => color));
   const accent = document.querySelector('input[name="accent-color"][value="#f15d63"]');

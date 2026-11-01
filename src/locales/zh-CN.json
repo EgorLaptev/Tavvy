@@ -1,4 +1,10 @@
 {
+  "onboarding": {
+    "title": "开始之前",
+    "message": "使用 Tavvy 前，请停用其他标签页管理扩展。同时使用可能会导致冲突。",
+    "understood": "知道了",
+    "save_failed": "无法保存您的选择，请重试。"
+  },
   "settings": {
     "theme": {
       "title": "主题",
@@ -122,7 +128,8 @@
     "sleepy_tabosaurus": "瞌睡标签龙",
     "pajama_tapir": "睡衣貘",
     "sleepy_raccoon": "困困浣熊",
-    "lilac_platypus": "淡紫色鸭嘴兽"
+    "lilac_platypus": "淡紫色鸭嘴兽",
+    "curious_capybara": "好奇的水豚"
   },
   "errors": {
     "background_process_is_unavailable": "后台进程不可用",

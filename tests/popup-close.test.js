@@ -32,6 +32,7 @@ for (const succeeds of [true, false])
       },
     };
     window.browser = {
+      storage: { local: { get: async () => ({ "tavvy:tab-manager-notice:v1": true }), set: async () => {} } },
       windows: { getCurrent: async () => ({ id: 1 }) },
       runtime: {
         getURL: (path) => path,

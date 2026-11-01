@@ -1,4 +1,10 @@
 {
+  "onboarding": {
+    "title": "Before you start",
+    "message": "Disable other tab management extensions before using Tavvy. Running them together can cause conflicts.",
+    "understood": "Got it",
+    "save_failed": "Could not save your choice. Please try again."
+  },
   "settings": {
     "theme": {
       "title": "Theme",
@@ -122,7 +128,8 @@
     "sleepy_tabosaurus": "Sleepy Tabosaurus",
     "pajama_tapir": "Pajama Tapir",
     "sleepy_raccoon": "Sleepy Raccoon",
-    "lilac_platypus": "Lilac Platypus"
+    "lilac_platypus": "Lilac Platypus",
+    "curious_capybara": "Curious Capybara"
   },
   "errors": {
     "background_process_is_unavailable": "Background process is unavailable",
