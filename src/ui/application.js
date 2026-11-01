@@ -133,7 +133,7 @@ export async function mountApplication(api) {
         let current = command.groupId;
         while (current && !path.has(current)) {
           path.add(current);
-          current = viewIndex.groups.get(current)?.parentId;
+          current = snapshot.settings.nestedGroups === false ? null : viewIndex.groups.get(current)?.parentId;
         }
         opened = path;
       }
@@ -323,6 +323,7 @@ export async function mountApplication(api) {
       if (!keep.has(node)) node.remove();
   }
   function expandedPath(group) {
+    if (snapshot.settings.nestedGroups === false) return true;
     let parent = group.parentId;
     const visited = new Set();
     while (parent && !visited.has(parent)) {
@@ -504,6 +505,7 @@ export async function mountApplication(api) {
     mountDragDrop(dragActions);
   }
   const dragActions = {
+    canNestGroup: () => snapshot.settings.nestedGroups !== false,
     onStartGroupDrag: (node) => {
       const groupId = node.dataset.groupId;
       if (!opened.has(groupId)) return;
@@ -516,7 +518,7 @@ export async function mountApplication(api) {
             break;
           }
           visited.add(current);
-          current = viewIndex.groups.get(current)?.parentId;
+          current = snapshot.settings.nestedGroups === false ? null : viewIndex.groups.get(current)?.parentId;
         }
       }
       renderLists();
@@ -658,7 +660,7 @@ export async function mountApplication(api) {
     }
     const children = new Map();
     for (const group of snapshot.groups) {
-      const parent = viewIndex.groups.has(group.parentId)
+      const parent = snapshot.settings.nestedGroups !== false && viewIndex.groups.has(group.parentId)
         ? group.parentId
         : null;
       if (!children.has(parent)) children.set(parent, []);

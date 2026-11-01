@@ -5,6 +5,11 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.3 — Sleepy Raccoon — 2026-11-01
+
+- Add settings for nested groups and whether to show parent or child group tabs.
+- Move the version label next to the GitHub button in settings.
+
 ## 0.2.2 — Pajama Tapir — 2026-10-31
 
 - Add Simplified Chinese interface translation.

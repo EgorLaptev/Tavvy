@@ -107,3 +107,32 @@ test("starting a group drag collapses the group, but a click does not", async ()
     f.close();
   }
 });
+
+test("nested group settings flatten and restore the existing hierarchy", async () => {
+  const f = await page(100);
+  try {
+    await f.api.runtime.sendMessage({ channel: "tavvy-command", windowId: 1, command: { type: "moveGroup", groupId: "g1", parentId: "inbox" } });
+    await pause(180);
+    assert.ok(f.document.querySelector('[data-group-id="inbox"] > .subgroups > [data-group-id="g1"]'));
+    f.document.querySelector(".settings-button").click();
+    const nested = f.document.querySelector('input[aria-label="Nested groups"]');
+    const mode = f.document.querySelector('select[aria-label="Show tabs from"]');
+    assert.equal(nested.checked, true);
+    assert.equal(mode.value, "parents");
+    mode.value = "children";
+    mode.dispatchEvent(new f.dom.window.Event("change", { bubbles: true }));
+    await pause(120);
+    nested.checked = false;
+    nested.dispatchEvent(new f.dom.window.Event("change", { bubbles: true }));
+    await pause(120);
+    assert.equal(f.document.querySelector(".nested-visibility-setting").hidden, true);
+    assert.ok(f.document.querySelector('.groups > [data-group-id="g1"]'));
+    nested.checked = true;
+    nested.dispatchEvent(new f.dom.window.Event("change", { bubbles: true }));
+    await pause(120);
+    assert.equal(mode.value, "children");
+    assert.ok(f.document.querySelector('[data-group-id="inbox"] > .subgroups > [data-group-id="g1"]'));
+  } finally {
+    f.close();
+  }
+});

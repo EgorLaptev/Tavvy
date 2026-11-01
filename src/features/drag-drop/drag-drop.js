@@ -5,7 +5,7 @@ let draggedTab = null,
   tabDropHandled = false,
   groupDrag = null,
   suppressGroupClick = false;
-export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGroupDrag } = {}) {
+export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGroupDrag, canNestGroup } = {}) {
   document.querySelectorAll(".group").forEach((group) => {
     if (boundGroups.has(group)) return;
     boundGroups.add(group);
@@ -150,7 +150,7 @@ export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGr
         .getBoundingClientRect();
       const nearEdge =
         event.clientY < headerRect.top + 8 || event.clientY > rect.bottom - 8;
-      if (!nearEdge) {
+      if (!nearEdge && (canNestGroup?.() ?? true)) {
         d.nest = target;
         target.classList.add("group-nest-target");
       } else {

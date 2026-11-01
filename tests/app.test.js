@@ -36,6 +36,8 @@ test("settings validate untrusted imports and clamp sizes", () => {
       animations: true,
       discardInactiveTabs: false,
       groupPinnedTabs: false,
+      nestedGroups: true,
+      nestedTabsVisibility: "parents",
       backupEnabled: true,
       backupFrequency: "daily",
       backupFolder: "Tavvy",

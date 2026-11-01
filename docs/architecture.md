@@ -43,8 +43,9 @@ notify open popups; snapshot messages do not trigger another notification.
   can optionally be managed per group.
 - The destination tab is shown and activated before other tabs are hidden.
 - An empty group receives a new tab when activated.
-- A nested group shows its own tabs and those of all its ancestors. Selecting a
-  parent hides its children's tabs.
+- Nested groups can show tabs from ancestors or descendants of the selected
+  group. When nesting is disabled, only the selected group's tabs are shown;
+  the stored hierarchy is preserved for later use.
 - Cycles and operations on tabs in another window are rejected.
 - Deleting a group does not close its pages; children move to its parent.
 - UI closure and native `onRemoved` do not create duplicate archive entries.

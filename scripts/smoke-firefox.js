@@ -76,6 +76,15 @@ await build({
  check(state.tabs.some(t=>t.url?.includes('/sample')),'real tab recreated');
  await command({type:'saveSettings',settings:{theme:'Тёмная',animations:false}});state=await command({type:'snapshot'});check(state.settings.animations===false,'settings persisted in Firefox storage');
  state=await command({type:'deleteGroup',groupId});check(!state.groups.some(g=>g.id===groupId),'group deletion');check(state.tabs.some(t=>t.url?.includes('/sample')),'group deletion preserves real tabs');
+ state=await command({type:'createGroup',title:'Visibility parent'});const visibilityParent=state.groups.find(g=>g.title==='Visibility parent').id;
+ await command({type:'activateGroup',groupId:visibilityParent});state=await command({type:'snapshot'});const parentTab=state.tabs.find(t=>t.groupId===visibilityParent).id;
+ state=await command({type:'createGroup',title:'Visibility child',parentId:visibilityParent});const visibilityChild=state.groups.find(g=>g.title==='Visibility child').id;
+ await command({type:'activateGroup',groupId:visibilityChild});state=await command({type:'snapshot'});const childTab=state.tabs.find(t=>t.groupId===visibilityChild).id;
+ check(!(await browser.tabs.get(parentTab)).hidden,'parent mode shows ancestor tabs');
+ state=await command({type:'saveSettings',settings:{...state.settings,nestedTabsVisibility:'children'}});check((await browser.tabs.get(parentTab)).hidden,'child mode hides ancestor tabs');
+ await command({type:'activateGroup',groupId:visibilityParent});check(!(await browser.tabs.get(childTab)).hidden,'child mode shows descendant tabs');
+ state=await command({type:'snapshot'});state=await command({type:'saveSettings',settings:{...state.settings,nestedGroups:false}});check((await browser.tabs.get(childTab)).hidden,'disabled nesting isolates group tabs');check(state.groups.find(g=>g.id===visibilityChild).parentId===visibilityParent,'disabled nesting preserves hierarchy');
+ state=await command({type:'saveSettings',settings:{...state.settings,nestedGroups:true,nestedTabsVisibility:'parents'}});await command({type:'deleteGroup',groupId:visibilityChild});await command({type:'deleteGroup',groupId:visibilityParent});
 
  const frame=document.createElement('iframe');frame.src=browser.runtime.getURL('popup.html');document.documentElement.append(frame);
  for(let attempt=0;attempt<100&&!frame.contentDocument?.querySelector('.group-header');attempt++)await new Promise(resolve=>setTimeout(resolve,50));

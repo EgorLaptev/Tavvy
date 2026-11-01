@@ -29,7 +29,7 @@ export function buildViewIndex(snapshot) {
       for (const id of matchedTabs) matching.add(tabs.get(id).groupId);
       const filtering = Boolean(query && matching.size);
       const visible = filtering ? new Set(matching) : new Set(groups.keys());
-      for (const id of [...visible]) {
+      for (const id of snapshot.settings?.nestedGroups === false ? [] : [...visible]) {
         let parent = groups.get(id)?.parentId;
         const visited = new Set();
         while (parent && !visited.has(parent)) {

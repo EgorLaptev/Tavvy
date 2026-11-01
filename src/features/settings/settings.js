@@ -19,6 +19,9 @@ export function mountSettings({
   );
   const animationInput = document.querySelector('input[aria-label="Анимации"]');
   const groupPinnedInput = document.querySelector('input[aria-label="Закреплённые вкладки по группам"]');
+  const nestedInput = document.querySelector('input[aria-label="Вложенные группы"]');
+  const nestedVisibility = document.querySelector('select[aria-label="Показывать вкладки"]');
+  const nestedVisibilityRow = document.querySelector(".nested-visibility-setting");
   const dynamicIconInput = document.querySelector('input[aria-label="Динамическая иконка"]');
   const archiveInput = document.querySelector('input[aria-label="Архив закрытых вкладок"]');
   const backupInput = document.querySelector('input[aria-label="Автоматические копии"]');
@@ -91,7 +94,7 @@ export function mountSettings({
     const version = document.createElement("div");
     version.className = "app-version";
     version.textContent = versionLabel(appVersion, t);
-    document.querySelector(".settings-view").append(version);
+    document.querySelector(".github-link").before(version);
   }
   const themeInputs = [...themeView.querySelectorAll("input[name=theme]")];
   const panelWidth = document.querySelector("#panel-width");
@@ -102,6 +105,7 @@ export function mountSettings({
   function applySettings() {
     if (!THEMES.includes(savedSettings.theme))
       savedSettings.theme = "Чёрная";
+    if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion, t);
     const light =
       savedSettings.theme === "Светлая" ||
       (["Как в системе", "Стандартная"].includes(savedSettings.theme) && systemTheme.matches);
@@ -123,6 +127,9 @@ export function mountSettings({
     animationInput.checked = Boolean(savedSettings.animations);
     languageSelect.value = savedSettings.language || "en";
     groupPinnedInput.checked = Boolean(savedSettings.groupPinnedTabs);
+    nestedInput.checked = savedSettings.nestedGroups !== false;
+    nestedVisibility.value = savedSettings.nestedTabsVisibility;
+    nestedVisibilityRow.hidden = !nestedInput.checked;
     dynamicIconInput.checked = savedSettings.dynamicIcon !== false;
     archiveInput.checked = savedSettings.archiveEnabled !== false;
     backupInput.checked = Boolean(savedSettings.backupEnabled);
@@ -187,6 +194,15 @@ export function mountSettings({
   listen(groupPinnedInput, "change", () => {
     savedSettings.groupPinnedTabs = groupPinnedInput.checked;
     applySettings();
+    saveSettings();
+  });
+  listen(nestedInput, "change", () => {
+    savedSettings.nestedGroups = nestedInput.checked;
+    applySettings();
+    saveSettings();
+  });
+  listen(nestedVisibility, "change", () => {
+    savedSettings.nestedTabsVisibility = nestedVisibility.value;
     saveSettings();
   });
   listen(dynamicIconInput, "change", () => {

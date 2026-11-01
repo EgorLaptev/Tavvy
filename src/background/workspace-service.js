@@ -114,6 +114,22 @@ export function createWorkspaceService(
     return state.groups.some((g) => g.id === value) ? value : "inbox";
   }
   function visibleGroups(groupId) {
+    if (state.settings?.nestedGroups === false) return new Set([groupId]);
+    if (state.settings?.nestedTabsVisibility === "children") {
+      const children = new Map();
+      for (const item of state.groups) {
+        if (!children.has(item.parentId)) children.set(item.parentId, []);
+        children.get(item.parentId).push(item.id);
+      }
+      const visible = new Set([groupId]);
+      const pending = [groupId];
+      while (pending.length) {
+        for (const child of children.get(pending.pop()) || []) {
+          if (!visible.has(child)) { visible.add(child); pending.push(child); }
+        }
+      }
+      return visible;
+    }
     const groups = new Map(state.groups.map((item) => [item.id, item]));
     const visible = new Set();
     let current = groupId;
@@ -595,13 +611,14 @@ export function createWorkspaceService(
     } else if (type === "clearArchive") state.archive = [];
     else if (type === "moveGroup") {
       const moving = group(command.groupId);
-      let parent = command.parentId ? group(command.parentId) : null;
+      const parentId = state.settings?.nestedGroups === false ? moving.parentId : command.parentId;
+      let parent = parentId ? group(parentId) : null;
       while (parent) {
         if (parent.id === moving.id)
           throw new Error("Нельзя вложить группу в саму себя");
         parent = parent.parentId ? group(parent.parentId) : null;
       }
-      moving.parentId = command.parentId || null;
+      moving.parentId = parentId || null;
       state.groups = state.groups.filter((item) => item.id !== moving.id);
       const before = state.groups.findIndex(
         (item) => item.id === command.beforeId,
@@ -631,6 +648,7 @@ export function createWorkspaceService(
       }
     } else if (type === "saveSettings") {
       const next = normalizeSettings(command.settings);
+      const previousSettings = normalizeSettings(state.settings);
       if (state.settings?.archiveEnabled === false && next.archiveEnabled) {
         state.archive = [];
       }
@@ -653,10 +671,14 @@ export function createWorkspaceService(
       }
       state.settings = next;
       await save();
-      if (wasGrouped !== next.groupPinnedTabs) {
+      if (wasGrouped !== next.groupPinnedTabs || previousSettings.nestedGroups !== next.nestedGroups || previousSettings.nestedTabsVisibility !== next.nestedTabsVisibility) {
         const records = await scan();
-        for (const id of new Set(records.map((tab) => tab.windowId)))
-          await visibility(id, await active(id));
+        for (const id of new Set(records.map((tab) => tab.windowId))) {
+          const groupId = await active(id);
+          const selected = records.find((tab) => tab.windowId === id && tab.active && !tab.pinned);
+          if (selected && !visibleGroups(groupId).has(selected.groupId)) await activate(id, groupId);
+          else await visibility(id, groupId);
+        }
       }
     }
     else throw new Error("Неизвестная команда");
