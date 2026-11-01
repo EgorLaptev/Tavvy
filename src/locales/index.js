@@ -3,30 +3,39 @@ import ru from "./ru.json";
 import zhCN from "./zh-CN.json";
 
 let language = "en";
-const originals = new WeakMap();
+// Persisted domain values and background errors still use Russian source text.
+function* entries(object, prefix = "") {
+  for (const [key, value] of Object.entries(object)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (typeof value === "string") yield [path, value];
+    else yield* entries(value, path);
+  }
+}
+const sourceKeys = new Map([...entries(ru)].map(([key, text]) => [text, key]));
+function lookup(locale, path) {
+  let value = locale;
+  for (const part of path.split(".")) {
+    if (!value || typeof value !== "object" || !Object.hasOwn(value, part)) return undefined;
+    value = value[part];
+  }
+  return typeof value === "string" ? value : undefined;
+}
 export function setLanguage(value) { language = ["en", "ru", "zh-CN"].includes(value) ? value : "en"; document.documentElement.lang = language; }
 export function getLanguage() { return language; }
-export function t(key) { return ({ en, ru, "zh-CN": zhCN }[language][key]) ?? key; }
+export function t(key) { return lookup({ en, ru, "zh-CN": zhCN }[language], key) ?? lookup(en, key) ?? key; }
+export function translateText(text) { return t(sourceKeys.get(text) ?? text); }
 export function format(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? "")); }
 export function translateStatic(root) {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
-  let node = walker.currentNode;
-  while (node) {
-    if (node.nodeType === 3) {
-      const original = originals.get(node) ?? node.nodeValue;
-      originals.set(node, original);
-      const trimmed = original.trim();
-      if (Object.hasOwn(en, trimmed)) node.nodeValue = original.replace(trimmed, t(trimmed));
-    } else {
-      for (const attr of ["aria-label", "placeholder", "title"]) {
-        if (!node.hasAttribute?.(attr)) continue;
-        let stored = originals.get(node);
-        if (!stored) { stored = {}; originals.set(node, stored); }
-        const original = stored[attr] ?? node.getAttribute(attr);
-        stored[attr] = original;
-        if (Object.hasOwn(en, original)) node.setAttribute(attr, t(original));
-      }
+  const selector = "[data-i18n], [data-i18n-aria-label], [data-i18n-placeholder], [data-i18n-title]";
+  const elements = [...(root.matches?.(selector) ? [root] : []), ...root.querySelectorAll(selector)];
+  for (const element of elements) {
+    if (element.dataset.i18n) {
+      const text = [...element.childNodes].find((node) => node.nodeType === 3 && node.nodeValue.trim());
+      if (text) text.nodeValue = text.nodeValue.replace(text.nodeValue.trim(), t(element.dataset.i18n));
     }
-    node = walker.nextNode();
+    for (const attr of ["aria-label", "placeholder", "title"]) {
+      const key = element.getAttribute(`data-i18n-${attr}`);
+      if (key) element.setAttribute(attr, t(key));
+    }
   }
 }

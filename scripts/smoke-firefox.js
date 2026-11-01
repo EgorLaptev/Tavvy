@@ -95,7 +95,13 @@ await build({
  const light=ui.querySelector('input[value="Светлая"]');light.checked=true;light.dispatchEvent(new Event('change'));
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.settings.theme==='Светлая')break;await new Promise(resolve=>setTimeout(resolve,50));}
  check(state.settings.theme==='Светлая','popup settings reach background');
- ui.querySelector('.settings-back').click();ui.querySelector('.settings-back').click();
+ ui.querySelector('.settings-back').click();
+ const accentTrigger=ui.querySelector('.accent-trigger');accentTrigger.click();check(!ui.querySelector('#accent-palette').hidden,'accent palette opens on click');
+ const accent=ui.querySelector('input[name="accent-color"][value="#f15d63"]');accent.click();check(ui.querySelector('#accent-palette').hidden,'accent palette closes after selection');
+ for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.settings.accentColor==='#f15d63')break;await new Promise(resolve=>setTimeout(resolve,50));}
+ check(state.settings.accentColor==='#f15d63','accent color persists to Firefox storage');
+ check(ui.documentElement.style.getPropertyValue('--accent-color')==='#f15d63','accent color is applied in Firefox');
+ ui.querySelector('.settings-back').click();
  ui.querySelector('.create-group').click();ui.querySelector('.new-group-form input').value='UI group';ui.querySelector('.new-group-form').dispatchEvent(new Event('submit',{cancelable:true}));
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.groups.some(g=>g.title==='UI group'))break;await new Promise(resolve=>setTimeout(resolve,50));}
  check(state.groups.some(g=>g.title==='UI group'),'popup creates real group');

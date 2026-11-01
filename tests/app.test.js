@@ -5,20 +5,39 @@ import { JSDOM } from "jsdom";
 import { normalizeSettings } from "../src/domain/settings.js";
 import { createSettingsRepository } from "../src/platform/settings-repository.js";
 import { versionLabel } from "../src/domain/version-names.js";
+import { GROUP_COLOR_PRESETS, accentTextColor } from "../src/domain/colors.js";
 
-test("Simplified Chinese covers every interface string and preserves placeholders", async () => {
-  const en = JSON.parse(await readFile("src/locales/en.json", "utf8"));
-  const zh = JSON.parse(await readFile("src/locales/zh-CN.json", "utf8"));
-  assert.deepEqual(Object.keys(zh).sort(), Object.keys(en).sort());
-  for (const key of Object.keys(en)) {
-    assert.ok(zh[key].trim(), key);
-    const placeholders = (text) => [...text.matchAll(/\{\w+\}/g)].map((match) => match[0]).sort();
-    assert.deepEqual(placeholders(zh[key]), placeholders(en[key]), key);
+test("locale keys use snake_case and all translations preserve placeholders", async () => {
+  const flatten = (object, prefix = "") => Object.fromEntries(Object.entries(object).flatMap(([key, value]) => {
+    assert.match(key, /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/);
+    const path = prefix ? `${prefix}.${key}` : key;
+    return typeof value === "string" ? [[path, value]] : Object.entries(flatten(value, path));
+  }));
+  const en = flatten(JSON.parse(await readFile("src/locales/en.json", "utf8")));
+  for (const locale of ["ru", "zh-CN"]) {
+    const translations = flatten(JSON.parse(await readFile(`src/locales/${locale}.json`, "utf8")));
+    assert.deepEqual(Object.keys(translations).sort(), Object.keys(en).sort());
+    for (const key of Object.keys(en)) {
+      assert.ok(translations[key].trim(), `${locale}: ${key}`);
+      const placeholders = (text) => [...text.matchAll(/\{\w+\}/g)].map((match) => match[0]).sort();
+      assert.deepEqual(placeholders(translations[key]), placeholders(en[key]), `${locale}: ${key}`);
+    }
+  }
+  for (const path of ["index.html", "extension/import.html", "extension/local-file.html"]) {
+    const dom = new JSDOM(await readFile(path, "utf8"));
+    for (const element of dom.window.document.querySelectorAll("[data-i18n], [data-i18n-aria-label], [data-i18n-placeholder], [data-i18n-title]")) {
+      for (const attr of ["data-i18n", "data-i18n-aria-label", "data-i18n-placeholder", "data-i18n-title"]) {
+        if (element.hasAttribute(attr)) assert.ok(Object.hasOwn(en, element.getAttribute(attr)), `${path}: ${element.getAttribute(attr)}`);
+      }
+    }
+    dom.window.close();
   }
   assert.equal(normalizeSettings({ language: "zh-CN" }).language, "zh-CN");
 });
 
 test("settings validate untrusted imports and clamp sizes", () => {
+  assert.equal(accentTextColor("#ffffff"), "#161616");
+  assert.equal(accentTextColor("#000000"), "#ffffff");
   assert.deepEqual(
     normalizeSettings({
       theme: "invalid",
@@ -29,6 +48,7 @@ test("settings validate untrusted imports and clamp sizes", () => {
     }),
     {
       theme: "Чёрная",
+      accentColor: "#398dff",
       language: "en",
       markerStyle: "blob",
       dynamicIcon: true,
@@ -133,6 +153,9 @@ test("built app mounts and connects settings, groups, archive and navigation", a
   assert.equal(document.documentElement.lang, "zh-CN");
   assert.equal(document.querySelector(".theme-open strong").textContent, "主题");
   assert.equal(document.querySelector(".create-group").textContent, "+ 新建分组");
+  assert.equal(document.querySelector("#settings-tabs-title").textContent, "标签页和分组");
+  assert.equal(document.querySelector('.search input').getAttribute("placeholder"), "搜索");
+  assert.equal(document.querySelector('.marker-option input[value="blob"]').getAttribute("aria-label"), "不规则形状");
   assert.equal(JSON.parse(window.localStorage.getItem("tavvy:settings:v1")).language, "zh-CN");
   language.value = "en";
   language.dispatchEvent(new window.Event("change", { bubbles: true }));
@@ -148,6 +171,31 @@ test("built app mounts and connects settings, groups, archive and navigation", a
   const light = document.querySelector('input[value="Светлая"]');
   light.checked = true;
   light.dispatchEvent(new window.Event("change"));
+  assert.ok(document.documentElement.classList.contains("light-theme"));
+  document.querySelector(".settings-back").click();
+  const accentTrigger = document.querySelector(".accent-trigger");
+  const accentPalette = document.querySelector("#accent-palette");
+  assert.equal(accentPalette.hidden, true);
+  assert.equal(accentTrigger.getAttribute("aria-expanded"), "false");
+  accentTrigger.click();
+  assert.equal(accentPalette.hidden, false);
+  assert.equal(accentTrigger.getAttribute("aria-expanded"), "true");
+  const accents = [...document.querySelectorAll('input[name="accent-color"]')];
+  assert.deepEqual(accents.map((input) => input.value), GROUP_COLOR_PRESETS.map(([, color]) => color));
+  const accent = document.querySelector('input[name="accent-color"][value="#f15d63"]');
+  accent.click();
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.equal(accentPalette.hidden, true);
+  assert.equal(accentTrigger.getAttribute("aria-expanded"), "false");
+  assert.equal(JSON.parse(window.localStorage.getItem("tavvy:settings:v1")).accentColor, "#f15d63");
+  assert.equal(document.documentElement.style.getPropertyValue("--accent-color"), "#f15d63");
+  accentTrigger.click();
+  document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  assert.equal(accentPalette.hidden, true);
+  assert.equal(document.activeElement, accentTrigger);
+  accentTrigger.click();
+  document.body.dispatchEvent(new window.Event("pointerdown", { bubbles: true }));
+  assert.equal(accentPalette.hidden, true);
   assert.ok(document.documentElement.classList.contains("light-theme"));
   const toggle = document.querySelector('input[aria-label="Animations"]');
   toggle.checked = false;

@@ -145,7 +145,7 @@
 }
 
 .restore-button:hover {
-  color: #38aaff;
+  color: var(--accent-color, #398dff);
 }
 .archive-delete-button {
   color: #777;

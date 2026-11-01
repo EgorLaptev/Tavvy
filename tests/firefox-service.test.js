@@ -139,6 +139,17 @@ test("private tabs are excluded from storage, snapshots, archives and backups", 
   assert.equal([...f.tags.keys()].some((key) => key.startsWith("99:")), false);
   assert.equal(JSON.stringify(await f.api.storage.local.get("tavvy:known:v1")).includes("private.invalid"), false);
 });
+test("accent color survives a service restart and backup export", async () => {
+  const f = fixture();
+  let service = f.service();
+  let snap = await service.dispatch({ type: "snapshot" }, 1);
+  await service.dispatch({ type: "saveSettings", settings: { ...snap.settings, accentColor: "#f15d63" } }, 1);
+  service = f.service();
+  snap = await service.dispatch({ type: "snapshot" }, 1);
+  assert.equal(snap.settings.accentColor, "#f15d63");
+  const backup = await service.dispatch({ type: "exportBackup" }, 1);
+  assert.equal(backup.settings.accentColor, "#f15d63");
+});
 test("nested groups keep ancestor tabs visible, including grouped pinned tabs", async () => {
   const f = fixture();
   const service = f.service();

@@ -67,6 +67,16 @@ mockup retains its original cascade; full consolidation remains separate work.
 Browser operations are separated from UI components, and the service accepts
 an API argument for testing without Firefox.
 
+## Localization
+
+`src/locales/en.json`, `ru.json` and `zh-CN.json` share nested English
+`snake_case` keys, grouped by area. UI code uses dot-separated paths such as
+`t("settings.nested_groups.title")` or `format(key, values)`; static markup uses
+`data-i18n` and `data-i18n-*` attributes. Keep keys and format placeholders
+consistent across all three files. `translateText` is a compatibility adapter
+for existing persisted values and background errors that still use Russian
+source strings; unknown messages are passed through unchanged.
+
 ## Verification
 
 Unit and integration tests cover the command queue, window isolation, pinned

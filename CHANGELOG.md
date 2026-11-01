@@ -5,6 +5,13 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.4 — Lilac Platypus — 2026-11-01
+
+- Add a compact accent color picker using the group color palette.
+- Group language-independent English snake_case locale keys by application area.
+- Organize settings into compact sections.
+- Refresh the settings controls and show panel size values.
+
 ## 0.2.3 — Sleepy Raccoon — 2026-11-01
 
 - Add settings for nested groups and whether to show parent or child group tabs.

@@ -1,7 +1,8 @@
 import { createEventScope } from "../../ui/event-scope.js";
 import { normalizeSettings, THEMES, validBackupFolder } from "../../domain/settings.js";
+import { GROUP_COLOR_PRESETS, accentTextColor } from "../../domain/colors.js";
 import { versionLabel } from "../../domain/version-names.js";
-import { setLanguage, t, format, getLanguage, translateStatic } from "../../locales/index.js";
+import { setLanguage, t, format, getLanguage, translateStatic, translateText } from "../../locales/index.js";
 export function mountSettings({
   themeView,
   repository,
@@ -33,8 +34,10 @@ export function mountSettings({
   languageRow.className = "setting language-setting";
   const languageTitle = document.createElement("strong");
   languageTitle.textContent = "Язык";
+  languageTitle.dataset.i18n = "settings.language";
   const languageSelect = document.createElement("select");
   languageSelect.setAttribute("aria-label", "Язык");
+  languageSelect.setAttribute("data-i18n-aria-label", "settings.language");
   for (const [value, label] of [["en", "English"], ["ru", "Русский"], ["zh-CN", "简体中文"]]) {
     const option = document.createElement("option");
     option.value = value;
@@ -42,46 +45,132 @@ export function mountSettings({
     languageSelect.append(option);
   }
   languageRow.append(languageTitle, languageSelect);
-  document.querySelector(".settings-view").prepend(languageRow);
+  const appearanceGroup = document.querySelector(".settings-appearance");
+  appearanceGroup.querySelector("h2").after(languageRow);
+  const accentRow = document.createElement("div");
+  accentRow.className = "setting accent-setting";
+  const accentTitle = document.createElement("strong");
+  accentTitle.textContent = "Акцентный цвет";
+  accentTitle.dataset.i18n = "settings.accent_color";
+  const accentTrigger = document.createElement("button");
+  accentTrigger.type = "button";
+  accentTrigger.className = "accent-trigger";
+  accentTrigger.setAttribute("aria-expanded", "false");
+  accentTrigger.setAttribute("aria-controls", "accent-palette");
+  const activeAccent = document.createElement("span");
+  activeAccent.className = "accent-swatch";
+  activeAccent.setAttribute("aria-hidden", "true");
+  accentTrigger.append(activeAccent);
+  const accentOptions = document.createElement("div");
+  accentOptions.className = "accent-options accent-palette";
+  accentOptions.id = "accent-palette";
+  accentOptions.hidden = true;
+  accentOptions.setAttribute("role", "radiogroup");
+  accentOptions.setAttribute("aria-label", "Акцентный цвет");
+  accentOptions.setAttribute("data-i18n-aria-label", "settings.accent_color");
+  for (const [key, color] of GROUP_COLOR_PRESETS) {
+    const label = document.createElement("label");
+    label.className = "accent-option";
+    label.setAttribute("data-i18n-title", key);
+    label.title = t(key);
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "accent-color";
+    input.value = color;
+    input.setAttribute("data-i18n-aria-label", key);
+    input.setAttribute("aria-label", t(key));
+    const swatch = document.createElement("span");
+    swatch.className = "accent-swatch";
+    swatch.style.setProperty("--swatch-color", color);
+    swatch.setAttribute("aria-hidden", "true");
+    label.append(input, swatch);
+    accentOptions.append(label);
+  }
+  accentRow.append(accentTitle, accentTrigger);
+  appearanceGroup.querySelector(".theme-open").after(accentRow);
+  const popup = document.querySelector(".popup");
+  popup.append(accentOptions);
+  function closeAccentPalette(restoreFocus = false) {
+    if (accentOptions.hidden) return;
+    accentOptions.hidden = true;
+    accentTrigger.setAttribute("aria-expanded", "false");
+    if (restoreFocus) accentTrigger.focus();
+  }
+  listen(accentTrigger, "click", () => {
+    if (!accentOptions.hidden) { closeAccentPalette(); return; }
+    accentOptions.hidden = false;
+    accentTrigger.setAttribute("aria-expanded", "true");
+    const anchor = accentTrigger.getBoundingClientRect();
+    const bounds = popup.getBoundingClientRect();
+    const palette = accentOptions.getBoundingClientRect();
+    const left = Math.max(bounds.left + 4, Math.min(anchor.right - palette.width, bounds.right - palette.width - 4));
+    const below = anchor.bottom + 4;
+    const top = below + palette.height <= bounds.bottom - 4 ? below : anchor.top - palette.height - 4;
+    accentOptions.style.left = `${left}px`;
+    accentOptions.style.top = `${Math.max(bounds.top + 4, top)}px`;
+    accentOptions.querySelector("input:checked")?.focus();
+  });
+  listen(document, "pointerdown", (event) => {
+    if (!accentOptions.hidden && !accentOptions.contains(event.target) && !accentTrigger.contains(event.target)) closeAccentPalette();
+  });
+  listen(document, "focusin", (event) => {
+    if (!accentOptions.hidden && !accentOptions.contains(event.target) && !accentTrigger.contains(event.target)) closeAccentPalette();
+  });
+  listen(document, "keydown", (event) => {
+    if (event.key === "Escape" && !accentOptions.hidden) {
+      event.preventDefault();
+      closeAccentPalette(true);
+    }
+  });
+  listen(document.querySelector(".settings-view"), "scroll", () => closeAccentPalette(), { passive: true });
+  listen(window, "resize", () => closeAccentPalette());
+  listen(accentOptions, "click", (event) => {
+    if (event.target.matches('input[name="accent-color"]') && event.target.checked)
+      queueMicrotask(() => closeAccentPalette(true));
+  });
   let savePending = Promise.resolve();
   listen(document.querySelector(".backup-open"), "click", async () => {
     if (!onBackupStatus) return;
     try {
       const status = await onBackupStatus();
-      backupNotice.textContent = status.error ? format("Ошибка: {error}", {error: t(status.error)}) : status.lastSuccess ? format("Последняя копия: {date}", {date: new Date(status.lastSuccess).toLocaleString(getLanguage())}) : t("Папка находится внутри загрузок Firefox.");
-    } catch { backupNotice.textContent = t("Не удалось получить состояние резервного копирования."); }
+      backupNotice.textContent = status.error ? format("common.error_message", {error: translateText(status.error)}) : status.lastSuccess ? format("settings.backup.last_backup_date", {date: new Date(status.lastSuccess).toLocaleString(getLanguage())}) : t("settings.backup.the_folder_is_inside_firefox_downloads");
+    } catch { backupNotice.textContent = t("settings.backup.could_not_get_backup_status"); }
   });
   listen(document.querySelector(".backup-create"), "click", async () => {
-    if (!onBackup) { backupNotice.textContent = t("Создание копий доступно в расширении Firefox."); return; }
-    backupNotice.textContent = t("Создание копии…");
-    try { await savePending; await onBackup(); backupNotice.textContent = format("Копия сохранена в Загрузки/{folder}.", {folder: savedSettings.backupFolder}); }
-    catch (error) { backupNotice.textContent = format("Не удалось создать копию: {error}", {error: t(error.message)}); }
+    if (!onBackup) { backupNotice.textContent = t("settings.backup.backups_are_available_in_the_firefox_extension"); return; }
+    backupNotice.textContent = t("settings.backup.creating_backup");
+    try { await savePending; await onBackup(); backupNotice.textContent = format("settings.backup.backup_saved_to_downloads_folder", {folder: savedSettings.backupFolder}); }
+    catch (error) { backupNotice.textContent = format("settings.backup.could_not_create_backup_error", {error: translateText(error.message)}); }
   });
   const markerRow = document.createElement("div");
   markerRow.className = "setting marker-setting";
   const markerTitle = document.createElement("strong");
   markerTitle.textContent = "Метки групп";
+  markerTitle.dataset.i18n = "settings.markers.title";
   const markerSelect = document.createElement("div");
   markerSelect.className = "marker-options";
   markerSelect.setAttribute("role", "radiogroup");
   markerSelect.setAttribute("aria-label", "Форма меток групп");
-  for (const [value, title] of [
-    ["blob", "Блоб"],
-    ["circle", "Круг"],
-    ["square", "Скруглённый квадрат"],
-    ["diamond", "Ромб"],
-    ["letters2", "Первые две буквы"],
-    ["letters", "Первые три буквы"],
-    ["none", "Без метки"],
+  markerSelect.setAttribute("data-i18n-aria-label", "settings.markers.style");
+  for (const [value, title, key] of [
+    ["blob", "Блоб", "settings.markers.blob"],
+    ["circle", "Круг", "settings.markers.circle"],
+    ["square", "Скруглённый квадрат", "settings.markers.rounded_square"],
+    ["diamond", "Ромб", "settings.markers.diamond"],
+    ["letters2", "Первые две буквы", "settings.markers.first_two_letters"],
+    ["letters", "Первые три буквы", "settings.markers.first_three_letters"],
+    ["none", "Без метки", "settings.markers.no_marker"],
   ]) {
     const label = document.createElement("label");
     label.className = "marker-option";
     label.title = title;
+    label.setAttribute("data-i18n-title", key);
     const input = document.createElement("input");
     input.type = "radio";
     input.name = "marker-style";
     input.value = value;
     input.setAttribute("aria-label", title);
+    input.setAttribute("data-i18n-aria-label", key);
     const preview = document.createElement("span");
     preview.className = `marker-preview marker-preview-${value}`;
     preview.setAttribute("aria-hidden", "true");
@@ -89,26 +178,33 @@ export function mountSettings({
     markerSelect.append(label);
   }
   markerRow.append(markerTitle, markerSelect);
-  document.querySelector(".settings-view").append(markerRow);
+  appearanceGroup.append(markerRow);
   if (appVersion) {
     const version = document.createElement("div");
     version.className = "app-version";
-    version.textContent = versionLabel(appVersion, t);
+    version.textContent = versionLabel(appVersion, translateText);
     document.querySelector(".github-link").before(version);
   }
   const themeInputs = [...themeView.querySelectorAll("input[name=theme]")];
   const panelWidth = document.querySelector("#panel-width");
   const panelHeight = document.querySelector("#panel-height");
   const systemTheme = matchMedia("(prefers-color-scheme: light)");
-  let savedSettings = repository.read();
+  let savedSettings = normalizeSettings(repository.read());
   setLanguage(savedSettings.language);
   function applySettings() {
     if (!THEMES.includes(savedSettings.theme))
       savedSettings.theme = "Чёрная";
-    if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion, t);
+    if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion, translateText);
     const light =
       savedSettings.theme === "Светлая" ||
       (["Как в системе", "Стандартная"].includes(savedSettings.theme) && systemTheme.matches);
+    document.documentElement.style.setProperty("--accent-color", savedSettings.accentColor);
+    document.documentElement.style.setProperty("--accent-on", accentTextColor(savedSettings.accentColor));
+    activeAccent.style.setProperty("--swatch-color", savedSettings.accentColor);
+    const accentName = GROUP_COLOR_PRESETS.find(([, color]) => color === savedSettings.accentColor)?.[0];
+    accentTrigger.setAttribute("aria-label", `${t("settings.accent_color")}: ${t(accentName)}`);
+    accentTrigger.title = accentTrigger.getAttribute("aria-label");
+    accentOptions.querySelectorAll("input").forEach((input) => { input.checked = input.value === savedSettings.accentColor; });
     document.documentElement.classList.toggle("light-theme", light);
     document.documentElement.classList.toggle(
       "dark-theme",
@@ -145,6 +241,8 @@ export function mountSettings({
       200,
       Math.min(800, Number(savedSettings.height) || 300),
     );
+    updateSliderFill(panelWidth);
+    updateSliderFill(panelHeight);
     document.documentElement.style.setProperty(
       "--panel-width",
       panelWidth.value + "px",
@@ -166,7 +264,7 @@ export function mountSettings({
     themeInputs.forEach((input) => {
       input.checked = input.value === savedSettings.theme;
     });
-    document.querySelector(".theme-current").textContent = t(savedSettings.theme);
+    document.querySelector(".theme-current").textContent = translateText(savedSettings.theme);
   }
   function saveSettings() {
     savedSettings = normalizeSettings(savedSettings);
@@ -176,13 +274,8 @@ export function mountSettings({
     savedSettings.language = languageSelect.value;
     setLanguage(savedSettings.language);
     translateStatic(document.querySelector(".popup"));
-    markerSelect.querySelectorAll(".marker-option").forEach((label, index) => {
-      const key = ["Блоб", "Круг", "Скруглённый квадрат", "Ромб", "Первые две буквы", "Первые три буквы", "Без метки"][index];
-      label.title = t(key);
-      label.querySelector("input").setAttribute("aria-label", t(key));
-    });
     applySettings();
-    if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion, t);
+    if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion, translateText);
     saveSettings();
     onLanguageChange?.();
   });
@@ -226,18 +319,24 @@ export function mountSettings({
     const folder = backupFolder.value.trim();
     if (!validBackupFolder(folder)) {
       backupFolder.value = savedSettings.backupFolder || "Tavvy";
-      backupNotice.textContent = t("Укажи относительную папку внутри загрузок, например Tavvy/Backups.");
+      backupNotice.textContent = t("settings.backup.backup_folder_help");
       return;
     }
     savedSettings.backupFolder = folder;
     backupFolder.value = folder;
-    backupNotice.textContent = format("Папка: Загрузки/{folder}", {folder});
+    backupNotice.textContent = format("settings.backup.backup_folder_path", {folder});
     saveSettings();
   });
   listen(markerSelect, "change", (event) => {
     savedSettings.markerStyle = event.target.value;
     applySettings();
     saveSettings();
+  });
+  listen(accentOptions, "change", (event) => {
+    savedSettings.accentColor = event.target.value;
+    applySettings();
+    saveSettings();
+    closeAccentPalette(true);
   });
   listen(discardInput, "change", () => {
     savedSettings.discardInactiveTabs = discardInput.checked;
@@ -283,7 +382,7 @@ export function mountSettings({
       const data = JSON.parse(await importInput.files[0].text());
       if (Array.isArray(data.groups)) {
         if (!onImportGroups)
-          throw new Error(t("Импорт групп доступен в расширении Firefox"));
+          throw new Error(t("errors.group_import_requires_firefox"));
         await onImportGroups(data);
         return;
       }
@@ -298,7 +397,7 @@ export function mountSettings({
       applySettings();
       saveSettings();
     } catch (error) {
-      alert(t(error.message || "Не удалось загрузить файл"));
+      alert(translateText(error.message || "Не удалось загрузить файл"));
     } finally {
       importInput.value = "";
     }
@@ -309,6 +408,8 @@ export function mountSettings({
       "--progress",
       `${((slider.value - slider.min) / (slider.max - slider.min)) * 100}%`,
     );
+    const output = slider.parentElement.querySelector("output");
+    if (output) output.textContent = `${slider.value} px`;
   }
   sizeSliders.forEach((slider) => {
     updateSliderFill(slider);

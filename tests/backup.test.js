@@ -58,3 +58,11 @@ test("backup validation rejects cyclic groups and executable URLs", () => {
   assert.throws(() => parseTavvyBackup({ ...backup, tabs: [{ groupId: "inbox", url: "javascript:alert(1)" }] }));
   assert.throws(() => parseTavvyBackup({ ...backup, groups: [{ ...backup.groups[0], parentId: "inbox" }] }));
 });
+
+test("accent color survives backup parsing and rejects values outside the preset palette", () => {
+  const backup = { format: "tavvy-backup", version: 1, groups: [{ id: "inbox", title: "Main", color: "#398dff", parentId: null }], tabs: [], archive: [], settings: { accentColor: "#38BDF8" } };
+  const settings = parseTavvyBackup(backup).settings;
+  assert.equal(settings.accentColor, "#38bdf8");
+  assert.equal(normalizeSettings({ accentColor: "red; color: red" }).accentColor, "#398dff");
+  assert.equal(normalizeSettings({ accentColor: "#123456" }).accentColor, "#398dff");
+});

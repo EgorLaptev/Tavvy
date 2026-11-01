@@ -1,6 +1,6 @@
 import { parseStgBackup } from "../domain/stg-import.js";
 import { normalizeSettings } from "../domain/settings.js";
-import { setLanguage, t, format, translateStatic } from "../locales/index.js";
+import { setLanguage, t, format, translateStatic, translateText } from "../locales/index.js";
 setLanguage("en");
 translateStatic(document.documentElement);
 browser.storage.local.get("tavvy:workspace:v1").then((data) => {
@@ -33,7 +33,7 @@ async function command(payload) {
   });
   if (!result?.ok)
     throw new Error(
-      t(result?.error ||
+      translateText(result?.error ||
         "Нет ответа фонового процесса. Перезагрузите Tavvy в about:debugging.",
       ),
     );
@@ -47,14 +47,14 @@ async function importFile() {
   done.hidden = true;
   status.dataset.error = "false";
   try {
-    status.textContent = t("Чтение файла…");
+    status.textContent = t("import_page.reading_file");
     const data = JSON.parse((await file.text()).replace(/^\uFEFF/, ""));
     if (data.format === "tavvy-backup") {
       await command({ type: "importBackup", backup: data });
-      status.textContent = t("Копия Tavvy восстановлена. Существующие вкладки сохранены; вкладки из копии добавлены в текущее окно.");
+      status.textContent = t("import_page.backup_restored");
     } else if (Array.isArray(data.groups)) {
       const plan = parseStgBackup(data);
-      status.textContent = format("Импорт групп: {groups}, вкладок: {tabs}.\nМожно оставить эту страницу открытой — она покажет результат.", {groups: plan.groups.length, tabs: plan.tabCount});
+      status.textContent = format("import_page.import_in_progress", {groups: plan.groups.length, tabs: plan.tabCount});
       const snapshot = await command({ type: "importStg", backup: data });
       const report = snapshot.importReport;
       if (!report)
@@ -62,27 +62,27 @@ async function importFile() {
           "Не получен результат импорта. Проверьте, что установлена последняя сборка Tavvy.",
         );
       status.textContent = report.alreadyImported
-        ? t("Этот бэкап уже импортирован. Новые дубликаты не созданы.")
-        : format("Готово. Групп: {groups}. Вкладок: {tabs}. Закреплённых: {pinned}.", {groups: report.groups, tabs: report.tabs, pinned: report.pinnedTabs});
+        ? t("import_page.backup_already_imported_no_duplicates")
+        : format("import_page.import_complete", {groups: report.groups, tabs: report.tabs, pinned: report.pinnedTabs});
       if (report.localFiles)
-        status.textContent += format("\nЛокальные файлы ({count}) сохранены вкладками с исходным адресом.", {count: report.localFiles});
+        status.textContent += format("import_page.import_local_files_result", {count: report.localFiles});
     } else {
       if (
         data.version !== 1 ||
         !data.settings ||
         typeof data.settings.animations !== "boolean"
       )
-        throw new Error(t("Это не бэкап STG и не файл настроек Tavvy."));
+        throw new Error(t("import_page.this_is_not_an_stg_backup_or_tavvy_settings_file"));
       await command({
         type: "saveSettings",
         settings: normalizeSettings(data.settings),
       });
-      status.textContent = t("Настройки импортированы.");
+      status.textContent = t("import_page.settings_imported");
     }
     done.hidden = false;
   } catch (error) {
     status.dataset.error = "true";
-    status.textContent = format("Импорт не выполнен: {error}", {error: t(error.message)});
+    status.textContent = format("import_page.import_failed_error", {error: translateText(error.message)});
     retry.hidden = false;
   } finally {
     busy = false;

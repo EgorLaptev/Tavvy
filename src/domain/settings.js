@@ -1,5 +1,8 @@
+import { DEFAULT_ACCENT_COLOR, normalizeAccentColor } from "./colors.js";
+
 export const DEFAULT_SETTINGS = Object.freeze({
   theme: "Чёрная",
+  accentColor: DEFAULT_ACCENT_COLOR,
   language: "en",
   markerStyle: "blob",
   dynamicIcon: true,
@@ -35,6 +38,7 @@ export function normalizeSettings(input) {
   const value = input && typeof input === "object" ? input : {};
   return {
     theme: THEMES.includes(value.theme) ? value.theme : DEFAULT_SETTINGS.theme,
+    accentColor: normalizeAccentColor(value.accentColor),
     language: ["en", "ru", "zh-CN"].includes(value.language) ? value.language : "en",
     dynamicIcon: typeof value.dynamicIcon === "boolean" ? value.dynamicIcon : true,
     archiveEnabled: typeof value.archiveEnabled === "boolean" ? value.archiveEnabled : true,

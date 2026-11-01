@@ -9,7 +9,8 @@ import {
 import { mountMarkers } from "../ui/markers.js";
 import { mountCompactScrollbar } from "../ui/compact-scrollbar.js";
 import { groupMarker, markerLetters } from "../domain/group-marker.js";
-import { t, format, getLanguage, translateStatic } from "../locales/index.js";
+import { GROUP_COLOR_PRESETS } from "../domain/colors.js";
+import { t, format, getLanguage, translateStatic, translateText } from "../locales/index.js";
 function element(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -107,7 +108,7 @@ export async function mountApplication(api) {
       command,
     });
     if (!result?.ok)
-      throw new Error(t(result?.error || "Фоновый процесс недоступен"));
+      throw new Error(translateText(result?.error || "Фоновый процесс недоступен"));
     return result.snapshot;
   }
   let pendingSnapshot;
@@ -157,8 +158,8 @@ export async function mountApplication(api) {
       if (command.type === "importStg" && snapshot.importReport) {
         const report = snapshot.importReport;
         status.textContent = report.alreadyImported
-          ? t("Этот бэкап уже импортирован")
-          : format("Импортировано — групп: {groups}, вкладок: {tabs}, закреплённых: {pinned}", { groups: report.groups, tabs: report.tabs, pinned: report.pinnedTabs });
+          ? t("import_page.this_backup_has_already_been_imported")
+          : format("import_page.import_summary", { groups: report.groups, tabs: report.tabs, pinned: report.pinnedTabs });
       }
     });
     commandTail = result.catch((error) => {
@@ -183,11 +184,11 @@ export async function mountApplication(api) {
     ...navigation,
     appVersion: api.runtime.getManifest?.().version ?? api.appVersion,
     onLanguageChange: () => {
-      create.textContent = t("+ Новая группа");
-      create.setAttribute("aria-label", t("Создать группу"));
-      input.placeholder = t("Название группы");
-      input.setAttribute("aria-label", t("Название группы"));
-      palette.setAttribute("aria-label", t("Выбрать цвет группы"));
+      create.textContent = t("groups.new_group_action");
+      create.setAttribute("aria-label", t("groups.create_group"));
+      input.placeholder = t("groups.group_name");
+      input.setAttribute("aria-label", t("groups.group_name"));
+      palette.setAttribute("aria-label", t("groups.choose_group_color"));
       for (const view of groupViews.values()) view.node.remove();
       groupViews.clear();
       tabViews.clear();
@@ -266,9 +267,9 @@ export async function mountApplication(api) {
     searchTimer = setTimeout(() => animatePanelChange(render), 180);
   });
   const create = button(
-    t("Создать группу"),
+    t("groups.create_group"),
     "create create-group",
-    document.createTextNode(t("+ Новая группа")),
+    document.createTextNode(t("groups.new_group_action")),
     () => {
       create.hidden = true;
       form.hidden = false;
@@ -286,9 +287,9 @@ export async function mountApplication(api) {
   const draftHeader = element("div", "group-header");
   const draftMarker = element("span", "marker");
   const input = element("input");
-  input.placeholder = t("Название группы");
+  input.placeholder = t("groups.group_name");
   input.maxLength = 100;
-  input.setAttribute("aria-label", t("Название группы"));
+  input.setAttribute("aria-label", t("groups.group_name"));
   draftHeader.append(draftMarker, input);
   const draftToggle = element("div", "group-toggle");
   draftToggle.setAttribute("aria-hidden", "true");
@@ -339,11 +340,11 @@ export async function mountApplication(api) {
     const controls = element("div", "group-controls"),
       marker = element("span", "marker"),
       title = element("strong");
-    const header = button(group.id === "inbox" && group.title === "Основная" ? t(group.title) : group.title, "group-header", marker, () =>
+    const header = button(group.id === "inbox" && group.title === "Основная" ? t("groups.main") : group.title, "group-header", marker, () =>
       run({ type: "activateGroup", groupId: group.id }),
     );
     header.append(title);
-    const colorInput = button(`${t("Цвет группы")}: ${group.title}`, "group-color-input", document.createTextNode(""), () => {
+    const colorInput = button(`${t("groups.group_color")}: ${group.title}`, "group-color-input", document.createTextNode(""), () => {
       if (paletteAnchor === colorInput) { closePalette(); return; }
       closePalette();
       paletteAnchor = colorInput;
@@ -355,8 +356,8 @@ export async function mountApplication(api) {
       palette.style.setProperty("--swatch-label", JSON.stringify(markerLetters(viewIndex.groups.get(group.id)?.title)));
       palette.style.setProperty("--swatch-label2", JSON.stringify(markerLetters(viewIndex.groups.get(group.id)?.title, 2)));
       const selected = viewIndex.groups.get(group.id)?.color?.toLowerCase();
-      for (const [name, color] of [["Синий", "#398dff"], ["Голубой", "#38bdf8"], ["Бирюзовый", "#20c9c3"], ["Зелёный", "#00c98a"], ["Лаймовый", "#a3d451"], ["Жёлтый", "#f4ca50"], ["Оранжевый", "#ff7800"], ["Красный", "#f15d63"], ["Розовый", "#ff168a"], ["Фиолетовый", "#a855f7"], ["Сиреневый", "#b69aff"], ["Чёрный", "#000000"], ["Серый", "#a0a7b4"], ["Белый", "#ffffff"]]) {
-        const swatch = button(name, "group-color-swatch", document.createTextNode(""), () => {
+      for (const [name, color] of GROUP_COLOR_PRESETS) {
+        const swatch = button(t(name), "group-color-swatch", document.createTextNode(""), () => {
           closePalette(true);
           run({ type: "setGroupColor", groupId: group.id, color });
         });
@@ -376,7 +377,7 @@ export async function mountApplication(api) {
     colorInput.setAttribute("aria-expanded", "false");
     colorInput.setAttribute("aria-haspopup", "true");
     const count = element("span", "count");
-    const toggle = button(t("Показать вкладки"), "group-toggle", count, () =>
+    const toggle = button(t("groups.show_tabs"), "group-toggle", count, () =>
       animatePanelChange(() => {
         const closing = opened.has(group.id);
         for (const id of [...opened]) {
@@ -391,7 +392,7 @@ export async function mountApplication(api) {
     toggle.setAttribute("aria-expanded", "false");
     toggle.append(icon("m6 4 4 4-4 4", "arrow"));
     const add = button(
-      t("Новая вкладка в группе"),
+      t("groups.new_tab_in_group"),
       "add-subgroup",
       document.createTextNode("+"),
       () => run({ type: "createTab", groupId: group.id }),
@@ -421,7 +422,7 @@ export async function mountApplication(api) {
     row.dataset.tabId = tab.id;
     const label = element("span", "tab-title"),
       close = button(
-        t("Закрыть вкладку"),
+        t("tabs.close_tab"),
         "tab-close",
         icon("M4 4l8 8M12 4l-8 8"),
         (event) => {
@@ -476,8 +477,8 @@ export async function mountApplication(api) {
           tabViews.set(tab.id, item);
         }
         if (item.title !== tab.title) {
-          item.label.textContent = tab.url === "about:newtab" && tab.title === "Новая вкладка" ? t(tab.title) : tab.title;
-          item.close.setAttribute("aria-label", t("Закрыть вкладку") + " " + tab.title);
+          item.label.textContent = tab.url === "about:newtab" && tab.title === "Новая вкладка" ? t("tabs.new_tab") : tab.title;
+          item.close.setAttribute("aria-label", t("tabs.close_tab") + " " + tab.title);
           item.title = tab.title;
         }
         if (item.icon !== tab.faviconUrl) {
@@ -493,7 +494,7 @@ export async function mountApplication(api) {
         spacer.setAttribute("aria-hidden", "true");
         desired.push(spacer);
       }
-      if (!rows.length) desired.push(element("div", "empty", t("Нет вкладок")));
+      if (!rows.length) desired.push(element("div", "empty", t("tabs.no_tabs")));
       order(view.inner, desired);
       view.tabs.style.height = view.inner.scrollHeight + "px";
     }
@@ -582,13 +583,13 @@ export async function mountApplication(api) {
           element("span", "recent-title", entry.title),
           time,
           button(
-            t("Вернуть вкладку"),
+            t("archive.restore_tab"),
             "restore-button",
             icon("M3 7a5 5 0 1 1 1.2 4M3 3v4h4"),
             () => run({ type: "restoreTab", entryId: entry.id }),
           ),
           button(
-            t("Удалить вкладку из архива"),
+            t("archive.delete_recently_closed_tab"),
             "restore-button archive-delete-button",
             icon("M4 4l8 8M12 4l-8 8"),
             () => run({ type: "deleteArchivedTab", entryId: entry.id }),
@@ -600,9 +601,9 @@ export async function mountApplication(api) {
       const minutes = Math.floor((Date.now() - entry.closedAt) / 60000);
       item.time.textContent =
         minutes < 1
-          ? t("только что")
+          ? t("archive.just_now")
           : minutes < 60
-            ? format("{count} мин назад", { count: minutes })
+            ? format("archive.minutes_ago", { count: minutes })
             : new Date(entry.closedAt).toLocaleDateString(getLanguage());
       rows.push(item.row);
       live.add(entry.id);
@@ -642,11 +643,11 @@ export async function mountApplication(api) {
         groupViews.set(group.id, view);
       }
       if (view.title.textContent !== group.title) {
-        view.title.textContent = group.id === "inbox" && group.title === "Основная" ? t(group.title) : group.title;
+        view.title.textContent = group.id === "inbox" && group.title === "Основная" ? t("groups.main") : group.title;
         view.marker.dataset.label = markerLetters(group.title);
         view.marker.dataset.label2 = markerLetters(group.title, 2);
-        view.header.setAttribute("aria-label", group.id === "inbox" && group.title === "Основная" ? t(group.title) : group.title);
-        view.colorInput.setAttribute("aria-label", `${t("Цвет группы")}: ${group.title}`);
+        view.header.setAttribute("aria-label", group.id === "inbox" && group.title === "Основная" ? t("groups.main") : group.title);
+        view.colorInput.setAttribute("aria-label", `${t("groups.group_color")}: ${group.title}`);
       }
       if (view.color !== group.color) {
         view.marker.style.background = group.color;

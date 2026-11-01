@@ -11,9 +11,9 @@ try {
   if (!data.url?.startsWith("file:")) throw new Error();
   input.value = data.url;
   if (data.title) { document.title = data.title; document.querySelector("h1").textContent = data.title; }
-} catch { document.querySelector('[role="status"]').textContent = t("Ссылка повреждена"); }
+} catch { document.querySelector('[role="status"]').textContent = t("local_file.the_link_is_invalid"); }
 document.querySelector("button").addEventListener("click", async () => {
   input.select();
-  try { await navigator.clipboard.writeText(input.value); document.querySelector('[role="status"]').textContent = t("Адрес скопирован"); }
-  catch { document.querySelector('[role="status"]').textContent = t("Адрес выделен — нажмите Ctrl+C"); }
+  try { await navigator.clipboard.writeText(input.value); document.querySelector('[role="status"]').textContent = t("local_file.address_copied"); }
+  catch { document.querySelector('[role="status"]').textContent = t("local_file.address_selected_press_ctrl_c"); }
 });

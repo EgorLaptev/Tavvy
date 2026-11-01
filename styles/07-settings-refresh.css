@@ -1,0 +1,228 @@
+/* Settings controls share a quiet, compact visual language. */
+.settings-group + .settings-group {
+  margin-top: 10px;
+}
+.settings-group h2 {
+  margin: 0;
+  padding: 7px 10px 3px;
+  color: #606060;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.light-theme .settings-group h2 {
+  color: #858585;
+}
+.settings-view,
+.theme-view,
+.backup-view {
+  --settings-control: #121212;
+  --settings-control-hover: #191919;
+  --settings-muted: #777;
+  --settings-track: #282828;
+  --settings-thumb: #a4a4a4;
+  --settings-accent: var(--accent-color, #398dff);
+}
+.light-theme .settings-view,
+.light-theme .theme-view,
+.light-theme .backup-view {
+  --settings-control: #ededed;
+  --settings-control-hover: #e4e4e4;
+  --settings-muted: #737373;
+  --settings-track: #d1d1d1;
+  --settings-thumb: #fff;
+  --settings-accent: var(--accent-color, #398dff);
+}
+.dark-theme .settings-view,
+.dark-theme .theme-view,
+.dark-theme .backup-view {
+  --settings-control: #222326;
+  --settings-control-hover: #2b2c30;
+  --settings-track: #37383c;
+}
+.settings-view .setting,
+.backup-view .setting,
+.theme-view .theme-option {
+  min-height: 36px;
+  border-radius: 9px;
+  transition: background-color 0.18s ease;
+}
+.settings-view .setting strong,
+.backup-view .setting strong {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.25;
+}
+.settings-view .setting select,
+.backup-view .setting select {
+  max-width: min(46%, 160px);
+  min-width: 0;
+  padding: 6px 25px 6px 9px;
+  border: 0;
+  border-radius: 7px;
+  appearance: none;
+  background: var(--settings-control) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='m3 4.5 3 3 3-3' fill='none' stroke='%23888' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 8px center / 12px;
+  color: inherit;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+.settings-view .setting select:hover,
+.backup-view .setting select:hover {
+  background-color: var(--settings-control-hover);
+}
+.settings-view .setting select:focus-visible,
+.backup-view .setting select:focus-visible,
+.theme-option input:focus-visible {
+  outline: 2px solid var(--settings-accent);
+  outline-offset: 2px;
+}
+.nested-visibility-setting {
+  padding-left: 20px !important;
+  color: var(--settings-muted);
+}
+.nested-visibility-setting strong {
+  font-weight: 400;
+}
+.switch-track {
+  background: var(--settings-track);
+}
+.switch-track::after {
+  background: var(--settings-thumb);
+}
+.switch input:checked + .switch-track {
+  background: var(--settings-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 22%, transparent);
+}
+.switch input:checked + .switch-track::after {
+  background: var(--accent-on, #fff);
+}
+.theme-view .theme-option input {
+  appearance: none;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--settings-track);
+  cursor: pointer;
+}
+.theme-view .theme-option input:checked {
+  background: var(--settings-accent);
+  box-shadow: inset 0 0 0 4px var(--settings-control);
+}
+.setting-range {
+  gap: 10px;
+}
+.setting-range strong {
+  flex: 1;
+}
+.setting-range output {
+  flex: none;
+  width: 39px;
+  color: var(--settings-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.settings-view .marker-options {
+  gap: 2px;
+}
+.settings-view .marker-option {
+  width: 25px;
+  height: 25px;
+}
+.settings-view .marker-option:has(input:checked) {
+  background: var(--settings-control-hover);
+}
+.settings-view .marker-preview {
+  background-color: var(--accent-color, #398dff);
+}
+.settings-view .marker-preview-letters,
+.settings-view .marker-preview-letters2,
+.settings-view .marker-preview-none {
+  background-color: transparent;
+}
+.settings-view .marker-preview-letters,
+.settings-view .marker-preview-letters2 {
+  color: var(--accent-color, #398dff);
+}
+.accent-options {
+  display: grid;
+  grid-template-columns: repeat(7, 24px);
+  gap: 3px;
+}
+.accent-options[hidden] {
+  display: none;
+}
+.accent-palette {
+  --settings-control-hover: #303030;
+  --settings-accent: var(--accent-color, #398dff);
+  position: fixed;
+  z-index: 50;
+  padding: 7px;
+  border: 1px solid #2b2b2b;
+  border-radius: 11px;
+  background: #181818;
+  box-shadow: 0 8px 24px #0008;
+}
+.light-theme .accent-palette {
+  --settings-control-hover: #e0e0e0;
+  background: #f5f5f5;
+  border-color: #ddd;
+}
+.accent-trigger {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+}
+.accent-trigger:hover,
+.accent-trigger[aria-expanded="true"] {
+  background: var(--settings-control-hover);
+}
+.accent-trigger:focus-visible {
+  outline: 2px solid var(--settings-accent);
+  outline-offset: 1px;
+}
+.accent-option {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.accent-option:hover,
+.accent-option:has(input:checked) {
+  background: var(--settings-control-hover);
+}
+.accent-option:has(input:focus-visible) {
+  outline: 2px solid var(--settings-accent);
+  outline-offset: 1px;
+}
+.accent-option input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.accent-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--swatch-color);
+  box-shadow: inset 0 0 0 1px #8888;
+  pointer-events: none;
+}
