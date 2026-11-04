@@ -1,9 +1,11 @@
 import { createToolbarIcon } from "./toolbar-icon.js";
 import { createWorkspaceService } from "./workspace-service.js";
 import { createBackupManager } from "./backup.js";
+import { mountTabContextMenu } from "./tab-context-menu.js";
 const toolbar = createToolbarIcon(browser);
 const service = createWorkspaceService(browser, undefined, toolbar);
 const backupManager = createBackupManager(browser, service, notify);
+mountTabContextMenu(browser, service, notify);
 browser.alarms.onAlarm.addListener((alarm) => backupManager.runAlarm(alarm).catch(console.error));
 browser.windows.onRemoved.addListener((windowId) => {
   toolbar.forget(windowId);

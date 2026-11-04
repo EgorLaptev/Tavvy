@@ -15,7 +15,6 @@
       "system": "跟随系统"
     },
     "appearance": "外观",
-    "accent_color": "强调色",
     "tabs_and_groups": "标签页和分组",
     "data": "数据",
     "window": {
@@ -117,7 +116,8 @@
       "white": "白色"
     },
     "choose_group_color": "选择分组颜色",
-    "main": "主分组"
+    "main": "主分组",
+    "move_tab_to_group": "将标签页移至分组"
   },
   "tabs": {
     "actions": {
@@ -144,7 +144,8 @@
     "sleepy_raccoon": "困困浣熊",
     "lilac_platypus": "淡紫色鸭嘴兽",
     "curious_capybara": "好奇的水豚",
-    "cosmic_wombat": "宇宙袋熊"
+    "cosmic_wombat": "宇宙袋熊",
+    "dancing_red_panda": "跳舞的小熊猫"
   },
   "errors": {
     "background_process_is_unavailable": "后台进程不可用",

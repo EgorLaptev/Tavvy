@@ -149,6 +149,44 @@ test("switching groups manages real tabs in only one window and preserves pinned
   await service.dispatch({ type: "activateGroup", groupId: "inbox" }, 1);
   assert.equal(f.records.find((t) => t.id === 1).hidden, false);
 });
+test("context menu moves an active tab without switching its current group", async () => {
+  const f = fixture();
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "Work" }, 1);
+  const work = snap.groups[1].id;
+  snap = await service.dispatch({ type: "moveTab", tabId: 1, groupId: work, keepActiveGroup: true }, 1);
+  assert.equal(snap.activeGroupId, "inbox");
+  assert.equal(snap.tabs.find((tab) => tab.id === 1).groupId, work);
+  assert.equal(f.records.find((tab) => tab.id === 1).hidden, true);
+  assert.equal(f.records.find((tab) => tab.id === 2).active, true);
+  assert.equal(f.records.find((tab) => tab.id === 4).active, true);
+});
+
+test("moving the last active group tab creates a replacement in the current group", async () => {
+  const f = fixture();
+  f.records.splice(1, 1);
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "Work" }, 1);
+  const work = snap.groups[1].id;
+  snap = await service.dispatch({ type: "moveTab", tabId: 1, groupId: work, keepActiveGroup: true }, 1);
+  assert.equal(snap.activeGroupId, "inbox");
+  assert.equal(f.records.find((tab) => tab.id === 1).hidden, true);
+  const replacement = snap.tabs.find((tab) => tab.active && tab.id !== 1);
+  assert.equal(replacement.groupId, "inbox");
+  assert.equal(replacement.url, "about:newtab");
+});
+
+test("context menu keeps an active tab visible when its destination is already visible", async () => {
+  const f = fixture();
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "Child", parentId: "inbox" }, 1);
+  const child = snap.groups[1].id;
+  snap = await service.dispatch({ type: "saveSettings", settings: { ...snap.settings, nestedTabsVisibility: "children" } }, 1);
+  snap = await service.dispatch({ type: "moveTab", tabId: 1, groupId: child, keepActiveGroup: true }, 1);
+  assert.equal(snap.activeGroupId, "inbox");
+  assert.equal(f.records.find((tab) => tab.id === 1).active, true);
+  assert.notEqual(f.records.find((tab) => tab.id === 1).hidden, true);
+});
 test("tab mute and unpin commands work for audible and group-pinned tabs", async () => {
   const f = fixture();
   f.records[1].audible = true;

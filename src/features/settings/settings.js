@@ -1,10 +1,11 @@
+import { LANGUAGES } from "../../domain/languages.js";
 import { createEventScope } from "../../ui/event-scope.js";
 import { normalizeSettings, THEMES, validBackupFolder } from "../../domain/settings.js";
-import { GROUP_COLOR_PRESETS, accentTextColor } from "../../domain/colors.js";
 import { versionLabel } from "../../domain/version-names.js";
 import { setLanguage, t, format, getLanguage, translateStatic, translateText } from "../../locales/index.js";
 export function mountSettings({
   themeView,
+  languageView,
   repository,
   onImportGroups,
   onOpenImport,
@@ -30,108 +31,20 @@ export function mountSettings({
   const backupFrequencyRow = document.querySelector(".backup-frequency");
   const backupFolder = document.querySelector(".backup-folder-input");
   const backupNotice = document.querySelector(".backup-notice");
-  const languageRow = document.createElement("label");
-  languageRow.className = "setting language-setting";
-  const languageTitle = document.createElement("strong");
-  languageTitle.textContent = "Язык";
-  languageTitle.dataset.i18n = "settings.language";
-  const languageSelect = document.createElement("select");
-  languageSelect.setAttribute("aria-label", "Язык");
-  languageSelect.setAttribute("data-i18n-aria-label", "settings.language");
-  for (const [value, label] of [["en", "English"], ["ru", "Русский"], ["zh-CN", "简体中文"]]) {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = label;
-    languageSelect.append(option);
-  }
-  languageRow.append(languageTitle, languageSelect);
   const appearanceGroup = document.querySelector(".settings-appearance");
-  appearanceGroup.querySelector("h2").after(languageRow);
-  const accentRow = document.createElement("div");
-  accentRow.className = "setting accent-setting";
-  const accentTitle = document.createElement("strong");
-  accentTitle.textContent = "Акцентный цвет";
-  accentTitle.dataset.i18n = "settings.accent_color";
-  const accentTrigger = document.createElement("button");
-  accentTrigger.type = "button";
-  accentTrigger.className = "accent-trigger";
-  accentTrigger.setAttribute("aria-expanded", "false");
-  accentTrigger.setAttribute("aria-controls", "accent-palette");
-  const activeAccent = document.createElement("span");
-  activeAccent.className = "accent-swatch";
-  activeAccent.setAttribute("aria-hidden", "true");
-  accentTrigger.append(activeAccent);
-  const accentOptions = document.createElement("div");
-  accentOptions.className = "accent-options accent-palette";
-  accentOptions.id = "accent-palette";
-  accentOptions.hidden = true;
-  accentOptions.setAttribute("role", "radiogroup");
-  accentOptions.setAttribute("aria-label", "Акцентный цвет");
-  accentOptions.setAttribute("data-i18n-aria-label", "settings.accent_color");
-  for (const [key, color] of GROUP_COLOR_PRESETS) {
+  const languageCurrent = document.querySelector(".language-current");
+  for (const [value, text] of LANGUAGES) {
     const label = document.createElement("label");
-    label.className = "accent-option";
-    label.setAttribute("data-i18n-title", key);
-    label.title = t(key);
+    label.className = "theme-option";
+    const name = document.createElement("span");
+    name.textContent = text;
     const input = document.createElement("input");
     input.type = "radio";
-    input.name = "accent-color";
-    input.value = color;
-    input.setAttribute("data-i18n-aria-label", key);
-    input.setAttribute("aria-label", t(key));
-    const swatch = document.createElement("span");
-    swatch.className = "accent-swatch";
-    swatch.style.setProperty("--swatch-color", color);
-    swatch.setAttribute("aria-hidden", "true");
-    label.append(input, swatch);
-    accentOptions.append(label);
+    input.name = "language";
+    input.value = value;
+    label.append(name, input);
+    languageView.append(label);
   }
-  accentRow.append(accentTitle, accentTrigger);
-  appearanceGroup.querySelector(".theme-open").after(accentRow);
-  const popup = document.querySelector(".popup");
-  popup.append(accentOptions);
-  function closeAccentPalette(restoreFocus = false) {
-    if (accentOptions.hidden) return;
-    accentOptions.hidden = true;
-    accentTrigger.setAttribute("aria-expanded", "false");
-    if (restoreFocus) accentTrigger.focus();
-  }
-  function positionAccentPalette() {
-    if (accentOptions.hidden) return;
-    const anchor = accentTrigger.getBoundingClientRect();
-    const bounds = popup.getBoundingClientRect();
-    const palette = accentOptions.getBoundingClientRect();
-    const left = Math.max(bounds.left + 4, Math.min(anchor.right - palette.width, bounds.right - palette.width - 4));
-    const below = anchor.bottom + 4;
-    const top = below + palette.height <= bounds.bottom - 4 ? below : anchor.top - palette.height - 4;
-    accentOptions.style.left = `${left}px`;
-    accentOptions.style.top = `${Math.max(bounds.top + 4, top)}px`;
-  }
-  listen(accentTrigger, "click", () => {
-    if (!accentOptions.hidden) { closeAccentPalette(); return; }
-    accentOptions.hidden = false;
-    accentTrigger.setAttribute("aria-expanded", "true");
-    positionAccentPalette();
-    accentOptions.querySelector("input:checked")?.focus();
-  });
-  listen(document, "pointerdown", (event) => {
-    if (!accentOptions.hidden && !accentOptions.contains(event.target) && !accentTrigger.contains(event.target)) closeAccentPalette();
-  });
-  listen(document, "focusin", (event) => {
-    if (!accentOptions.hidden && !accentOptions.contains(event.target) && !accentTrigger.contains(event.target)) closeAccentPalette();
-  });
-  listen(document, "keydown", (event) => {
-    if (event.key === "Escape" && !accentOptions.hidden) {
-      event.preventDefault();
-      closeAccentPalette(true);
-    }
-  });
-  listen(document.querySelector(".settings-view"), "scroll", positionAccentPalette, { passive: true });
-  listen(window, "resize", () => closeAccentPalette());
-  listen(accentOptions, "click", (event) => {
-    if (event.target.matches('input[name="accent-color"]') && event.target.checked)
-      queueMicrotask(() => closeAccentPalette(true));
-  });
   let savePending = Promise.resolve();
   listen(document.querySelector(".backup-open"), "click", async () => {
     if (!onBackupStatus) return;
@@ -202,13 +115,6 @@ export function mountSettings({
     const light =
       savedSettings.theme === "Светлая" ||
       (["Как в системе", "Стандартная"].includes(savedSettings.theme) && systemTheme.matches);
-    document.documentElement.style.setProperty("--accent-color", savedSettings.accentColor);
-    document.documentElement.style.setProperty("--accent-on", accentTextColor(savedSettings.accentColor));
-    activeAccent.style.setProperty("--swatch-color", savedSettings.accentColor);
-    const accentName = GROUP_COLOR_PRESETS.find(([, color]) => color === savedSettings.accentColor)?.[0];
-    accentTrigger.setAttribute("aria-label", `${t("settings.accent_color")}: ${t(accentName)}`);
-    accentTrigger.title = accentTrigger.getAttribute("aria-label");
-    accentOptions.querySelectorAll("input").forEach((input) => { input.checked = input.value === savedSettings.accentColor; });
     document.documentElement.classList.toggle("light-theme", light);
     document.documentElement.classList.toggle(
       "dark-theme",
@@ -220,12 +126,15 @@ export function mountSettings({
       !savedSettings.animations,
     );
     document.documentElement.dataset.markerStyle =
-      savedSettings.markerStyle || "blob";
+      savedSettings.markerStyle;
     markerSelect.querySelectorAll("input").forEach((input) => {
-      input.checked = input.value === (savedSettings.markerStyle || "blob");
+      input.checked = input.value === (savedSettings.markerStyle);
     });
     animationInput.checked = Boolean(savedSettings.animations);
-    languageSelect.value = savedSettings.language || "en";
+    languageCurrent.textContent = LANGUAGES.find(([code]) => code === savedSettings.language)?.[1] || "English";
+    languageView.querySelectorAll('input[name="language"]').forEach((input) => {
+      input.checked = input.value === savedSettings.language;
+    });
     groupPinnedInput.checked = Boolean(savedSettings.groupPinnedTabs);
     nestedInput.checked = savedSettings.nestedGroups !== false;
     nestedVisibility.value = savedSettings.nestedTabsVisibility;
@@ -274,8 +183,9 @@ export function mountSettings({
     savedSettings = normalizeSettings(savedSettings);
     savePending = Promise.resolve(repository.write(savedSettings));
   }
-  listen(languageSelect, "change", () => {
-    savedSettings.language = languageSelect.value;
+  listen(languageView, "change", (event) => {
+    if (!event.target.matches('input[name="language"]')) return;
+    savedSettings.language = event.target.value;
     setLanguage(savedSettings.language);
     translateStatic(document.querySelector(".popup"));
     applySettings();
@@ -335,12 +245,6 @@ export function mountSettings({
     savedSettings.markerStyle = event.target.value;
     applySettings();
     saveSettings();
-  });
-  listen(accentOptions, "change", (event) => {
-    savedSettings.accentColor = event.target.value;
-    applySettings();
-    saveSettings();
-    closeAccentPalette(true);
   });
   listen(discardInput, "change", () => {
     savedSettings.discardInactiveTabs = discardInput.checked;

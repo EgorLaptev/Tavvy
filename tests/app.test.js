@@ -5,7 +5,6 @@ import { JSDOM } from "jsdom";
 import { normalizeSettings } from "../src/domain/settings.js";
 import { createSettingsRepository } from "../src/platform/settings-repository.js";
 import { versionLabel } from "../src/domain/version-names.js";
-import { GROUP_COLOR_PRESETS, accentTextColor } from "../src/domain/colors.js";
 
 test("locale keys use snake_case and all translations preserve placeholders", async () => {
   const flatten = (object, prefix = "") => Object.fromEntries(Object.entries(object).flatMap(([key, value]) => {
@@ -14,7 +13,7 @@ test("locale keys use snake_case and all translations preserve placeholders", as
     return typeof value === "string" ? [[path, value]] : Object.entries(flatten(value, path));
   }));
   const en = flatten(JSON.parse(await readFile("src/locales/en.json", "utf8")));
-  for (const locale of ["ru", "zh-CN"]) {
+  for (const locale of ["ru", "zh-CN", "es", "fr", "de"]) {
     const translations = flatten(JSON.parse(await readFile(`src/locales/${locale}.json`, "utf8")));
     assert.deepEqual(Object.keys(translations).sort(), Object.keys(en).sort());
     for (const key of Object.keys(en)) {
@@ -32,12 +31,16 @@ test("locale keys use snake_case and all translations preserve placeholders", as
     }
     dom.window.close();
   }
-  assert.equal(normalizeSettings({ language: "zh-CN" }).language, "zh-CN");
+  for (const language of ["zh-CN", "es", "fr", "de"]) {
+    assert.equal(normalizeSettings({ language }).language, language);
+  }
+  assert.equal(normalizeSettings({ language: "pt-BR" }).language, "en");
 });
 
 test("settings validate untrusted imports and clamp sizes", () => {
-  assert.equal(accentTextColor("#ffffff"), "#161616");
-  assert.equal(accentTextColor("#000000"), "#ffffff");
+  assert.equal(normalizeSettings({}).markerStyle, "square");
+  assert.equal(normalizeSettings({ markerStyle: "invalid" }).markerStyle, "square");
+  assert.equal(normalizeSettings({ markerStyle: "blob" }).markerStyle, "blob");
   assert.deepEqual(
     normalizeSettings({
       theme: "invalid",
@@ -50,7 +53,7 @@ test("settings validate untrusted imports and clamp sizes", () => {
       theme: "Чёрная",
       accentColor: "#398dff",
       language: "en",
-      markerStyle: "blob",
+      markerStyle: "square",
       dynamicIcon: true,
       archiveEnabled: true,
       animations: true,
@@ -148,13 +151,15 @@ test("built app mounts and connects settings, groups, archive and navigation", a
   assert.equal(document.querySelectorAll(".recent-row").length, 1);
   document.querySelector(".archive-back").click();
   document.querySelector(".settings-button").click();
-  const language = document.querySelector(".language-setting select");
-  language.value = "ru";
-  language.dispatchEvent(new window.Event("change", { bubbles: true }));
+  assert.equal(document.querySelector(".language-current").textContent, "English");
+  document.querySelector(".language-open").click();
+  assert.equal(document.querySelector(".language-view").hidden, false);
+  assert.equal(document.querySelector(".settings-view").hidden, true);
+  const chooseLanguage = (code) => document.querySelector(`.language-view input[value="${code}"]`).click();
+  chooseLanguage("ru");
   assert.equal(document.querySelector(".theme-open strong").textContent, "Тема");
   assert.equal(document.querySelector(".create-group").textContent, "+ Новая группа");
-  language.value = "zh-CN";
-  language.dispatchEvent(new window.Event("change", { bubbles: true }));
+  chooseLanguage("zh-CN");
   await new Promise((resolve) => setTimeout(resolve, 30));
   assert.equal(document.documentElement.lang, "zh-CN");
   assert.equal(document.querySelector(".theme-open strong").textContent, "主题");
@@ -163,8 +168,12 @@ test("built app mounts and connects settings, groups, archive and navigation", a
   assert.equal(document.querySelector('.search input').getAttribute("placeholder"), "搜索");
   assert.equal(document.querySelector('.marker-option input[value="blob"]').getAttribute("aria-label"), "不规则形状");
   assert.equal(JSON.parse(window.localStorage.getItem("tavvy:settings:v1")).language, "zh-CN");
-  language.value = "en";
-  language.dispatchEvent(new window.Event("change", { bubbles: true }));
+  assert.equal(document.querySelector(".language-current").textContent, "简体中文");
+  chooseLanguage("en");
+  assert.equal(document.querySelector('.language-view input[value="en"]').checked, true);
+  document.querySelector(".settings-back").click();
+  assert.equal(document.querySelector(".language-view").hidden, true);
+  assert.equal(document.querySelector(".settings-view").hidden, false);
   assert.equal(document.querySelector(".theme-open strong").textContent, "Theme");
   assert.equal(document.querySelector(".create-group").textContent, "+ New group");
   const manifest = JSON.parse(await readFile("extension/manifest.json", "utf8"));
@@ -179,31 +188,7 @@ test("built app mounts and connects settings, groups, archive and navigation", a
   light.dispatchEvent(new window.Event("change"));
   assert.ok(document.documentElement.classList.contains("light-theme"));
   document.querySelector(".settings-back").click();
-  const accentTrigger = document.querySelector(".accent-trigger");
-  const accentPalette = document.querySelector("#accent-palette");
-  assert.equal(accentPalette.hidden, true);
-  assert.equal(accentTrigger.getAttribute("aria-expanded"), "false");
-  accentTrigger.click();
-  assert.equal(accentPalette.hidden, false);
-  assert.equal(accentTrigger.getAttribute("aria-expanded"), "true");
-  document.querySelector(".settings-view").dispatchEvent(new window.Event("scroll"));
-  assert.equal(accentPalette.hidden, false, "scrolling must not dismiss the accent palette");
-  const accents = [...document.querySelectorAll('input[name="accent-color"]')];
-  assert.deepEqual(accents.map((input) => input.value), GROUP_COLOR_PRESETS.map(([, color]) => color));
-  const accent = document.querySelector('input[name="accent-color"][value="#f15d63"]');
-  accent.click();
-  await new Promise((resolve) => setTimeout(resolve, 30));
-  assert.equal(accentPalette.hidden, true);
-  assert.equal(accentTrigger.getAttribute("aria-expanded"), "false");
-  assert.equal(JSON.parse(window.localStorage.getItem("tavvy:settings:v1")).accentColor, "#f15d63");
-  assert.equal(document.documentElement.style.getPropertyValue("--accent-color"), "#f15d63");
-  accentTrigger.click();
-  document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-  assert.equal(accentPalette.hidden, true);
-  assert.equal(document.activeElement, accentTrigger);
-  accentTrigger.click();
-  document.body.dispatchEvent(new window.Event("pointerdown", { bubbles: true }));
-  assert.equal(accentPalette.hidden, true);
+  assert.equal(document.querySelector(".accent-setting"), null);
   assert.ok(document.documentElement.classList.contains("light-theme"));
   const toggle = document.querySelector('input[aria-label="Animations"]');
   toggle.checked = false;

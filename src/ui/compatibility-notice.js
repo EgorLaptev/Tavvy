@@ -1,3 +1,4 @@
+import { LANGUAGES } from "../domain/languages.js";
 import { setLanguage, t } from "../locales/index.js";
 
 const KEY = "tavvy:tab-manager-notice:v1";
@@ -34,7 +35,7 @@ export async function showCompatibilityNotice(api, popup, windowId) {
   svg.setAttribute("aria-hidden", "true");
   svg.innerHTML = '<path d="M4 5h10M9 3v2m3 0c-.4 4-3.4 7-7 8m1-5c1.3 2.1 3.3 3.8 5.5 4.7M13 20l3.5-9 3.5 9m-5.8-3h4.6"/>';
   const select = document.createElement("select");
-  for (const [value, text] of [["en", "English"], ["ru", "Русский"], ["zh-CN", "简体中文"]]) {
+  for (const [value, text] of LANGUAGES) {
     const option = document.createElement("option");
     option.value = value;
     option.textContent = text;

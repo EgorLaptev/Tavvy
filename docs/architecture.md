@@ -67,13 +67,44 @@ mockup retains its original cascade; full consolidation remains separate work.
 Browser operations are separated from UI components, and the service accepts
 an API argument for testing without Firefox.
 
+## Firefox tab context menu
+
+`src/background/tab-context-menu.js` registers a Firefox tab context menu and
+builds its group submenu from a workspace snapshot when the menu is shown.
+Selecting a group dispatches the existing `moveTab` command for the clicked
+tab and its window, then notifies open popups. It keeps the current group active;
+when the moved tab was active and must be hidden, another tab is activated or
+a new one is created in the current group. The menu disables moves for
+pinned tabs while pinned tabs are shared across groups. A generation counter
+and serialized updates prevent a closed or replaced menu from being refreshed
+with an outdated snapshot.
+
+Each group marker is drawn locally on a 32 px canvas using the shared
+`domain/group-marker.js` renderer, then passed to Firefox as a PNG `data:` URL
+for the submenu icon. This supports arbitrary group colors, the selected marker
+shape, letter markers and transparent icons for the no-marker setting. The PNGs
+are held in menu data; no image files are written and no network request is
+made to generate them. Firefox supports these dynamic URLs, although the
+[Mozilla discussion](https://bugzilla.mozilla.org/show_bug.cgi?id=1864187)
+notes that this behavior has not been fully documented in the `menus` API.
+The extension is Firefox-specific; validate this behavior against supported
+Firefox versions when changing its minimum version or menu implementation.
+
+The current implementation recreates all submenu items and renders their icons
+on every opening. This keeps names, colors and settings current, but has not
+been benchmarked for large numbers of groups. If it becomes slow, cache icons
+by group ID, title, color and marker style, and update only changed items.
+`menus.removeAll()` is used at initialization, so any future Tavvy menu items
+must be coordinated with this module rather than registered independently.
+
 ## Localization
 
-`src/locales/en.json`, `ru.json` and `zh-CN.json` share nested English
+`src/locales/en.json`, `ru.json`, `zh-CN.json`, `es.json`, `fr.json` and
+`de.json` share nested English
 `snake_case` keys, grouped by area. UI code uses dot-separated paths such as
 `t("settings.nested_groups.title")` or `format(key, values)`; static markup uses
 `data-i18n` and `data-i18n-*` attributes. Keep keys and format placeholders
-consistent across all three files. `translateText` is a compatibility adapter
+consistent across all locale files. `translateText` is a compatibility adapter
 for existing persisted values and background errors that still use Russian
 source strings; unknown messages are passed through unchanged.
 

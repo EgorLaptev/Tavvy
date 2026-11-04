@@ -5,6 +5,16 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.7 — Dancing Red Panda — 2026-11-04
+
+- Add Spanish, French and German translations, and move language selection to a dedicated settings page.
+- Add a Firefox tab context menu for moving tabs to groups, with group markers and without switching the current group.
+- Improve group and tab dragging, nested group placement and animations.
+- Use rounded square group markers by default and hide the dynamic toolbar marker when group markers are disabled.
+- Remove the accent color setting and use the default blue interface color.
+- Update the extension icon.
+- Add GitHub Actions checks for pushes and pull requests.
+
 ## 0.2.6 — Cosmic Wombat — 2026-11-01
 
 - Allow renaming groups without changing their tabs or nesting.

@@ -1,10 +1,11 @@
+import { LANGUAGES } from "./languages.js";
 import { DEFAULT_ACCENT_COLOR, normalizeAccentColor } from "./colors.js";
 
 export const DEFAULT_SETTINGS = Object.freeze({
   theme: "Чёрная",
   accentColor: DEFAULT_ACCENT_COLOR,
   language: "en",
-  markerStyle: "blob",
+  markerStyle: "square",
   dynamicIcon: true,
   archiveEnabled: true,
   animations: true,
@@ -38,15 +39,16 @@ export function normalizeSettings(input) {
   const value = input && typeof input === "object" ? input : {};
   return {
     theme: THEMES.includes(value.theme) ? value.theme : DEFAULT_SETTINGS.theme,
+    // Preserve the retired setting in existing data and backups.
     accentColor: normalizeAccentColor(value.accentColor),
-    language: ["en", "ru", "zh-CN"].includes(value.language) ? value.language : "en",
+    language: LANGUAGES.some(([code]) => code === value.language) ? value.language : "en",
     dynamicIcon: typeof value.dynamicIcon === "boolean" ? value.dynamicIcon : true,
     archiveEnabled: typeof value.archiveEnabled === "boolean" ? value.archiveEnabled : true,
     markerStyle: ["blob", "circle", "square", "diamond", "none", "letters", "letters2"].includes(
       value.markerStyle,
     )
       ? value.markerStyle
-      : "blob",
+      : DEFAULT_SETTINGS.markerStyle,
     animations: typeof value.animations === "boolean" ? value.animations : true,
     groupPinnedTabs: value.groupPinnedTabs === true,
     nestedGroups: typeof value.nestedGroups === "boolean" ? value.nestedGroups : true,

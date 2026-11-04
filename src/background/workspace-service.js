@@ -608,7 +608,11 @@ export function createWorkspaceService(
         await api.sessions.setTabValue(tab.id, TAG, command.groupId);
         if (Number.isInteger(command.index))
           await api.tabs.move(tab.id, { index: command.index });
-        if (tab.active) await activate(windowId, command.groupId, tab.id);
+        if (tab.active && command.keepActiveGroup === true) {
+          const currentGroupId = await active(windowId);
+          if (visibleGroups(currentGroupId).has(command.groupId)) await visibility(windowId, currentGroupId);
+          else await activate(windowId, currentGroupId);
+        } else if (tab.active) await activate(windowId, command.groupId, tab.id);
         else await visibility(windowId, await active(windowId));
       }
     } else if (type === "restoreTab") {

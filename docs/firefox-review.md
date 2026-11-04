@@ -30,7 +30,7 @@ websites visited by the user. Icon requests serve the tab manager's display
 only and do not send the tab list to the developer. Please confirm this
 classification during review.
 
-Permissions: `tabs` reads and manages tabs; `tabHide` switches visible groups;
+Permissions: `menus` adds a tab context menu for moving tabs between groups; `tabs` reads and manages tabs; `tabHide` switches visible groups;
 `sessions` stores group associations across restarts; `storage` saves groups,
 settings and the archive; `alarms` schedules backups; `downloads` saves backup
 files. Private windows are excluded by the manifest.

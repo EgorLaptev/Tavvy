@@ -15,7 +15,6 @@
       "system": "Как в системе"
     },
     "appearance": "Оформление",
-    "accent_color": "Акцентный цвет",
     "tabs_and_groups": "Вкладки и группы",
     "data": "Данные",
     "window": {
@@ -117,7 +116,8 @@
       "white": "Белый"
     },
     "choose_group_color": "Выбрать цвет группы",
-    "main": "Основная"
+    "main": "Основная",
+    "move_tab_to_group": "Перенести вкладку в группу"
   },
   "tabs": {
     "actions": {
@@ -144,7 +144,8 @@
     "sleepy_raccoon": "Сонный енот",
     "lilac_platypus": "Сиреневый утконос",
     "curious_capybara": "Любопытная капибара",
-    "cosmic_wombat": "Космический вомбат"
+    "cosmic_wombat": "Космический вомбат",
+    "dancing_red_panda": "Танцующая малая панда"
   },
   "errors": {
     "background_process_is_unavailable": "Фоновый процесс недоступен",

@@ -1,6 +1,12 @@
 import en from "./en.json";
 import ru from "./ru.json";
 import zhCN from "./zh-CN.json";
+import es from "./es.json";
+import fr from "./fr.json";
+import de from "./de.json";
+import { LANGUAGES } from "../domain/languages.js";
+
+const locales = { en, ru, "zh-CN": zhCN, es, fr, de };
 
 let language = "en";
 // Persisted domain values and background errors still use Russian source text.
@@ -20,9 +26,9 @@ function lookup(locale, path) {
   }
   return typeof value === "string" ? value : undefined;
 }
-export function setLanguage(value) { language = ["en", "ru", "zh-CN"].includes(value) ? value : "en"; document.documentElement.lang = language; }
+export function setLanguage(value) { language = LANGUAGES.some(([code]) => code === value) ? value : "en"; document.documentElement.lang = language; }
 export function getLanguage() { return language; }
-export function t(key) { return lookup({ en, ru, "zh-CN": zhCN }[language], key) ?? lookup(en, key) ?? key; }
+export function t(key) { return lookup(locales[language], key) ?? lookup(en, key) ?? key; }
 export function translateText(text) { return t(sourceKeys.get(text) ?? text); }
 export function format(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? "")); }
 export function translateStatic(root) {

@@ -5,6 +5,12 @@ let draggedTab = null,
   tabDropHandled = false,
   groupDrag = null,
   suppressGroupClick = false;
+function groupAtPoint(x, y) {
+  const hit = document.elementFromPoint(x, y);
+  // A placeholder inside .subgroups belongs to its parent in the DOM, but
+  // is empty space, just like a placeholder in the top-level list.
+  return hit?.closest(".group-placeholder") ? null : hit?.closest(".group");
+}
 export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGroupDrag, canNestGroup } = {}) {
   document.querySelectorAll(".group").forEach((group) => {
     if (boundGroups.has(group)) return;
@@ -76,7 +82,7 @@ export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGr
       };
       header.setPointerCapture(event.pointerId);
     });
-    function movePointer(event) {
+    function movePointer(event, forceReorder = false) {
       if (!groupDrag || groupDrag.header !== header) return;
       const d = groupDrag;
       if (
@@ -124,37 +130,76 @@ export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGr
         trash.classList.remove("holding", "ready");
       }
       if (overTrash) {
+        clearTimeout(d.nestTimer);
+        d.nestTimer = null;
+        d.nestCandidate = null;
         document
           .querySelectorAll(".group-nest-target")
           .forEach((el) => el.classList.remove("group-nest-target"));
         d.nest = null;
         return;
       }
-      const target = document
-        .elementFromPoint(event.clientX, event.clientY)
-        ?.closest(".group");
-      document
-        .querySelectorAll(".group-nest-target")
-        .forEach((el) => el.classList.remove("group-nest-target"));
-      d.nest = null;
+      const target = groupAtPoint(event.clientX, event.clientY);
       if (
         !target ||
         target === d.group ||
         d.group.contains(target) ||
         target.classList.contains("group-drag-source")
-      )
+      ) {
+        clearTimeout(d.nestTimer);
+        d.nestTimer = null;
+        d.nestCandidate = null;
+        d.nest?.classList.remove("group-nest-target");
+        d.nest = null;
         return;
-      const rect = target.getBoundingClientRect();
+      }
       const headerRect = target
         .querySelector(":scope > .group-controls")
         .getBoundingClientRect();
       const nearEdge =
-        event.clientY < headerRect.top + 8 || event.clientY > rect.bottom - 8;
-      if (!nearEdge && (canNestGroup?.() ?? true)) {
-        d.nest = target;
+        event.clientY < headerRect.top + 8 || event.clientY > headerRect.bottom - 8;
+      // Hold over the middle of any header to nest; its vertical edges reorder.
+      const canNest = !nearEdge && (canNestGroup?.() ?? true);
+      if (d.nestCandidate !== target || !canNest) {
+        clearTimeout(d.nestTimer);
+        d.nestTimer = null;
+        d.nestCandidate = null;
+      }
+      if (d.nest && (d.nest !== target || !canNest)) {
+        d.nest.classList.remove("group-nest-target");
+        d.nest = null;
+      }
+      if (canNest && d.nest !== target && !d.nestTimer && !forceReorder) {
+        d.nestCandidate = target;
+        d.nestTimer = setTimeout(() => {
+          d.nestTimer = null;
+          const latest = d.latest;
+          if (groupDrag !== d || !latest ||
+              groupAtPoint(latest.clientX, latest.clientY) !== target) return;
+          d.nest = target;
+          target.classList.add("group-nest-target");
+        }, 225);
+      }
+      if (canNest && d.nest !== target && !forceReorder) {
+        // Keep the hovered group still while deciding between nesting and reordering.
+        return;
+      }
+      if (canNest && d.nest === target) {
         target.classList.add("group-nest-target");
       } else {
-        const after = event.clientY > rect.top + rect.height / 2;
+        const midpoint = headerRect.top + headerRect.height / 2;
+        const neighbors = [...target.parentElement.children].filter(
+          (el) => el !== d.group && (el === d.placeholder || el.classList.contains("group")),
+        );
+        const placeholderIndex = neighbors.indexOf(d.placeholder);
+        const targetIndex = neighbors.indexOf(target);
+        const hysteresis = Math.min(8, headerRect.height / 4);
+        const threshold = placeholderIndex >= 0 && placeholderIndex === targetIndex - 1
+          ? midpoint + hysteresis
+          : placeholderIndex >= 0 && placeholderIndex === targetIndex + 1
+            ? midpoint - hysteresis
+            : midpoint;
+        const after = event.clientY > threshold;
         const parent = target.parentElement,
           beforeNode = after ? target.nextSibling : target;
         if (
@@ -162,18 +207,29 @@ export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGr
           (d.placeholder.parentElement !== parent ||
             d.placeholder.nextSibling !== beforeNode)
         ) {
-          const siblings = [...document.querySelectorAll(".group")].filter(
-            (el) => el !== d.group && !d.group.contains(el),
-          );
-          const before = new Map(
-            siblings.map((el) => [el, el.getBoundingClientRect().top]),
-          );
+          // A nested list can change the positions of groups outside either
+          // immediate parent, so measure every visible group in the panel.
+          const before = new Map();
+          for (const el of document.querySelectorAll(".groups .group")) {
+            if (el === d.group || d.group.contains(el)) continue;
+            const rect = el.getBoundingClientRect();
+            if (rect.height) before.set(el, rect.top);
+          }
+          const siblings = [...before.keys()];
+          for (const el of siblings) {
+            el.getAnimations?.().filter((animation) => animation.id === "group-drag-shift")
+              .forEach((animation) => animation.cancel());
+          }
           target.parentElement.insertBefore(
             d.placeholder,
             after ? target.nextSibling : target,
           );
+          const shifts = new Map(siblings.map((el) => [el, before.get(el) - el.getBoundingClientRect().top]));
           siblings.forEach((el) => {
-            const delta = before.get(el) - el.getBoundingClientRect().top;
+            // A nested group already moves with its animated ancestor.
+            let ancestor = el.parentElement.closest(".group");
+            while (ancestor && !shifts.has(ancestor)) ancestor = ancestor.parentElement.closest(".group");
+            const delta = shifts.get(el) - (shifts.get(ancestor) || 0);
             if (delta)
               el.animate(
                 [
@@ -181,6 +237,7 @@ export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGr
                   { transform: "translateY(0)" },
                 ],
                 {
+                  id: "group-drag-shift",
                   duration: document.documentElement.classList.contains(
                     "animations-off",
                   )
@@ -209,12 +266,13 @@ export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGr
     });
     function finish(event, cancel = false) {
       if (!groupDrag || groupDrag.header !== header) return;
-      if (groupDrag.frame) {
-        cancelAnimationFrame(groupDrag.frame);
-        if (!cancel && groupDrag.latest) movePointer(groupDrag.latest);
+      if (groupDrag.frame) cancelAnimationFrame(groupDrag.frame);
+      if (!cancel && groupDrag.latest && (groupDrag.frame || groupDrag.nestTimer)) {
+        movePointer({ clientX: event.clientX, clientY: event.clientY }, true);
       }
       const d = groupDrag;
       groupDrag = null;
+      clearTimeout(d.nestTimer);
       if (!d.active) return;
       suppressGroupClick = true;
       setTimeout(() => {
@@ -255,12 +313,20 @@ export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGr
       const end = d.group
         .querySelector(":scope > .group-controls")
         .getBoundingClientRect();
+      // A child of a collapsed group has no layout box. Fade toward the
+      // visible destination instead of animating to the viewport origin.
+      const destination = end.width && end.height
+        ? end
+        : d.nest?.querySelector(":scope > .group-controls")?.getBoundingClientRect();
+      const endTransform = destination?.width && destination?.height
+        ? `translate3d(${destination.left}px, ${destination.top}px, 0) rotate(0deg)`
+        : d.ghost.style.transform;
       d.ghost
         .animate(
           [
             { transform: d.ghost.style.transform, opacity: 1 },
             {
-              transform: `translate3d(${end.left}px, ${end.top}px, 0) rotate(0deg)`,
+              transform: endTransform,
               opacity: 0,
             },
           ],
@@ -307,7 +373,33 @@ export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGr
       event.stopPropagation();
       const after =
         event.clientY > row.getBoundingClientRect().top + row.offsetHeight / 2;
-      row.parentElement.insertBefore(draggedTab, after ? row.nextSibling : row);
+      const parent = row.parentElement;
+      const beforeNode = after ? row.nextSibling : row;
+      if (beforeNode === draggedTab || (draggedTab.parentElement === parent && draggedTab.nextSibling === beforeNode)) return;
+      const previousParent = draggedTab.parentElement;
+      const rows = [...new Set([previousParent, parent])].flatMap((container) =>
+        [...container.querySelectorAll(":scope > .tab-row")].filter((item) => item !== draggedTab),
+      );
+      const before = new Map(rows.map((item) => [item, item.getBoundingClientRect().top]));
+      for (const item of rows) {
+        item.getAnimations?.().filter((animation) => animation.id === "tab-drag-shift")
+          .forEach((animation) => animation.cancel());
+      }
+      parent.insertBefore(draggedTab, beforeNode);
+      if (previousParent !== parent) {
+        for (const container of new Set([previousParent, parent])) {
+          const tabs = container.closest(".tabs");
+          if (tabs && !tabs.classList.contains("is-closed")) tabs.style.height = `${container.scrollHeight}px`;
+        }
+      }
+      if (document.documentElement.classList.contains("animations-off")) return;
+      for (const item of rows) {
+        const delta = before.get(item) - item.getBoundingClientRect().top;
+        if (delta && item.animate) item.animate(
+          [{ transform: `translateY(${delta}px)` }, { transform: "translateY(0)" }],
+          { id: "tab-drag-shift", duration: 180, easing: "ease-out" },
+        );
+      }
     });
   });
 }
@@ -315,6 +407,7 @@ export function mountDragDrop({ onMoveGroup, onDeleteGroup, onMoveTab, onStartGr
 export function disposeDragState() {
   if (groupDrag) {
     clearTimeout(groupDrag.trashTimer);
+    clearTimeout(groupDrag.nestTimer);
     cancelAnimationFrame(groupDrag.frame);
     groupDrag.ghost?.remove();
     groupDrag.placeholder?.remove();

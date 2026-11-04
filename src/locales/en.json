@@ -15,7 +15,6 @@
       "system": "System"
     },
     "appearance": "Appearance",
-    "accent_color": "Accent color",
     "tabs_and_groups": "Tabs and groups",
     "data": "Data",
     "window": {
@@ -117,7 +116,8 @@
       "white": "White"
     },
     "choose_group_color": "Choose group color",
-    "main": "Main"
+    "main": "Main",
+    "move_tab_to_group": "Move tab to group"
   },
   "tabs": {
     "actions": {
@@ -144,7 +144,8 @@
     "sleepy_raccoon": "Sleepy Raccoon",
     "lilac_platypus": "Lilac Platypus",
     "curious_capybara": "Curious Capybara",
-    "cosmic_wombat": "Cosmic Wombat"
+    "cosmic_wombat": "Cosmic Wombat",
+    "dancing_red_panda": "Dancing Red Panda"
   },
   "errors": {
     "background_process_is_unavailable": "Background process is unavailable",

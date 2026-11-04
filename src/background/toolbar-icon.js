@@ -1,10 +1,11 @@
 import { drawMarker } from "../domain/group-marker.js";
+import { DEFAULT_SETTINGS } from "../domain/settings.js";
 export function createToolbarIcon(
   api,
   createCanvas = () => document.createElement("canvas"),
 ) {
   const applied = new Map();
-  let markerStyle = "blob";
+  let markerStyle = DEFAULT_SETTINGS.markerStyle;
   let dynamic = true;
   return {
     async setDynamic(enabled) {

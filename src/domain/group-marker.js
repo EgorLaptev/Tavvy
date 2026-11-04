@@ -1,3 +1,5 @@
+import { DEFAULT_SETTINGS } from "./settings.js";
+
 const shapes = [
   [70, 30, 64, 36, 35, 68, 32, 65],
   [35, 65, 30, 70, 68, 38, 62, 32],
@@ -29,7 +31,8 @@ export function groupMarker(id) {
     borderRadius: `${radii.slice(0, 4).join("% ")}% / ${radii.slice(4).join("% ")}%`,
   };
 }
-export function drawMarker(ctx, id, color, size, style = "blob", title = "") {
+export function drawMarker(ctx, id, color, size, style = DEFAULT_SETTINGS.markerStyle, title = "") {
+  if (style === "none") return;
   if (style === "letters" || style === "letters2") {
     ctx.save();
     ctx.fillStyle = color;

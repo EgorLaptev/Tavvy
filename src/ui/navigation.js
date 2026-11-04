@@ -4,7 +4,8 @@ export function mountNavigation() {
   const { listen, dispose } = createEventScope();
   const settingsView = document.querySelector(".settings-view");
   const settingsBar = document.querySelector(".settings-bar");
-  const themeView = document.querySelector(".theme-view");
+  const themeView = document.querySelector(".theme-view:not(.language-view)");
+  const languageView = document.querySelector(".language-view");
   const backupView = document.querySelector(".backup-view");
   function showSettings(show) {
     animatePanelChange(() => {
@@ -31,13 +32,17 @@ export function mountNavigation() {
   listen(document.querySelector(".theme-open"), "click", () =>
     subpage(themeView, true),
   );
+  listen(document.querySelector(".language-open"), "click", () =>
+    subpage(languageView, true),
+  );
   listen(document.querySelector(".backup-open"), "click", () =>
     subpage(backupView, true),
   );
   listen(document.querySelector(".settings-back"), "click", () => {
     if (!themeView.hidden) subpage(themeView, false);
+    else if (!languageView.hidden) subpage(languageView, false);
     else if (!backupView.hidden) subpage(backupView, false);
     else showSettings(false);
   });
-  return { themeView, dispose };
+  return { themeView, languageView, dispose };
 }

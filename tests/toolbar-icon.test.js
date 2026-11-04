@@ -37,6 +37,31 @@ test("wide letters are scaled proportionally rather than squeezed", () => {
   assert.equal(calls[0].font, `600 ${75 * 95 / 120}px sans-serif`);
   assert.deepEqual(calls[0].args, ["WW", 50, 50]);
 });
+test("no marker uses a transparent toolbar icon and restores the chosen style", async () => {
+  const icons = [];
+  const api = { action: { setIcon: async (icon) => icons.push(icon), setTitle: async () => {} } };
+  let drawings = 0;
+  const ctx = {
+    save() {}, translate() {}, rotate() {}, beginPath() {}, moveTo() {}, lineTo() {},
+    bezierCurveTo() {}, closePath() {}, fill() { drawings++; }, stroke() {}, restore() {},
+    getImageData(x, y, width, height) { return { width, height, data: new Uint8ClampedArray(width * height * 4) }; },
+  };
+  const toolbar = createToolbarIcon(api, () => ({ getContext: () => ctx }));
+  const group = { id: "a", color: "#398dff", title: "Work" };
+  await toolbar.update(1, group);
+  assert.equal(drawings, 3);
+  await toolbar.setStyle("none");
+  assert.deepEqual(Object.keys(icons.at(-1).imageData), ["16", "32", "64"]);
+  for (const image of Object.values(icons.at(-1).imageData)) assert.ok(image.data.every((channel) => channel === 0));
+  drawMarker(ctx, "a", "#398dff", 16, "none");
+  assert.equal(drawings, 3);
+  await toolbar.update(1, { ...group, id: "b" });
+  assert.ok(icons.at(-1).imageData);
+  assert.equal(drawings, 3);
+  await toolbar.setStyle("square");
+  assert.ok(icons.at(-1).imageData);
+  assert.equal(drawings, 6);
+});
 test("toolbar updates are cached per window and titles follow group selection", async () => {
   const calls = [];
   const api = {

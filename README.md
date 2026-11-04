@@ -36,6 +36,9 @@ tree, so keep it consistent with the changes being committed. To install the
 hook manually, run `npm run hooks:install`. Existing custom Git hook paths are
 left untouched.
 
+GitHub Actions runs whitespace checks, tests and Firefox extension validation on
+pushes and pull requests. It does not publish or sign a release.
+
 The preview uses demo data and does not manage browser tabs.
 
 Automatic backups are enabled by default and saved under `Tavvy` in Firefox's

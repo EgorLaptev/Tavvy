@@ -56,6 +56,9 @@ await build({
  try {
  const loadedIcon = await new Promise((resolve) => { const img = new Image(); img.onload = () => resolve(true); img.onerror = () => resolve(false); img.src = 'http://127.0.0.1:${port}/test-favicon.png'; });
  check(loadedIcon,'remote favicon loads in extension page');
+ const iconCanvas=document.createElement('canvas');iconCanvas.width=iconCanvas.height=32;iconCanvas.getContext('2d').fillRect(0,0,16,16);
+ await new Promise((resolve,reject)=>browser.menus.create({id:'smoke-menu-icon',parentId:'tavvy-move-tab',title:'Smoke marker',contexts:['tab'],icons:{32:iconCanvas.toDataURL('image/png')}},()=>browser.runtime.lastError?reject(new Error(browser.runtime.lastError.message)):resolve()));
+ check(true,'Firefox accepts generated menu marker');await browser.menus.remove('smoke-menu-icon');
  const {id:windowId}=await browser.windows.getCurrent();
  async function command(command){ const result=await browser.runtime.sendMessage({channel:'tavvy-command',windowId,command});if(!result?.ok)throw new Error(result?.error || 'No background response');return result.snapshot; }
  let state=await command({type:'snapshot'});check(state.groups.some(g=>g.id==='inbox'),'background snapshot');
@@ -89,7 +92,7 @@ await build({
  state=await command({type:'snapshot'});state=await command({type:'saveSettings',settings:{...state.settings,nestedGroups:false}});check((await browser.tabs.get(childTab)).hidden,'disabled nesting isolates group tabs');check(state.groups.find(g=>g.id===visibilityChild).parentId===visibilityParent,'disabled nesting preserves hierarchy');
  state=await command({type:'saveSettings',settings:{...state.settings,nestedGroups:true,nestedTabsVisibility:'parents'}});await command({type:'deleteGroup',groupId:visibilityChild});await command({type:'deleteGroup',groupId:visibilityParent});
 
- const frame=document.createElement('iframe');frame.src=browser.runtime.getURL('popup.html');document.documentElement.append(frame);
+ const frame=document.createElement('iframe');frame.style.width='440px';frame.style.height='300px';frame.src=browser.runtime.getURL('popup.html');document.documentElement.append(frame);
  for(let attempt=0;attempt<100&&!frame.contentDocument?.querySelector('.compatibility-notice button');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
  const notice=frame.contentDocument.querySelector('.compatibility-notice');check(Boolean(notice),'first launch shows compatibility notice');
  check(!frame.contentDocument.querySelector('.group-header'),'groups are unavailable before acknowledgement');
@@ -108,17 +111,22 @@ await build({
  for(let attempt=0;attempt<100&&!reopened.contentDocument?.querySelector('.group-header');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
  check(Boolean(reopened.contentDocument.querySelector('.group-header'))&&!reopened.contentDocument.querySelector('.compatibility-notice'),'notice is not shown after reopening');reopened.remove();
  check(!ui.body.textContent.includes('Глубокое обучение'),'popup uses live data, not fixtures');
- const retainedGroup=ui.querySelector('.group'); const retainedMarker=retainedGroup.querySelector('.marker');
+ let retainedGroup=ui.querySelector('.group'); let retainedMarker=retainedGroup.querySelector('.marker');
  const fixedHeight=ui.querySelector('.popup').getBoundingClientRect().height;ui.querySelector('.settings-button').click();ui.querySelector('.theme-open').click();check(Math.abs(ui.querySelector('.popup').getBoundingClientRect().height-fixedHeight)<1,'popup height stays fixed across settings screens');
  const light=ui.querySelector('input[value="Светлая"]');light.checked=true;light.dispatchEvent(new Event('change'));
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.settings.theme==='Светлая')break;await new Promise(resolve=>setTimeout(resolve,50));}
  check(state.settings.theme==='Светлая','popup settings reach background');
  ui.querySelector('.settings-back').click();
- const accentTrigger=ui.querySelector('.accent-trigger');accentTrigger.click();check(!ui.querySelector('#accent-palette').hidden,'accent palette opens on click');
- const accent=ui.querySelector('input[name="accent-color"][value="#f15d63"]');accent.click();check(ui.querySelector('#accent-palette').hidden,'accent palette closes after selection');
- for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.settings.accentColor==='#f15d63')break;await new Promise(resolve=>setTimeout(resolve,50));}
- check(state.settings.accentColor==='#f15d63','accent color persists to Firefox storage');
- check(ui.documentElement.style.getPropertyValue('--accent-color')==='#f15d63','accent color is applied in Firefox');
+ ui.querySelector('.language-open').click();check(!ui.querySelector('.language-view').hidden&&ui.querySelector('.settings-view').hidden,'language settings page opens');
+ check(Math.abs(ui.querySelector('.popup').getBoundingClientRect().height-fixedHeight)<1,'language page keeps popup height');
+ ui.querySelector('.language-view input[value="fr"]').click();
+ for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.settings.language==='fr')break;await new Promise(resolve=>setTimeout(resolve,50));}
+ check(state.settings.language==='fr'&&ui.documentElement.lang==='fr','language page persists selected language');
+ ui.querySelector('.language-view input[value="ru"]').click();
+ for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.settings.language==='ru')break;await new Promise(resolve=>setTimeout(resolve,50));}
+ ui.querySelector('.settings-back').click();check(ui.querySelector('.language-view').hidden&&!ui.querySelector('.settings-view').hidden,'back returns from language page');
+ check(!ui.querySelector('.accent-setting'),'accent color control is removed');
+ retainedGroup=ui.querySelector('.group');retainedMarker=retainedGroup.querySelector('.marker');
  ui.querySelector('.settings-back').click();
  ui.querySelector('.create-group').click();ui.querySelector('.new-group-form input').value='UI group';ui.querySelector('.new-group-form').dispatchEvent(new Event('submit',{cancelable:true}));
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.groups.some(g=>g.title==='UI group'))break;await new Promise(resolve=>setTimeout(resolve,50));}
