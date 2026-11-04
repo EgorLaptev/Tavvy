@@ -1,15 +1,16 @@
 export const VERSION_NAMES = Object.freeze({
-  "0.2.0": "Вкладочный воробей",
-  "0.2.1": "Сонный вкладкозавр",
-  "0.2.2": "Пижамный тапир",
-  "0.2.3": "Сонный енот",
-  "0.2.4": "Сиреневый утконос",
-  "0.2.5": "Любопытная капибара",
-  "0.2.6": "Космический вомбат",
-  "0.2.7": "Танцующая малая панда",
+  "0.2.0": "Tabby Sparrow",
+  "0.2.1": "Sleepy Tabosaurus",
+  "0.2.2": "Pajama Tapir",
+  "0.2.3": "Sleepy Raccoon",
+  "0.2.4": "Lilac Platypus",
+  "0.2.5": "Curious Capybara",
+  "0.2.6": "Cosmic Wombat",
+  "0.2.7": "Dancing Red Panda",
+  "0.2.8": "Wandering Otter",
 });
 
-export function versionLabel(version, translate = (text) => text) {
+export function versionLabel(version) {
   const name = VERSION_NAMES[version];
-  return name ? `${version} · ${translate(name)}` : version;
+  return name ? `${version} · ${name}` : version;
 }

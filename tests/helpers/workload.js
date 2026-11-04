@@ -1,4 +1,4 @@
-import { createMemoryBrowser } from "../../src/platform/memory-browser.js";
+import { createMemoryBrowser } from "../../src/mocks/memory-browser.js";
 import { createWorkspaceService } from "../../src/background/workspace-service.js";
 export function workload(count, windowCount = 1, groupCount = 2) {
   const groups = Array.from({ length: groupCount }, (_, i) => ({

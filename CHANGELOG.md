@@ -5,6 +5,23 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.8 — Wandering Otter — 2026-11-05
+
+- Refresh the local interface preview with English demo groups, nested groups, tabs and mock Firefox containers.
+
+- Translate the Default space name in the selected language.
+
+- Show release names in English regardless of the selected language.
+
+- Hide the space switcher when experimental spaces are disabled and return to Default without deleting space data.
+
+- Reconnect spaces with missing containers to an existing Firefox container without losing their groups.
+
+- Show existing Firefox containers as experimental spaces without creating containers. Preserve existing Tavvy groups and allow choosing Firefox icons.
+- Restore space backups into uniquely matching, unassigned Firefox containers.
+- Place the compact space switcher in the upper-right corner and fix menu overflow.
+- Keep settings on one line and truncate long descriptions.
+
 ## 0.2.7 — Dancing Red Panda — 2026-11-04
 
 - Add Spanish, French and German translations, and move language selection to a dedicated settings page.

@@ -145,7 +145,8 @@
     "lilac_platypus": "Lilac Platypus",
     "curious_capybara": "Curious Capybara",
     "cosmic_wombat": "Cosmic Wombat",
-    "dancing_red_panda": "Dancing Red Panda"
+    "dancing_red_panda": "Dancing Red Panda",
+    "wandering_otter": "Wandering Otter"
   },
   "errors": {
     "background_process_is_unavailable": "Background process is unavailable",
@@ -209,5 +210,35 @@
     "the_link_is_invalid": "The link is invalid",
     "address_copied": "Address copied",
     "address_selected_press_ctrl_c": "Address selected — press Ctrl+C"
+  },
+  "spaces": {
+    "experimental": "Experimental spaces",
+    "title": "Spaces",
+    "default": "Default",
+    "new": "New space",
+    "name": "Space name",
+    "create": "Create",
+    "cancel": "Cancel",
+    "permission": "Allow container access to use spaces.",
+    "help": "Separate website accounts",
+    "move_unsupported": "Tabs cannot be moved between spaces.",
+    "import_main": "Simple Tab Groups can only be imported into the main space.",
+    "container_required": "Container access is required for this space.",
+    "not_found": "Space not found",
+    "last_group": "A space must have at least one group.",
+    "enter_name": "Enter a space name",
+    "move_group_unsupported": "Groups cannot move between spaces",
+    "restore_permission": "Allow container access to restore spaces",
+    "container_unavailable": "The space container is unavailable",
+    "backup_invalid": "The backup contains invalid space data",
+    "restored_sign_in": "Restored spaces use new Firefox containers. Sign in to your accounts again.",
+    "too_many": "Too many spaces",
+    "delete": "Delete space",
+    "delete_confirm": "Delete “{name}”? Its groups and tabs will move to Default. The Firefox container and its data will be kept.",
+    "choose_icon": "Choose space icon",
+    "recover_confirm": "Firefox can no longer find this space’s container. Create a new container to open the space? Groups and tabs will be kept, but you will need to sign in again.",
+    "restore_container_match": "Restoring this space requires exactly one unassigned Firefox container with the same name",
+    "choose_existing_container": "Choose an existing Firefox container",
+    "no_available_containers": "No unassigned Firefox containers available"
   }
 }

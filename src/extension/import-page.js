@@ -51,7 +51,7 @@ async function importFile() {
     const data = JSON.parse((await file.text()).replace(/^\uFEFF/, ""));
     if (data.format === "tavvy-backup") {
       await command({ type: "importBackup", backup: data });
-      status.textContent = t("import_page.backup_restored");
+      status.textContent = t("import_page.backup_restored") + (data.version === 2 ? " " + t("spaces.restored_sign_in") : "");
     } else if (Array.isArray(data.groups)) {
       const plan = parseStgBackup(data);
       status.textContent = format("import_page.import_in_progress", {groups: plan.groups.length, tabs: plan.tabCount});

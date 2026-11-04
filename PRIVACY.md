@@ -15,6 +15,20 @@ You can disable automatic backups, change the interval or folder, and create a
 backup manually in Settings → Backups. The backup folder can be synchronized
 by other software on your computer; Tavvy does not control that software.
 
+Experimental spaces show existing Firefox containers and use the selected
+container for new tabs. Enabling spaces requests the optional `cookies`
+permission. Tavvy does not read or modify website cookie values through the
+cookies API. Container names and icons are read from Firefox; space associations,
+group membership and container IDs are stored locally. Changing an icon also
+updates the corresponding Firefox container. When a container is unavailable,
+you can select an unassigned existing Firefox container for that space; Tavvy
+keeps its group associations and does not move existing tabs.
+
+Backups that include spaces contain their names, selected icons, groups and tab
+URLs, but not Firefox container IDs, cookies or signed-in sessions. Restoring
+matches each saved space to one unassigned existing Firefox container with the
+same name; Tavvy does not create containers.
+
 To display favicons, Tavvy uses image URLs supplied by Firefox or an imported
 backup. Firefox may request these images from their hosting websites when they
 are not cached. The hosting server can see the requested image URL and the

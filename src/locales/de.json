@@ -145,7 +145,8 @@
     "lilac_platypus": "Lila Schnabeltier",
     "curious_capybara": "Neugieriges Capybara",
     "cosmic_wombat": "Kosmischer Wombat",
-    "dancing_red_panda": "Tanzender Roter Panda"
+    "dancing_red_panda": "Tanzender Roter Panda",
+    "wandering_otter": "Wandernder Otter"
   },
   "errors": {
     "background_process_is_unavailable": "Der Hintergrundprozess ist nicht verfügbar",
@@ -209,5 +210,35 @@
     "the_link_is_invalid": "Der Link ist ungültig",
     "address_copied": "Adresse kopiert",
     "address_selected_press_ctrl_c": "Adresse ausgewählt – drücken Sie Strg+C"
+  },
+  "spaces": {
+    "experimental": "Experimentelle Bereiche",
+    "title": "Bereiche",
+    "default": "Standard",
+    "new": "Neuer Bereich",
+    "name": "Name des Bereichs",
+    "create": "Erstellen",
+    "cancel": "Abbrechen",
+    "permission": "Erlaube den Containerzugriff, um Bereiche zu verwenden.",
+    "help": "Getrennte Website-Konten",
+    "move_unsupported": "Tabs können nicht zwischen Bereichen verschoben werden.",
+    "import_main": "Simple Tab Groups kann nur in den Hauptbereich importiert werden.",
+    "container_required": "Für diesen Bereich ist Zugriff auf Firefox-Container erforderlich.",
+    "not_found": "Bereich nicht gefunden",
+    "last_group": "Ein Bereich muss mindestens eine Gruppe enthalten.",
+    "enter_name": "Gib einen Namen für den Bereich ein",
+    "move_group_unsupported": "Gruppen können nicht zwischen Bereichen verschoben werden",
+    "restore_permission": "Erlaube den Containerzugriff, um Bereiche wiederherzustellen",
+    "container_unavailable": "Der Container des Bereichs ist nicht verfügbar",
+    "backup_invalid": "Die Sicherung enthält ungültige Bereichsdaten",
+    "restored_sign_in": "Wiederhergestellte Bereiche verwenden neue Firefox-Container. Melde dich erneut an.",
+    "too_many": "Zu viele Bereiche",
+    "delete": "Bereich löschen",
+    "delete_confirm": "„{name}“ löschen? Gruppen und Tabs werden nach Standard verschoben. Der Firefox-Container und seine Daten bleiben erhalten.",
+    "choose_icon": "Bereichssymbol auswählen",
+    "recover_confirm": "Firefox findet den Container dieses Bereichs nicht mehr. Einen neuen Container erstellen, um den Bereich zu öffnen? Gruppen und Tabs bleiben erhalten, aber Sie müssen sich erneut anmelden.",
+    "restore_container_match": "Zum Wiederherstellen ist genau ein nicht zugewiesener Firefox-Container mit demselben Namen erforderlich",
+    "choose_existing_container": "Vorhandenen Firefox-Container auswählen",
+    "no_available_containers": "Keine freien Firefox-Container verfügbar"
   }
 }

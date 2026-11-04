@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   language: "en",
   markerStyle: "square",
   dynamicIcon: true,
+  experimentalSpaces: false,
   archiveEnabled: true,
   animations: true,
   discardInactiveTabs: false,
@@ -43,6 +44,7 @@ export function normalizeSettings(input) {
     accentColor: normalizeAccentColor(value.accentColor),
     language: LANGUAGES.some(([code]) => code === value.language) ? value.language : "en",
     dynamicIcon: typeof value.dynamicIcon === "boolean" ? value.dynamicIcon : true,
+    experimentalSpaces: value.experimentalSpaces === true,
     archiveEnabled: typeof value.archiveEnabled === "boolean" ? value.archiveEnabled : true,
     markerStyle: ["blob", "circle", "square", "diamond", "none", "letters", "letters2"].includes(
       value.markerStyle,

@@ -145,7 +145,8 @@
     "lilac_platypus": "Ornithorynque lilas",
     "curious_capybara": "Capybara curieux",
     "cosmic_wombat": "Wombat cosmique",
-    "dancing_red_panda": "Panda roux dansant"
+    "dancing_red_panda": "Panda roux dansant",
+    "wandering_otter": "Loutre vagabonde"
   },
   "errors": {
     "background_process_is_unavailable": "Le processus en arrière-plan n'est pas disponible",
@@ -209,5 +210,35 @@
     "the_link_is_invalid": "Le lien n'est pas valide",
     "address_copied": "Adresse copiée",
     "address_selected_press_ctrl_c": "Adresse sélectionnée — appuyez sur Ctrl+C"
+  },
+  "spaces": {
+    "experimental": "Espaces expérimentaux",
+    "title": "Espaces",
+    "default": "Par défaut",
+    "new": "Nouvel espace",
+    "name": "Nom de l’espace",
+    "create": "Créer",
+    "cancel": "Annuler",
+    "permission": "Autorisez l’accès aux conteneurs pour utiliser les espaces.",
+    "help": "Comptes de sites séparés",
+    "move_unsupported": "Les onglets ne peuvent pas être déplacés entre espaces.",
+    "import_main": "Simple Tab Groups ne peut être importé que dans l’espace principal.",
+    "container_required": "Cet espace nécessite l’accès aux conteneurs Firefox.",
+    "not_found": "Espace introuvable",
+    "last_group": "Un espace doit contenir au moins un groupe.",
+    "enter_name": "Saisissez un nom d’espace",
+    "move_group_unsupported": "Les groupes ne peuvent pas être déplacés entre espaces",
+    "restore_permission": "Autorisez l’accès aux conteneurs pour restaurer les espaces",
+    "container_unavailable": "Le conteneur de l’espace est indisponible",
+    "backup_invalid": "La sauvegarde contient des données d’espace invalides",
+    "restored_sign_in": "Les espaces restaurés utilisent de nouveaux conteneurs Firefox. Reconnectez-vous.",
+    "too_many": "Trop d’espaces",
+    "delete": "Supprimer l’espace",
+    "delete_confirm": "Supprimer « {name} » ? Ses groupes et onglets seront déplacés vers Par défaut. Le conteneur Firefox et ses données seront conservés.",
+    "choose_icon": "Choisir l’icône de l’espace",
+    "recover_confirm": "Firefox ne trouve plus le conteneur de cet espace. Créer un nouveau conteneur pour ouvrir l’espace ? Les groupes et onglets seront conservés, mais vous devrez vous reconnecter.",
+    "restore_container_match": "La restauration nécessite un seul conteneur Firefox non attribué portant le même nom",
+    "choose_existing_container": "Choisissez un conteneur Firefox existant",
+    "no_available_containers": "Aucun conteneur Firefox disponible"
   }
 }

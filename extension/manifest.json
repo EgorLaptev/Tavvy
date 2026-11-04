@@ -1,22 +1,24 @@
 {
   "manifest_version": 3,
   "name": "Tavvy — Tabs Group",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Tab groups and workspaces for Firefox",
   "incognito": "not_allowed",
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; img-src 'self' data: https: http:; connect-src 'none'; upgrade-insecure-requests"
+    "extension_pages": "script-src 'self'; object-src 'self'; img-src 'self' data: resource: https: http:; connect-src 'none'; upgrade-insecure-requests"
   },
   "icons": { "32": "icon.svg", "48": "icon.svg", "96": "icon.svg" },
   "permissions": [
     "tabs",
     "menus",
+    "contextualIdentities",
     "tabHide",
     "storage",
     "sessions",
     "alarms",
     "downloads"
   ],
+  "optional_permissions": ["cookies"],
   "background": {
     "scripts": [
       "background.js"

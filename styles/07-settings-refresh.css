@@ -53,6 +53,41 @@
   font-size: 12px;
   line-height: 1.25;
 }
+/* Keep each setting compact even when its description is revealed. */
+.settings-view label.setting > span:not(.switch),
+.backup-view label.setting > span:not(.switch) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.settings-view .setting strong,
+.backup-view .setting strong,
+.theme-view .theme-option > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.settings-view .setting small,
+.backup-view .setting small {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  max-height: 1.25em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  transform: none;
+  transition: opacity 0.2s ease;
+}
+.settings-view .setting:hover small,
+.settings-view .setting:focus-within small,
+.backup-view .setting:hover small,
+.backup-view .setting:focus-within small {
+  max-height: 1.25em;
+  margin: 0;
+  transform: none;
+}
 .settings-view .setting select,
 .backup-view .setting select {
   max-width: min(46%, 160px);
@@ -147,4 +182,112 @@
 .settings-view .marker-preview-letters,
 .settings-view .marker-preview-letters2 {
   color: #398dff;
+}
+
+.spaces-bar {
+  position: relative;
+  z-index: 20;
+  align-self: flex-end;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 100%;
+  padding: 0 8px 5px;
+}
+.spaces-bar[hidden], .spaces-form[hidden], .spaces-menu[hidden],
+.spaces-trigger[hidden], .spaces-icon[hidden], .spaces-menu button[hidden],
+.spaces-bar:has(~ .groups[hidden]) { display: none; }
+.spaces-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(190px, 100%);
+  min-height: 28px;
+  padding: 3px 0 3px 4px;
+  border: 0;
+  background: transparent;
+  color: #999;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.16s ease;
+}
+.spaces-trigger:hover, .spaces-trigger[aria-expanded="true"] { color: #eee; }
+.spaces-trigger:focus-visible, .spaces-menu button:focus-visible {
+  outline: 2px solid #398dff;
+  outline-offset: 2px;
+}
+.spaces-current, .spaces-option-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spaces-trigger svg { flex: none; width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.14s ease; }
+.spaces-trigger[aria-expanded="true"] svg { transform: rotate(180deg); }
+.spaces-icon { display: inline-block; flex: none; width: 15px; height: 15px; background: currentColor; mask-size: contain; mask-position: center; mask-repeat: no-repeat; }
+.spaces-icon-container { color: #5797f4; mask-image: url("resource://usercontext-content/fingerprint.svg"); }
+.spaces-menu {
+  position: absolute;
+  top: calc(100% - 2px);
+  right: 8px;
+  width: 210px;
+  max-width: min(280px, calc(100vw - 24px));
+  max-height: min(220px, calc(100vh - 48px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 5px;
+  border: 1px solid #303030;
+  border-radius: 10px;
+  background: #181818;
+  box-shadow: 0 8px 24px #0008;
+  opacity: 0;
+  transform: translateY(-4px);
+  transform-origin: top right;
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+.spaces-menu.is-open { opacity: 1; transform: translateY(0); }
+.spaces-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #aaa;
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.spaces-option-row:hover, .spaces-option-row:has([aria-checked="true"]) { background: #ffffff12; }
+.spaces-menu button:hover, .spaces-menu button[aria-checked="true"] { color: #eee; }
+.spaces-option-row { border-radius: 7px; }
+.spaces-option-row { display: flex; align-items: center; min-width: 0; overflow: hidden; }
+.spaces-menu .spaces-option { flex: 1; min-width: 0; }
+.spaces-unavailable { margin-left: auto; color: #ef716b; font-weight: 700; }
+.spaces-rebind-title, .spaces-rebind-empty { padding: 6px 8px; color: #999; font-size: 11px; }
+.spaces-menu .spaces-rebind-option:hover, .spaces-menu .spaces-rebind-back:hover { background: #ffffff12; }
+.light-theme .spaces-menu .spaces-rebind-option:hover, .light-theme .spaces-menu .spaces-rebind-back:hover { background: #00000010; }
+.spaces-menu .spaces-icon-button { display: grid; place-items: center; flex: none; width: 30px; height: 30px; padding: 0; }
+html .space-icon-palette .group-color-swatch::before { content: none; }
+.spaces-menu .spaces-delete { display: grid; place-items: center; flex: none; min-width: 0; min-height: 0; overflow: hidden; border-radius: 5px; background: transparent; color: #666; }
+.spaces-menu .spaces-delete:hover { background: transparent; color: #ef5350; }
+.spaces-menu .spaces-delete svg { flex: none; width: 12px; height: 12px; }
+.spaces-menu .spaces-add { margin-top: 3px; border: 0; box-shadow: none; outline: none; }
+.spaces-add > span:first-child { width: 15px; text-align: center; font-size: 17px; line-height: 1; }
+.spaces-form { display: flex; align-items: center; gap: 3px; min-width: 0; margin-top: 3px; }
+.spaces-name { min-width: 0; border: 0; border-radius: 7px; padding: 6px 8px; background: #191919; color: inherit; font: inherit; font-size: 11px; }
+.spaces-name { flex: 1; outline: none; }
+.spaces-permission-notice { color: #ef716b; font-size: 11px; margin: 4px 14px; }
+.light-theme .spaces-trigger { color: #707070; }
+.light-theme .spaces-trigger:hover, .light-theme .spaces-trigger[aria-expanded="true"] { color: #222; }
+.light-theme .spaces-menu { background: #f5f5f5; border-color: #ddd; box-shadow: 0 8px 24px #0003; }
+.light-theme .spaces-menu button { color: #555; }
+.light-theme .spaces-option-row:hover, .light-theme .spaces-option-row:has([aria-checked="true"]) { background: #00000010; }
+.light-theme .spaces-menu button:hover, .light-theme .spaces-menu button[aria-checked="true"] { color: #222; }
+.light-theme .spaces-menu .spaces-delete:hover { background: transparent; color: #ef5350; }
+
+.light-theme .spaces-name { background: #ededed; color: #222; }
+@media (prefers-reduced-motion: reduce) {
+  .spaces-trigger, .spaces-trigger svg, .spaces-menu { transition: none; }
 }

@@ -145,7 +145,8 @@
     "lilac_platypus": "ornitorrinco lila",
     "curious_capybara": "Carpincho curioso",
     "cosmic_wombat": "Wombat cósmico",
-    "dancing_red_panda": "Panda rojo bailarín"
+    "dancing_red_panda": "Panda rojo bailarín",
+    "wandering_otter": "Nutria viajera"
   },
   "errors": {
     "background_process_is_unavailable": "El proceso en segundo plano no está disponible",
@@ -209,5 +210,35 @@
     "the_link_is_invalid": "El enlace no es válido.",
     "address_copied": "Dirección copiada",
     "address_selected_press_ctrl_c": "Dirección seleccionada: presione Ctrl+C"
+  },
+  "spaces": {
+    "experimental": "Espacios experimentales",
+    "title": "Espacios",
+    "default": "Predeterminado",
+    "new": "Nuevo espacio",
+    "name": "Nombre del espacio",
+    "create": "Crear",
+    "cancel": "Cancelar",
+    "permission": "Permite el acceso a contenedores para usar espacios.",
+    "help": "Cuentas web separadas",
+    "move_unsupported": "No se pueden mover pestañas entre espacios.",
+    "import_main": "Simple Tab Groups solo se puede importar al espacio principal.",
+    "container_required": "Este espacio necesita acceso a los contenedores de Firefox.",
+    "not_found": "Espacio no encontrado",
+    "last_group": "Un espacio debe tener al menos un grupo.",
+    "enter_name": "Introduce un nombre para el espacio",
+    "move_group_unsupported": "No se pueden mover grupos entre espacios",
+    "restore_permission": "Permite el acceso a contenedores para restaurar espacios",
+    "container_unavailable": "El contenedor del espacio no está disponible",
+    "backup_invalid": "La copia contiene datos de espacios no válidos",
+    "restored_sign_in": "Los espacios restaurados usan contenedores nuevos. Vuelve a iniciar sesión.",
+    "too_many": "Demasiados espacios",
+    "delete": "Eliminar espacio",
+    "delete_confirm": "¿Eliminar «{name}»? Sus grupos y pestañas pasarán a Predeterminado. Se conservarán el contenedor de Firefox y sus datos.",
+    "choose_icon": "Elegir icono del espacio",
+    "recover_confirm": "Firefox ya no encuentra el contenedor de este espacio. ¿Crear uno nuevo para abrirlo? Se conservarán los grupos y pestañas, pero tendrás que iniciar sesión de nuevo.",
+    "restore_container_match": "Para restaurar se necesita un único contenedor de Firefox sin asignar con el mismo nombre",
+    "choose_existing_container": "Elige un contenedor de Firefox existente",
+    "no_available_containers": "No hay contenedores de Firefox disponibles"
   }
 }

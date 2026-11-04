@@ -2,6 +2,7 @@ import { createTabIndex } from "../platform/tab-index.js";
 import { parseStgBackup, stgFingerprint } from "../domain/stg-import.js";
 import { normalizeSettings } from "../domain/settings.js";
 import { parseTavvyBackup } from "../domain/tavvy-backup.js";
+import { DEFAULT_SPACE_ID, groupSpaceId, groupsInSpace, SPACE_ICONS, spaceIcon } from "../domain/spaces.js";
 const KEY = "tavvy:workspace:v1";
 const TAG = "tavvy:group";
 const ACTIVE = "tavvy:active-group";
@@ -25,7 +26,8 @@ export function createWorkspaceService(
     savedKnownRevision = -1,
     scanOrderVersion = 0;
   let refreshPending,
-    observedVersion = -1;
+    observedVersion = -1,
+    identitiesVersion = 0, identitiesSignature = "";
   let recordsById = new Map();
   const sortedWindows = new Map();
   const pendingRemovals = new Map();
@@ -44,6 +46,7 @@ export function createWorkspaceService(
     if (state.version !== 1)
       throw new Error("Неподдерживаемая версия данных Tavvy");
     state.known ??= {};
+    state.spaces ??= [];
     for (const job of Object.values(state.imports || {}))
       if (job.complete) {
         delete job.completed;
@@ -109,6 +112,29 @@ export function createWorkspaceService(
     if (!value) throw new Error("Группа не найдена");
     return value;
   }
+  function space(spaceId) {
+    if (spaceId === DEFAULT_SPACE_ID) return { id: DEFAULT_SPACE_ID, name: "", cookieStoreId: null };
+    const found = state.spaces.find((item) => item.id === spaceId);
+    if (!found) throw new Error("Пространство не найдено");
+    return found;
+  }
+  async function tabContainer(groupId) {
+    const spaceId = groupSpaceId(group(groupId));
+    const selected = space(spaceId);
+    if (spaceId === DEFAULT_SPACE_ID) return {};
+    if (typeof selected.cookieStoreId !== "string" || !selected.cookieStoreId.startsWith("firefox-container-"))
+      throw new Error("Контейнер пространства недоступен");
+    if (!browserApi.contextualIdentities || !await browserApi.permissions?.contains({ permissions: ["cookies"] }))
+      throw new Error("Для пространства необходимо разрешение на контейнеры Firefox");
+    let identity;
+    try { identity = await browserApi.contextualIdentities.get(selected.cookieStoreId); }
+    catch (error) {
+      if (/^Invalid contextual identity:/i.test(String(error?.message || error))) throw new Error("Контейнер пространства недоступен");
+      throw error;
+    }
+    if (identity?.cookieStoreId !== selected.cookieStoreId) throw new Error("Контейнер пространства недоступен");
+    return { cookieStoreId: selected.cookieStoreId };
+  }
   async function active(windowId) {
     const value = await api.sessions.getWindowValue(windowId, ACTIVE);
     return state.groups.some((g) => g.id === value) ? value : "inbox";
@@ -170,6 +196,10 @@ export function createWorkspaceService(
             if (!windowGroups.has(tab.windowId))
               windowGroups.set(tab.windowId, active(tab.windowId));
             groupId = await windowGroups.get(tab.windowId);
+            const activeSpace = groupSpaceId(group(groupId));
+            const tabSpace = state.spaces.find((item) => item.cookieStoreId === tab.cookieStoreId);
+            if (tabSpace && tabSpace.id !== activeSpace) groupId = groupsInSpace(state.groups, tabSpace.id)[0]?.id || "inbox";
+            else if (!tabSpace && activeSpace !== DEFAULT_SPACE_ID) groupId = "inbox";
             try {
               await api.sessions.setTabValue(tab.id, TAG, groupId);
             } catch {
@@ -204,6 +234,7 @@ export function createWorkspaceService(
             id: tab.id,
             windowId: tab.windowId,
             groupId,
+            cookieStoreId: tab.cookieStoreId,
             title:
               localTitle || tab.title || metadata?.title || "Новая вкладка",
             url,
@@ -245,7 +276,21 @@ export function createWorkspaceService(
     scanOrderVersion = orderStamp;
     return scanCache;
   }
+  async function firefoxSpaces() {
+    if (!state.settings.experimentalSpaces || !browserApi.contextualIdentities?.query ||
+        !await browserApi.permissions?.contains({ permissions: ["cookies"] })) return [];
+    const identities = await browserApi.contextualIdentities.query({});
+    const signature = JSON.stringify(identities.map(({ cookieStoreId, name, icon }) => [cookieStoreId, name, icon]));
+    if (signature !== identitiesSignature) { identitiesSignature = signature; identitiesVersion++; }
+    return identities.filter((item) => typeof item.cookieStoreId === "string" && item.cookieStoreId.startsWith("firefox-container-"));
+  }
   async function snapshot(windowId) {
+    const identities = await firefoxSpaces();
+    if (!state.settings.experimentalSpaces && groupSpaceId(group(await active(windowId))) !== DEFAULT_SPACE_ID) {
+      const previous = await api.sessions.getWindowValue(windowId, "tavvy:space-group:" + DEFAULT_SPACE_ID);
+      const target = groupsInSpace(state.groups, DEFAULT_SPACE_ID).find((item) => item.id === previous) || group("inbox");
+      await activate(windowId, target.id);
+    }
     const records = await scan();
     let sorted = sortedWindows.get(windowId);
     if (!sorted || sorted.version !== scanOrderVersion || sorted.groupPinnedTabs !== !!state.settings?.groupPinnedTabs) {
@@ -259,17 +304,26 @@ export function createWorkspaceService(
       };
       sortedWindows.set(windowId, sorted);
     }
-    const tabs = sorted.ids.map((id) => recordsById.get(id)).filter(Boolean);
     const activeGroupId = await active(windowId);
+    const activeSpaceId = groupSpaceId(group(activeGroupId));
+    const groups = groupsInSpace(state.groups, activeSpaceId);
+    const groupIds = new Set(groups.map((item) => item.id));
+    const tabs = sorted.ids.map((id) => recordsById.get(id)).filter((tab) => tab && groupIds.has(tab.groupId));
     await toolbar?.setDynamic?.(state.settings?.dynamicIcon !== false).catch(console.error);
     await toolbar?.setStyle?.(state.settings.markerStyle).catch(console.error);
     await toolbar?.update(windowId, group(activeGroupId)).catch(console.error);
     return {
       revision,
-      groups: state.groups,
+      groups,
       tabs,
-      archive: state.archive,
+      archive: state.archive.filter((entry) => groupIds.has(entry.groupId) ||
+        (activeSpaceId === DEFAULT_SPACE_ID && !state.groups.some((item) => item.id === entry.groupId))),
       activeGroupId,
+      activeSpaceId,
+      spaces: [{ id: DEFAULT_SPACE_ID, name: "" }, ...state.spaces.map(({ id, name, icon, cookieStoreId }) => {
+        const identity = identities.find((item) => item.cookieStoreId === cookieStoreId);
+        return { id, name: identity?.name || name, icon: spaceIcon(identity?.icon || icon), ...(state.settings.experimentalSpaces && browserApi.contextualIdentities?.query && !identity ? { unavailable: true } : {}) };
+      }), ...identities.filter((item) => !state.spaces.some((space) => space.cookieStoreId === item.cookieStoreId)).map((item) => ({ id: `container:${item.cookieStoreId}`, name: item.name, icon: spaceIcon(item.icon), firefoxContainer: true }))],
       settings: normalizeSettings(state.settings),
       importReport: state.importReport,
     };
@@ -339,7 +393,7 @@ export function createWorkspaceService(
       tabs.find((tab) => tab.active) ||
       tabs[0];
     if (!target) {
-      target = await api.tabs.create({ windowId, active: false });
+      target = await api.tabs.create({ windowId, active: false, ...await tabContainer(groupId) });
       await api.sessions.setTabValue(target.id, TAG, groupId);
     }
     await api.tabs.show([
@@ -347,6 +401,7 @@ export function createWorkspaceService(
     ]);
     await api.tabs.update(target.id, { active: true });
     await api.sessions.setWindowValue(windowId, ACTIVE, groupId);
+    await api.sessions.setWindowValue(windowId, "tavvy:space-group:" + groupSpaceId(group(groupId)), groupId);
     await visibility(windowId, groupId);
     if (state.settings?.discardInactiveTabs && previousGroupId !== groupId) {
       const candidates = (await scan()).filter(
@@ -515,18 +570,38 @@ export function createWorkspaceService(
         }
         return { groupId: ids.has(entry.groupId) ? entry.groupId : "inbox", title: entry.title, url, pinned: !!(entry.pinned || entry.managedPinned), ...(entry.closedAt ? { closedAt: entry.closedAt } : {}) };
       };
-      return { format: "tavvy-backup", version: 1, createdAt: new Date().toISOString(), groups: structuredClone(state.groups), tabs: records.map(serialize).filter((t) => safe.test(t.url)), archive: state.archive.map(serialize).filter((t) => safe.test(t.url)), settings: normalizeSettings(state.settings) };
+      return { format: "tavvy-backup", version: state.spaces.length ? 2 : 1, createdAt: new Date().toISOString(), groups: structuredClone(state.groups), ...(state.spaces.length ? { spaces: state.spaces.map(({ id, name, icon }) => ({ id, name, ...(icon ? { icon: spaceIcon(icon) } : {}) })) } : {}), tabs: records.map(serialize).filter((t) => safe.test(t.url)), archive: state.archive.map(serialize).filter((t) => safe.test(t.url)), settings: normalizeSettings(state.settings) };
     }
     if (type === "importBackup") {
       const plan = parseTavvyBackup(command.backup);
+      if (state.spaces.length + (plan.spaces?.length || 0) > 100) throw new Error("Слишком много пространств");
+      if (state.groups.length + plan.groups.filter((item) => item.id !== "inbox").length > 1000) throw new Error("Слишком много групп");
+      const spaceMapping = new Map([[DEFAULT_SPACE_ID, DEFAULT_SPACE_ID]]);
+      if (plan.spaces?.length) {
+        if (!browserApi.contextualIdentities || !await browserApi.permissions?.contains({ permissions: ["cookies"] }))
+          throw new Error("Для восстановления пространств необходимо разрешение на контейнеры Firefox");
+        const identities = await browserApi.contextualIdentities.query({});
+        const restoredSpaces = [];
+        const usedContainers = new Set(state.spaces.map((item) => item.cookieStoreId));
+        for (const item of plan.spaces) {
+          const matches = identities.filter((identity) => identity.name === item.name && !usedContainers.has(identity.cookieStoreId));
+          if (matches.length !== 1) throw new Error("Для восстановления пространства нужен один существующий контейнер Firefox с тем же именем");
+          const identity = matches[0];
+          usedContainers.add(identity.cookieStoreId);
+          const spaceId = id();
+          restoredSpaces.push({ id: spaceId, name: item.name, cookieStoreId: identity.cookieStoreId, ...(item.icon ? { icon: item.icon } : {}) });
+          spaceMapping.set(item.id, spaceId);
+        }
+        state.spaces.push(...restoredSpaces);
+      }
       const mapping = new Map(plan.groups.map((g) => [g.id, g.id === "inbox" ? "inbox" : id()]));
-      for (const g of plan.groups) if (g.id !== "inbox") state.groups.push({ id: mapping.get(g.id), title: g.title, color: g.color, parentId: g.parentId ? mapping.get(g.parentId) : null });
+      for (const g of plan.groups) if (g.id !== "inbox") state.groups.push({ id: mapping.get(g.id), title: g.title, color: g.color, parentId: g.parentId ? mapping.get(g.parentId) : null, ...(g.spaceId ? { spaceId: spaceMapping.get(g.spaceId) } : {}) });
       await save();
       const selected = await active(windowId);
       for (const entry of plan.tabs) {
         const local = entry.url.startsWith("file:");
         const url = local ? api.runtime.getURL("local-file.html") + "#" + encodeURIComponent(JSON.stringify({ url: entry.url, title: entry.title })) : entry.url;
-        const tab = await api.tabs.create({ windowId, active: false, pinned: entry.pinned, ...(url === "about:newtab" ? {} : { url }), ...(!entry.pinned && !url.startsWith("about:") ? { discarded: true, title: entry.title } : {}) });
+        const tab = await api.tabs.create({ windowId, active: false, pinned: entry.pinned, ...await tabContainer(mapping.get(entry.groupId)), ...(url === "about:newtab" ? {} : { url }), ...(!entry.pinned && !url.startsWith("about:") ? { discarded: true, title: entry.title } : {}) });
         await api.sessions.setTabValue(tab.id, TAG, mapping.get(entry.groupId));
         await api.sessions.setTabValue(tab.id, "tavvy:import-metadata", { title: entry.title });
         if (!entry.pinned && !visibleGroups(selected).has(mapping.get(entry.groupId))) await api.tabs.hide([tab.id]);
@@ -538,20 +613,91 @@ export function createWorkspaceService(
       return snapshot(windowId);
     }
     if (type === "importStg") {
+      if (groupSpaceId(group(await active(windowId))) !== DEFAULT_SPACE_ID) throw new Error("Импорт Simple Tab Groups доступен только в основном пространстве");
       await importStg(command.backup, windowId);
       return snapshot(windowId);
     }
-    if (type === "createGroup") {
+    if (type === "createSpace" || type === "recoverSpace") {
+      throw new Error("Создание контейнеров Firefox в Tavvy недоступно");
+    } else if (type === "setSpaceIcon") {
+      if (command.spaceId === DEFAULT_SPACE_ID || !SPACE_ICONS.includes(command.icon)) throw new Error("Недопустимая иконка пространства");
+      const selected = command.spaceId?.startsWith("container:")
+        ? { cookieStoreId: command.spaceId.slice("container:".length) }
+        : space(command.spaceId);
+      if (!browserApi.contextualIdentities || !await browserApi.permissions?.contains({ permissions: ["cookies"] }))
+        throw new Error("Для пространства необходимо разрешение на контейнеры Firefox");
+      try {
+        await browserApi.contextualIdentities.update(selected.cookieStoreId, { icon: command.icon });
+      } catch (error) {
+        // The space can outlive a container removed in Firefox. Keep the visual
+        // choice without silently creating a new, unrelated cookie store.
+        if (!/^Invalid contextual identity:/i.test(String(error?.message || error))) throw error;
+      }
+      if (!command.spaceId.startsWith("container:")) selected.icon = command.icon;
+    } else if (type === "rebindSpace") {
+      if (command.spaceId === DEFAULT_SPACE_ID) throw new Error("Контейнер пространства недоступен");
+      const selected = space(command.spaceId);
+      const identities = await firefoxSpaces();
+      if (identities.some((identity) => identity.cookieStoreId === selected.cookieStoreId))
+        throw new Error("Контейнер пространства уже существует");
+      const target = identities.find((identity) => identity.cookieStoreId === command.cookieStoreId);
+      if (!target || state.spaces.some((item) => item.cookieStoreId === target.cookieStoreId))
+        throw new Error("Контейнер пространства недоступен");
+      // The user explicitly selected this existing container; preserve all
+      // group, tab and archive associations and do not touch Firefox cookies.
+      selected.cookieStoreId = target.cookieStoreId;
+      selected.name = target.name;
+      selected.icon = spaceIcon(target.icon);
+      await save();
+      const available = groupsInSpace(state.groups, selected.id);
+      const previous = await api.sessions.getWindowValue(windowId, "tavvy:space-group:" + selected.id);
+      const groupId = available.find((item) => item.id === previous)?.id || available[0]?.id;
+      if (!groupId) throw new Error("В пространстве нет групп");
+      await activate(windowId, groupId);
+    } else if (type === "deleteSpace") {
+      if (command.spaceId === DEFAULT_SPACE_ID) throw new Error("Основное пространство удалить нельзя");
+      space(command.spaceId);
+      // Keep groups, tabs, archive entries and the Firefox container and its cookies.
+      for (const item of state.groups)
+        if (groupSpaceId(item) === command.spaceId) delete item.spaceId;
+      state.spaces = state.spaces.filter((item) => item.id !== command.spaceId);
+    } else if (type === "activateSpace") {
+      let spaceId = command.spaceId;
+      if (typeof spaceId === "string" && spaceId.startsWith("container:")) {
+        const cookieStoreId = spaceId.slice("container:".length);
+        const identity = (await firefoxSpaces()).find((item) => item.cookieStoreId === cookieStoreId);
+        if (!identity) throw new Error("Контейнер пространства недоступен");
+        let existing = state.spaces.find((item) => item.cookieStoreId === cookieStoreId);
+        if (!existing) {
+          if (state.spaces.length >= 100 || state.groups.length >= 1000) throw new Error("Слишком много пространств");
+          existing = { id: id(), name: identity.name, icon: spaceIcon(identity.icon), cookieStoreId };
+          state.spaces.push(existing);
+          state.groups.push({ id: id(), title: identity.name, color: colors[0], parentId: null, spaceId: existing.id });
+          await save();
+        }
+        spaceId = existing.id;
+      }
+      space(spaceId);
+      const current = await active(windowId);
+      await api.sessions.setWindowValue(windowId, "tavvy:space-group:" + groupSpaceId(group(current)), current);
+      const previous = await api.sessions.getWindowValue(windowId, "tavvy:space-group:" + spaceId);
+      const available = groupsInSpace(state.groups, spaceId);
+      const target = available.find((item) => item.id === previous) || available[0];
+      if (!target) throw new Error("В пространстве нет групп");
+      await activate(windowId, target.id);
+    } else if (type === "createGroup") {
       const title = String(command.title ?? "")
         .trim()
         .slice(0, 100);
       if (!title) throw new Error("Введите название группы");
-      if (command.parentId) group(command.parentId);
+      const currentSpaceId = groupSpaceId(group(await active(windowId)));
+      if (command.parentId && groupSpaceId(group(command.parentId)) !== currentSpaceId) throw new Error("Нельзя переместить группу в другое пространство");
       state.groups.push({
         id: id(),
         title,
         color: colors[state.groups.length % colors.length],
         parentId: command.parentId || null,
+        ...(currentSpaceId === DEFAULT_SPACE_ID ? {} : { spaceId: currentSpaceId }),
       });
     } else if (type === "renameGroup") {
       if (typeof command.title !== "string" || command.title.length > 100 || !command.title.trim())
@@ -569,7 +715,7 @@ export function createWorkspaceService(
       await activate(windowId, command.groupId);
     else if (type === "createTab") {
       group(command.groupId);
-      const tab = await api.tabs.create({ windowId, active: false });
+      const tab = await api.tabs.create({ windowId, active: false, ...await tabContainer(command.groupId) });
       await api.sessions.setTabValue(tab.id, TAG, command.groupId);
       await activate(windowId, command.groupId, tab.id);
     } else if (
@@ -604,7 +750,11 @@ export function createWorkspaceService(
         forgetKnown(tab.id);
       }
       if (type === "moveTab") {
-        group(command.groupId);
+        const destination = group(command.groupId);
+        const expected = space(groupSpaceId(destination));
+        if ((expected.cookieStoreId && tab.cookieStoreId !== expected.cookieStoreId) ||
+            (groupSpaceId(group(tab.groupId)) !== groupSpaceId(destination)))
+          throw new Error("Перенос вкладок между пространствами не поддерживается");
         await api.sessions.setTabValue(tab.id, TAG, command.groupId);
         if (Number.isInteger(command.index))
           await api.tabs.move(tab.id, { index: command.index });
@@ -625,6 +775,7 @@ export function createWorkspaceService(
       const tab = await api.tabs.create({
         windowId,
         active: false,
+        ...await tabContainer(groupId),
         ...(url ? { url } : {}),
       });
       await api.sessions.setTabValue(tab.id, TAG, groupId);
@@ -634,11 +785,19 @@ export function createWorkspaceService(
       state.archive = state.archive.filter(
         (item) => item.id !== command.entryId,
       );
-    } else if (type === "clearArchive") state.archive = [];
+    } else if (type === "clearArchive") {
+      const currentSpace = groupSpaceId(group(await active(windowId)));
+      const ids = new Set(groupsInSpace(state.groups, currentSpace).map((item) => item.id));
+      const allIds = new Set(state.groups.map((item) => item.id));
+      state.archive = state.archive.filter((entry) => !ids.has(entry.groupId) &&
+        !(currentSpace === DEFAULT_SPACE_ID && !allIds.has(entry.groupId)));
+    }
     else if (type === "moveGroup") {
       const moving = group(command.groupId);
       const parentId = state.settings?.nestedGroups === false ? moving.parentId : command.parentId;
       let parent = parentId ? group(parentId) : null;
+      if (parent && groupSpaceId(parent) !== groupSpaceId(moving)) throw new Error("Нельзя переместить группу в другое пространство");
+      if (command.beforeId && groupSpaceId(group(command.beforeId)) !== groupSpaceId(moving)) throw new Error("Нельзя переместить группу в другое пространство");
       while (parent) {
         if (parent.id === moving.id)
           throw new Error("Нельзя вложить группу в саму себя");
@@ -656,6 +815,9 @@ export function createWorkspaceService(
       if (command.groupId === "inbox")
         throw new Error("Основная группа нужна для несортированных вкладок");
       const deleting = group(command.groupId);
+      const candidates = groupsInSpace(state.groups, groupSpaceId(deleting)).filter((item) => item.id !== deleting.id);
+      const replacement = candidates.find((item) => item.id === "inbox") || candidates[0];
+      if (!replacement) throw new Error("Последнюю группу пространства удалить нельзя");
       const currentTabs = await scan();
       const windowGroups = new Map();
       for (const tab of currentTabs)
@@ -663,13 +825,15 @@ export function createWorkspaceService(
           windowGroups.set(tab.windowId, await active(tab.windowId));
       for (const tab of currentTabs)
         if (tab.groupId === deleting.id)
-          await api.sessions.setTabValue(tab.id, TAG, "inbox");
+          await api.sessions.setTabValue(tab.id, TAG, replacement.id);
       for (const child of state.groups)
         if (child.parentId === deleting.id) child.parentId = deleting.parentId;
+      for (const entry of state.archive)
+        if (entry.groupId === deleting.id) entry.groupId = replacement.id;
       state.groups = state.groups.filter((item) => item.id !== deleting.id);
       // Deleting a group never closes its real tabs.
       for (const [affectedWindowId, activeId] of windowGroups) {
-        if (activeId === deleting.id) await activate(affectedWindowId, "inbox");
+        if (activeId === deleting.id) await activate(affectedWindowId, replacement.id);
         else await visibility(affectedWindowId, activeId);
       }
     } else if (type === "saveSettings") {
@@ -697,6 +861,15 @@ export function createWorkspaceService(
       }
       state.settings = next;
       await save();
+      if (previousSettings.experimentalSpaces && !next.experimentalSpaces) {
+        for (const affectedWindowId of new Set((await scan()).map((tab) => tab.windowId))) {
+          const currentGroup = await active(affectedWindowId);
+          if (groupSpaceId(group(currentGroup)) === DEFAULT_SPACE_ID) continue;
+          const previous = await api.sessions.getWindowValue(affectedWindowId, "tavvy:space-group:" + DEFAULT_SPACE_ID);
+          const target = groupsInSpace(state.groups, DEFAULT_SPACE_ID).find((item) => item.id === previous) || group("inbox");
+          await activate(affectedWindowId, target.id);
+        }
+      }
       if (wasGrouped !== next.groupPinnedTabs || previousSettings.nestedGroups !== next.nestedGroups || previousSettings.nestedTabsVisibility !== next.nestedTabsVisibility) {
         const records = await scan();
         for (const id of new Set(records.map((tab) => tab.windowId))) {
@@ -727,7 +900,7 @@ export function createWorkspaceService(
           return structuredClone({
             ...result,
             revision,
-            viewVersion: index.version + ":" + revision,
+            viewVersion: index.version + ":" + revision + ":" + identitiesVersion,
           });
         } catch (error) {
           await save();

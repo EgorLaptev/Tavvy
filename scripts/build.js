@@ -9,6 +9,7 @@ await build({
 await build({
   entryPoints: ["styles/preview.css"],
   loader: { ".png": "file" },
+  external: ["resource://*"],
   bundle: true,
   outfile: "dist/app.css",
   sourcemap: true,

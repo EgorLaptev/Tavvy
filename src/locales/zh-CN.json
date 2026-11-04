@@ -145,7 +145,8 @@
     "lilac_platypus": "淡紫色鸭嘴兽",
     "curious_capybara": "好奇的水豚",
     "cosmic_wombat": "宇宙袋熊",
-    "dancing_red_panda": "跳舞的小熊猫"
+    "dancing_red_panda": "跳舞的小熊猫",
+    "wandering_otter": "漫游水獭"
   },
   "errors": {
     "background_process_is_unavailable": "后台进程不可用",
@@ -209,5 +210,35 @@
     "the_link_is_invalid": "链接无效",
     "address_copied": "地址已复制",
     "address_selected_press_ctrl_c": "地址已选中 — 按 Ctrl+C 复制"
+  },
+  "spaces": {
+    "experimental": "实验性空间",
+    "title": "空间",
+    "default": "默认",
+    "new": "新空间",
+    "name": "空间名称",
+    "create": "创建",
+    "cancel": "取消",
+    "permission": "请允许访问容器以使用空间。",
+    "help": "独立的网站账号",
+    "move_unsupported": "无法在空间之间移动标签页。",
+    "import_main": "只能将 Simple Tab Groups 导入主空间。",
+    "container_required": "此空间需要访问 Firefox 容器的权限。",
+    "not_found": "找不到空间",
+    "last_group": "空间必须至少包含一个分组。",
+    "enter_name": "请输入空间名称",
+    "move_group_unsupported": "无法在空间之间移动分组",
+    "restore_permission": "恢复空间需要容器访问权限",
+    "container_unavailable": "空间容器不可用",
+    "backup_invalid": "备份中的空间数据无效",
+    "restored_sign_in": "恢复的空间使用新的 Firefox 容器，请重新登录账号。",
+    "too_many": "空间过多",
+    "delete": "删除空间",
+    "delete_confirm": "删除“{name}”？其分组和标签页将移至 默认。Firefox 容器及其数据将保留。",
+    "choose_icon": "选择空间图标",
+    "recover_confirm": "Firefox 已找不到此空间的容器。要创建新容器以打开此空间吗？分组和标签页会保留，但您需要重新登录。",
+    "restore_container_match": "恢复此空间需要一个同名且尚未分配的 Firefox 容器",
+    "choose_existing_container": "选择现有的 Firefox 容器",
+    "no_available_containers": "没有可用的 Firefox 容器"
   }
 }

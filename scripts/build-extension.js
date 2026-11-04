@@ -33,6 +33,7 @@ await build({
   bundle: true,
   outfile: `${out}/popup.css`,
   loader: { ".png": "file" },
+  external: ["resource://*"],
   target: "firefox140",
   minify: true,
   legalComments: "eof",

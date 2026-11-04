@@ -14,6 +14,7 @@ export function mountSettings({
   onBackupStatus,
   appVersion,
   onLanguageChange,
+  requestSpacesPermission,
 }) {
   const { listen, dispose } = createEventScope();
   const discardInput = document.querySelector(
@@ -24,6 +25,8 @@ export function mountSettings({
   const nestedInput = document.querySelector('input[aria-label="Вложенные группы"]');
   const nestedVisibility = document.querySelector('select[aria-label="Показывать вкладки"]');
   const nestedVisibilityRow = document.querySelector(".nested-visibility-setting");
+  const experimentalSpaces = document.querySelector(".experimental-spaces");
+  const spacesPermissionNotice = document.querySelector(".spaces-permission-notice");
   const dynamicIconInput = document.querySelector('input[aria-label="Динамическая иконка"]');
   const archiveInput = document.querySelector('input[aria-label="Архив закрытых вкладок"]');
   const backupInput = document.querySelector('input[aria-label="Автоматические копии"]');
@@ -99,7 +102,7 @@ export function mountSettings({
   if (appVersion) {
     const version = document.createElement("div");
     version.className = "app-version";
-    version.textContent = versionLabel(appVersion, translateText);
+    version.textContent = versionLabel(appVersion);
     document.querySelector(".github-link").before(version);
   }
   const themeInputs = [...themeView.querySelectorAll("input[name=theme]")];
@@ -111,7 +114,7 @@ export function mountSettings({
   function applySettings() {
     if (!THEMES.includes(savedSettings.theme))
       savedSettings.theme = "Чёрная";
-    if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion, translateText);
+    if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion);
     const light =
       savedSettings.theme === "Светлая" ||
       (["Как в системе", "Стандартная"].includes(savedSettings.theme) && systemTheme.matches);
@@ -140,6 +143,7 @@ export function mountSettings({
     nestedVisibility.value = savedSettings.nestedTabsVisibility;
     nestedVisibilityRow.hidden = !nestedInput.checked;
     dynamicIconInput.checked = savedSettings.dynamicIcon !== false;
+    experimentalSpaces.checked = savedSettings.experimentalSpaces;
     archiveInput.checked = savedSettings.archiveEnabled !== false;
     backupInput.checked = Boolean(savedSettings.backupEnabled);
     backupFrequency.value = savedSettings.backupFrequency || "daily";
@@ -189,7 +193,7 @@ export function mountSettings({
     setLanguage(savedSettings.language);
     translateStatic(document.querySelector(".popup"));
     applySettings();
-    if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion, translateText);
+    if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion);
     saveSettings();
     onLanguageChange?.();
   });
@@ -210,6 +214,20 @@ export function mountSettings({
   });
   listen(nestedVisibility, "change", () => {
     savedSettings.nestedTabsVisibility = nestedVisibility.value;
+    saveSettings();
+  });
+  listen(experimentalSpaces, "change", async () => {
+    if (experimentalSpaces.checked) {
+      let granted = false;
+      try { granted = await requestSpacesPermission?.(); } catch {}
+      if (!granted) {
+        experimentalSpaces.checked = false;
+        spacesPermissionNotice.hidden = false;
+        return;
+      }
+    }
+    spacesPermissionNotice.hidden = true;
+    savedSettings.experimentalSpaces = experimentalSpaces.checked;
     saveSettings();
   });
   listen(dynamicIconInput, "change", () => {

@@ -5,6 +5,7 @@ export function createMemoryBrowser({
   tabs,
   settings = {},
   onSettings = () => {},
+  containers = null,
 }) {
   const storage = new Map([
       [
@@ -115,7 +116,7 @@ export function createMemoryBrowser({
         const tab = {
           id: nextId++,
           index: records.size,
-          title: options.title || "Новая вкладка",
+          title: options.title || "New tab",
           url: "about:newtab",
           pinned: false,
           active: false,
@@ -161,5 +162,27 @@ export function createMemoryBrowser({
       },
     },
   };
+  if (containers) {
+    const identities = structuredClone(containers);
+    let granted = settings.experimentalSpaces === true;
+    api.permissions = {
+      async request() { granted = true; return true; },
+      async contains() { return granted; },
+    };
+    api.contextualIdentities = {
+      async query() { return structuredClone(identities); },
+      async get(cookieStoreId) {
+        const identity = identities.find((item) => item.cookieStoreId === cookieStoreId);
+        if (!identity) throw new Error(`Invalid contextual identity: ${cookieStoreId}`);
+        return structuredClone(identity);
+      },
+      async update(cookieStoreId, details) {
+        const identity = identities.find((item) => item.cookieStoreId === cookieStoreId);
+        if (!identity) throw new Error(`Invalid contextual identity: ${cookieStoreId}`);
+        Object.assign(identity, details);
+        return structuredClone(identity);
+      },
+    };
+  }
   return api;
 }

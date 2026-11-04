@@ -9,10 +9,11 @@ const js = await context({
 const css = await context({
   entryPoints: ["styles/preview.css"],
   loader: { ".png": "file" },
+  external: ["resource://*"],
   bundle: true,
   outfile: "dist/app.css",
   sourcemap: true,
 });
 await Promise.all([js.watch(), css.watch()]);
 const server = await js.serve({ servedir: ".", port: 5173, host: "127.0.0.1" });
-console.log(`Tavvy: http://${server.host}:${server.port}`);
+console.log(`Tavvy: http://127.0.0.1:${server.port}`);

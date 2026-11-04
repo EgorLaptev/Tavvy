@@ -1,5 +1,5 @@
 import { mountApplication } from "../../src/ui/application.js";
-import { createMemoryBrowser } from "../../src/platform/memory-browser.js";
+import { createMemoryBrowser } from "../../src/mocks/memory-browser.js";
 import { createWorkspaceService } from "../../src/background/workspace-service.js";
 (async () => {
   try {

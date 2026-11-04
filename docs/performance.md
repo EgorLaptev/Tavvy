@@ -1,9 +1,8 @@
 # Tavvy performance
 
-Date: October 31, 2026. Optimizations were made after the audit was approved.
-The project does not use React; its custom DOM renderer was optimized. No
-specialized JavaScript or WebExtension performance skills were available in
-the installed catalog, so the results are based on project code and checks.
+Historical audit: October 31, 2026. Measurements and test counts below describe
+that revision, not the current build. Re-run the benchmark for current figures.
+The project uses a custom DOM renderer rather than React.
 
 ## Problems and changes
 
@@ -12,7 +11,7 @@ the installed catalog, so the results are based on project code and checks.
 | High | Repeated full queries and session reads | A background-lifetime tab index, event deltas and targeted reconciliation reduce IPC and repeated processing of all tabs. |
 | High | Repeated reconciliation per window | A shared scan and coalesced refreshes prevent work from multiplying by window count on each request. |
 | High | Creating DOM for every tab | Closed groups create no rows. Lists over 120 rows are virtualized with 30 px rows and an overscan of eight, reducing DOM, layout and handlers. |
-| High | Writes on reads and bulk closure | Snapshots do not write storage; removals are batched, reducing serialization and writes. |
+| High | Writes on reads and bulk closure | Ordinary snapshots avoid workspace storage writes; removals are batched. |
 | Medium | Large `known` data in shared state | Compact records use a separate key and dirty revision. Changing settings does not serialize all tabs; the old format migrates on save. |
 | Medium | Repeated filtering, sorting and tree construction | Group and ID indexes, normalized search strings and ordering cached separately from titles. Search remains linear with a 180 ms debounce. |
 | Medium | Full UI rebuilds | Cards and markers are reused, changed fields are updated, and a snapshot version replaces double `JSON.stringify`. This preserves focus and reduces DOM work. |
@@ -35,8 +34,9 @@ recorded on the original implementation. These are call counts, not timings.
 
 In the model, switching uses one call each to `show`, `update`, `hide` and
 `setWindowValue`. The destination is shown before activation and hiding.
-Repeated snapshots do not write storage. The first refresh after a read-only
-snapshot may save the initial checkpoint and selected groups for windows.
+At the time of the audit, repeated snapshots did not write storage. Current
+snapshots may activate Default when migrating a window with spaces disabled;
+re-run measurements after changes to the workspace or index.
 
 A cold load still requires one `tabs.query`, two `storage.get` calls and 2N
 `sessions.getTabValue` calls (200, 1000 and 2000 for 100, 500 and 1000 tabs).

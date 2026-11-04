@@ -6,6 +6,13 @@ import { normalizeSettings } from "../src/domain/settings.js";
 import { createSettingsRepository } from "../src/platform/settings-repository.js";
 import { versionLabel } from "../src/domain/version-names.js";
 
+test("release names remain in English", () => {
+  assert.equal(versionLabel("0.2.8"), "0.2.8 · Wandering Otter");
+  assert.equal(versionLabel("0.2.7"), "0.2.7 · Dancing Red Panda");
+  assert.equal(versionLabel("0.2.0"), "0.2.0 · Tabby Sparrow");
+  assert.equal(versionLabel("unknown"), "unknown");
+});
+
 test("locale keys use snake_case and all translations preserve placeholders", async () => {
   const flatten = (object, prefix = "") => Object.fromEntries(Object.entries(object).flatMap(([key, value]) => {
     assert.match(key, /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/);
@@ -55,6 +62,7 @@ test("settings validate untrusted imports and clamp sizes", () => {
       language: "en",
       markerStyle: "square",
       dynamicIcon: true,
+      experimentalSpaces: false,
       archiveEnabled: true,
       animations: true,
       discardInactiveTabs: false,
@@ -88,6 +96,35 @@ test("repository migrates legacy settings and handles corrupted JSON", () => {
   values.set("tavvy:settings:v1", "{");
   assert.equal(repository.read().animations, true);
 });
+test("preview shows mock containers and switches without Firefox APIs", async () => {
+  const dom = new JSDOM(await readFile("index.html", "utf8"), {
+    url: "http://localhost", runScripts: "outside-only", pretendToBeVisual: true,
+  });
+  try {
+    const { window } = dom;
+    window.structuredClone = structuredClone;
+    window.matchMedia = () => ({ matches: false, addEventListener() {} });
+    window.eval(await readFile("dist/app.js", "utf8"));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const doc = window.document;
+    assert.equal(doc.querySelector(".spaces-bar").hidden, false);
+    const projects = doc.querySelector('[data-group-id="group-projects"]');
+    assert.equal(projects.querySelector(":scope > .group-controls .group-toggle").getAttribute("aria-expanded"), "true");
+    assert.equal(projects.querySelectorAll(":scope > .subgroups > .group").length, 2);
+    doc.querySelector(".spaces-trigger").click();
+    const work = doc.querySelector('[data-space-id="container:firefox-container-1"]');
+    assert.equal(work.textContent, "Work");
+    assert.match(work.parentElement.querySelector(".spaces-icon").style.maskImage, /data:image/);
+    work.click();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    assert.equal(doc.querySelector(".spaces-current").textContent, "Work");
+    doc.querySelector(".spaces-trigger").click();
+    doc.querySelector('[data-space-id="default"]').click();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    assert.equal(doc.querySelector(".spaces-current").textContent, "Default");
+  } finally { dom.window.close(); }
+});
+
 test("built app mounts and connects settings, groups, archive and navigation", async () => {
   const dom = new JSDOM(await readFile("index.html", "utf8"), {
     url: "http://localhost",
@@ -102,7 +139,7 @@ test("built app mounts and connects settings, groups, archive and navigation", a
   const document = window.document;
   assert.equal(document.documentElement.lang, "en");
   assert.equal(document.querySelector(".theme-open strong").textContent, "Theme");
-  assert.equal(document.querySelectorAll(".group").length, 12);
+  assert.equal(document.querySelectorAll(".group").length, 10);
   const group = document.querySelectorAll(".group")[1];
   group.querySelector(".group-rename").click();
   const renameInput = group.querySelector(".group-rename-input");

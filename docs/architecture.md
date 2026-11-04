@@ -2,7 +2,7 @@
 
 ## Two modes
 
-`src/app.js` starts the memory browser with demo data. `src/extension/index.js`
+`src/app.js` starts the memory browser and demo data from `src/mocks/`. `src/extension/index.js`
 starts the Firefox adapter. Both use `src/ui/application.js` and the same
 workspace service. Historical implementations are in `prototype/`, outside
 production sources. The build entry point selects the mode; demo data is not
@@ -16,9 +16,11 @@ browser can wake the non-persistent Manifest V3 background page.
 stop operations. Each service instance loads state from `browser.storage.local`:
 `tavvy:workspace:v1` contains groups, archive, imports and settings, while
 `tavvy:known:v1` contains compact tab records. The previous format with `known`
-inside the workspace is read and migrated on save. Snapshots do not write to
-storage. Separate dirty revisions avoid serializing and writing unchanged tab
-records when changing settings or switching groups.
+inside the workspace is read and migrated on save. Ordinary snapshots avoid
+writing workspace storage; when spaces are disabled, a snapshot can activate
+the Default group to recover an older window state, which changes browser tabs
+and session values. Separate dirty revisions avoid serializing and writing
+unchanged tab records when changing settings or switching groups.
 
 Groups have a UUID, `parentId`, `title`, `color` and an order in the array.
 Tabs are read with `tabs.query`; group membership uses `sessions.setTabValue`.
@@ -62,10 +64,35 @@ are not created. Groups with more than 120 rows use virtualization with fixed
 on `pagehide`. Shared `domain/settings.js` normalizes settings. The popup
 repository adapts background commands; `localStorage` is used only in preview.
 
-Dragging uses a shared module with callback commands. CSS from the historical
-mockup retains its original cascade; full consolidation remains separate work.
+Dragging is implemented in `features/drag-drop/drag-drop.js`: group dragging
+uses pointer events, while tab dragging uses HTML drag events; callbacks dispatch
+workspace commands. CSS from the historical mockup retains its original
+cascade; full consolidation remains separate work.
 Browser operations are separated from UI components, and the service accepts
 an API argument for testing without Firefox.
+
+## Experimental spaces and Firefox containers
+
+Spaces are disabled by default; groups without a `spaceId` belong to Default.
+When enabled, the switcher queries Firefox contextual identities, displaying
+existing containers using their Firefox names and icons. Selecting a previously
+unlinked container creates only a local space record and initial group. Existing
+Tavvy space IDs and group relationships are preserved. Containers missing in
+Firefox remain available as records so their groups and tabs are not discarded.
+Selecting one offers unassigned Firefox containers; explicit selection updates
+only the existing space association and does not move tabs or modify cookies.
+
+The optional `cookies` permission allows tabs to be created in the selected
+container. Tab creation never falls back to the default cookie store. Existing
+tabs are not reopened or automatically moved between containers. Changing a
+space icon updates the Firefox identity. Tavvy does not create containers.
+
+Version 2 backups omit browser-specific container IDs and site data. Restore
+requires exactly one unassigned existing Firefox container with the same name
+for each saved space. The operation checks all matches before modifying groups
+or tabs, and refuses missing or ambiguous matches. Version 1 backups remain
+supported. Disabling spaces hides the switcher and returns active windows to
+Default while preserving space data for later use.
 
 ## Firefox tab context menu
 
@@ -106,7 +133,9 @@ must be coordinated with this module rather than registered independently.
 `data-i18n` and `data-i18n-*` attributes. Keep keys and format placeholders
 consistent across all locale files. `translateText` is a compatibility adapter
 for existing persisted values and background errors that still use Russian
-source strings; unknown messages are passed through unchanged.
+source strings; unknown messages are passed through unchanged. Release names
+are stored in `domain/version-names.js` and displayed in English for every UI
+language; the Default space label is translated.
 
 ## Verification
 
@@ -115,7 +144,8 @@ tabs, archive persistence and restoration, closure outside the UI, cycles and
 group deletion. `scripts/smoke-firefox.js` loads a temporary extension copy
 into a separate headless Firefox profile, tests real operations and UI, then
 stops only its own runner and child processes. Extra access to a local HTTP
-server exists only in the test manifest.
+server exists only in the test manifest. This is not a substitute for checking
+visual behavior or the user’s installed profile. See `manual-testing.md`.
 
 ## Mozilla documentation
 

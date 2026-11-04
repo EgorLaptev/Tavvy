@@ -104,7 +104,7 @@ button.tab-status-icon:hover { color: #ddd; }
 .tabs .tabs-inner > .tab-row { gap: 0; }
 .tab-row .tab-favicon { margin-right: 10px; }
 .tab-statuses:not(:empty) { margin-left: 10px; }
-.tab-row .tab-close {
+:is(.tab-row, .spaces-option-row) .tab-close {
   width: 0;
   padding: 0;
   margin: 0;
@@ -113,8 +113,8 @@ button.tab-status-icon:hover { color: #ddd; }
   pointer-events: none;
   transition: width .2s ease, margin .2s ease, opacity .15s ease, transform .2s ease, color .15s ease;
 }
-.tab-row:hover .tab-close,
-.tab-row .tab-close:focus-visible {
+:is(.tab-row, .spaces-option-row):hover .tab-close,
+:is(.tab-row, .spaces-option-row) .tab-close:focus-visible {
   width: 16px;
   margin-left: 10px;
   margin-right: 10px;

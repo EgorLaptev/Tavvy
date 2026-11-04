@@ -35,6 +35,9 @@ await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const port = server.address().port;
 const manifest = JSON.parse(await readFile(`${dir}/manifest.json`, "utf8"));
 manifest.host_permissions = ["http://127.0.0.1/*"];
+// The isolated smoke profile grants the optional container permission for testing.
+manifest.permissions.push("cookies");
+delete manifest.optional_permissions;
 // The smoke harness reports its result to a local test server.
 manifest.content_security_policy.extension_pages = manifest.content_security_policy.extension_pages.replace("connect-src 'none'", "connect-src http://127.0.0.1:*");
 await writeFile(`${dir}/manifest.json`, JSON.stringify(manifest));
@@ -56,6 +59,7 @@ await build({
  try {
  const loadedIcon = await new Promise((resolve) => { const img = new Image(); img.onload = () => resolve(true); img.onerror = () => resolve(false); img.src = 'http://127.0.0.1:${port}/test-favicon.png'; });
  check(loadedIcon,'remote favicon loads in extension page');
+ for(const icon of ['fingerprint']){const loaded=await new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(true);img.onerror=()=>resolve(false);img.src='resource://usercontext-content/'+icon+'.svg';});check(loaded,'Firefox container icon loads: '+icon);}
  const iconCanvas=document.createElement('canvas');iconCanvas.width=iconCanvas.height=32;iconCanvas.getContext('2d').fillRect(0,0,16,16);
  await new Promise((resolve,reject)=>browser.menus.create({id:'smoke-menu-icon',parentId:'tavvy-move-tab',title:'Smoke marker',contexts:['tab'],icons:{32:iconCanvas.toDataURL('image/png')}},()=>browser.runtime.lastError?reject(new Error(browser.runtime.lastError.message)):resolve()));
  check(true,'Firefox accepts generated menu marker');await browser.menus.remove('smoke-menu-icon');
@@ -125,9 +129,60 @@ await build({
  ui.querySelector('.language-view input[value="ru"]').click();
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.settings.language==='ru')break;await new Promise(resolve=>setTimeout(resolve,50));}
  ui.querySelector('.settings-back').click();check(ui.querySelector('.language-view').hidden&&!ui.querySelector('.settings-view').hidden,'back returns from language page');
+ for(const selector of ['.settings-appearance > .theme-open:not(.language-open)','.language-open']){
+  const row=ui.querySelector(selector),value=row.querySelector('.theme-current').getBoundingClientRect(),arrow=row.querySelector('svg').getBoundingClientRect();
+  check(arrow.left-value.right<=20&&value.width<row.getBoundingClientRect().width/2,'settings value is aligned next to arrow: '+selector);
+ }
+ ui.documentElement.style.setProperty('--panel-width','320px');
+ const spaceSetting=ui.querySelector('.experimental-spaces').closest('.setting');const settingHeight=spaceSetting.getBoundingClientRect().height;
+ ui.querySelector('.experimental-spaces').focus();await new Promise(resolve=>setTimeout(resolve,250));
+ const settingText=spaceSetting.querySelector('small');const textStyle=frame.contentWindow.getComputedStyle(settingText);
+ check(Math.abs(spaceSetting.getBoundingClientRect().height-settingHeight)<1,'settings row stays one line when description is shown');
+ check(textStyle.whiteSpace==='nowrap'&&textStyle.textOverflow==='ellipsis'&&settingText.scrollWidth>settingText.clientWidth,'long setting description is truncated');
+ ui.documentElement.style.setProperty('--panel-width','440px');
  check(!ui.querySelector('.accent-setting'),'accent color control is removed');
+ state=await command({type:'snapshot'});await command({type:'saveSettings',settings:{...state.settings,experimentalSpaces:true}});
+ for(let attempt=0;attempt<100&&ui.querySelector('.spaces-bar').hidden;attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ ui.querySelector('.settings-back').click();check(!ui.querySelector('.spaces-bar').hidden,'experimental spaces become available');
+ const switcher=ui.querySelector('.spaces-trigger'),switcherBounds=switcher.getBoundingClientRect(),panelBounds=ui.querySelector('.popup').getBoundingClientRect();
+ check(switcherBounds.width<panelBounds.width*.7&&panelBounds.right-switcherBounds.right<30,'space switcher is compact and right aligned');
+ check(frame.contentWindow.getComputedStyle(switcher).backgroundColor==='rgba(0, 0, 0, 0)','space switcher has no background');
+ check(ui.querySelector('.spaces-current').textContent==='Основное'&&frame.contentWindow.getComputedStyle(switcher.querySelector('.spaces-icon')).display==='none','default space has no icon');
+ const smokeIdentity=await browser.contextualIdentities.create({name:'Smoke workspace',icon:'fingerprint',color:'blue'});
+ ui.querySelector('.spaces-trigger').click();check(!ui.querySelector('.spaces-menu').hidden,'space menu opens');check(!ui.querySelector('.spaces-option-row .spaces-icon-default'),'default space menu has no icon');
+ for(let attempt=0;attempt<100&&!ui.querySelector('[data-space-id="container:'+smokeIdentity.cookieStoreId+'"]');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ const existingOption=ui.querySelector('[data-space-id="container:'+smokeIdentity.cookieStoreId+'"]');check(Boolean(existingOption),'existing Firefox container is listed');check(!ui.querySelector('.spaces-add'),'space creation is unavailable');existingOption.click();
+ for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.activeSpaceId!=='default')break;await new Promise(resolve=>setTimeout(resolve,50));}
+ check(state.activeSpaceId!=='default'&&state.spaces.some(item=>item.name==='Smoke workspace'),'existing Firefox container is selected');
+ const spaceTab=state.tabs.find(tab=>tab.active);const realSpaceTab=await browser.tabs.get(spaceTab.id);
+ check(realSpaceTab.cookieStoreId?.startsWith('firefox-container-'),'space tab uses Firefox container');
+ for(let attempt=0;attempt<100&&ui.querySelector('.spaces-current').textContent!=='Smoke workspace';attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ for(let attempt=0;attempt<100&&ui.querySelector('.spaces-trigger').getAttribute('aria-expanded')!=='false';attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ ui.querySelector('.spaces-trigger').click();
+ const spaceMenu=ui.querySelector('.spaces-menu');
+ await new Promise(resolve=>setTimeout(resolve,250));
+ check(spaceMenu.scrollWidth<=spaceMenu.clientWidth,'space menu has no horizontal overflow');
+ const workOption=ui.querySelector('[data-space-id="'+state.activeSpaceId+'"]');workOption.closest('.spaces-option-row').querySelector('.spaces-icon-button').click();
+ check(ui.querySelectorAll('.spaces-icon-choice').length===13,'space icon picker opens');
+ ui.querySelector('.spaces-icon-choice[aria-label$="briefcase"]').click();
+ for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.spaces.find(item=>item.id===state.activeSpaceId)?.icon==='briefcase')break;await new Promise(resolve=>setTimeout(resolve,50));}
+ check((await browser.contextualIdentities.get(realSpaceTab.cookieStoreId)).icon==='briefcase','space icon updates Firefox container');
+ ui.querySelector('.spaces-trigger').click();
+ await browser.cookies.set({url:'http://127.0.0.1:${port}/',name:'tavvy-space-isolation',value:'work',storeId:realSpaceTab.cookieStoreId});
+ check((await browser.cookies.get({url:'http://127.0.0.1:${port}/',name:'tavvy-space-isolation',storeId:realSpaceTab.cookieStoreId}))?.value==='work','space cookie is stored in its container');
+ check(!(await browser.cookies.get({url:'http://127.0.0.1:${port}/',name:'tavvy-space-isolation',storeId:'firefox-default'})),'space cookie is isolated from default');
+ state=await command({type:'snapshot'});state=await command({type:'saveSettings',settings:{...state.settings,experimentalSpaces:false}});
+ check(state.activeSpaceId==='default'&&state.spaces.some(item=>item.name==='Smoke workspace'),'disabling spaces returns to Default and preserves groups');
+ for(let attempt=0;attempt<100&&!ui.querySelector('.spaces-bar').hidden;attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ check(ui.querySelector('.spaces-bar').hidden,'space switcher is hidden when disabled');
+ state=await command({type:'saveSettings',settings:{...state.settings,experimentalSpaces:true}});
+ for(let attempt=0;attempt<100&&ui.querySelector('.spaces-bar').hidden;attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ check(!ui.querySelector('.spaces-bar').hidden,'space switcher returns when re-enabled');
+ for(let attempt=0;attempt<100&&ui.querySelector('.spaces-trigger').hidden;attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ ui.querySelector('.spaces-trigger').click();ui.querySelector('[data-space-id="default"]').click();
+ for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.activeSpaceId==='default')break;await new Promise(resolve=>setTimeout(resolve,50));}
+ check(state.activeSpaceId==='default'&&state.groups.some(item=>item.id==='inbox'),'switching spaces restores original groups');
  retainedGroup=ui.querySelector('.group');retainedMarker=retainedGroup.querySelector('.marker');
- ui.querySelector('.settings-back').click();
  ui.querySelector('.create-group').click();ui.querySelector('.new-group-form input').value='UI group';ui.querySelector('.new-group-form').dispatchEvent(new Event('submit',{cancelable:true}));
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.groups.some(g=>g.title==='UI group'))break;await new Promise(resolve=>setTimeout(resolve,50));}
  check(state.groups.some(g=>g.title==='UI group'),'popup creates real group');
@@ -169,6 +224,33 @@ await build({
  check((await browser.tabs.get(previousId)).discarded===false,'tab reloads after returning to its group');
  await browser.windows.remove(second.id);
 
+ const restoreBackup={format:'tavvy-backup',version:2,groups:[{id:'inbox',title:'Main',color:'#398dff',parentId:null},{id:'backup-work',title:'Restored work',color:'#398dff',parentId:null,spaceId:'backup-space'}],spaces:[{id:'backup-space',name:'Restored space'}],tabs:[{groupId:'backup-work',title:'Restored',url:'http://127.0.0.1:${port}/restored',pinned:false},{groupId:'backup-work',title:'Local',url:'file:///D:/workspace-smoke.pdf',pinned:false}],archive:[],settings:state.settings};
+ const restoreIdentity=await browser.contextualIdentities.create({name:'Restored space',icon:'fingerprint',color:'blue'});
+ state=await command({type:'importBackup',backup:restoreBackup});const restoredSpace=state.spaces.find(item=>item.name==='Restored space');check(Boolean(restoredSpace),'workspace backup restores space');
+ state=await command({type:'activateSpace',spaceId:restoredSpace.id});let restoredTab=state.tabs.find(tab=>tab.url.includes('/restored'));for(let attempt=0;attempt<100&&!restoredTab;attempt++){await new Promise(resolve=>setTimeout(resolve,50));state=await command({type:'snapshot'});restoredTab=state.tabs.find(tab=>tab.url.includes('/restored'));}check(Boolean(restoredTab),'workspace backup restores its tab');
+ const restoredReal=await browser.tabs.get(restoredTab.id);check(restoredReal.cookieStoreId===restoreIdentity.cookieStoreId,'workspace backup uses an existing container');
+ const restoredLocal=state.tabs.find(tab=>tab.url.includes('/local-file.html#'));check(Boolean(restoredLocal),'workspace backup preserves local-file link');check((await browser.tabs.get(restoredLocal.id)).cookieStoreId===restoredReal.cookieStoreId,'local-file explanation stays in the workspace container');
+ await command({type:'activateSpace',spaceId:'default'});
+ const missingIdentity=await browser.contextualIdentities.create({name:'Missing smoke container',icon:'fingerprint',color:'blue'});
+ state=await command({type:'activateSpace',spaceId:'container:'+missingIdentity.cookieStoreId});const missingSpace=state.activeSpaceId;
+ await command({type:'createGroup',title:'Recovered smoke group'});await command({type:'activateSpace',spaceId:'default'});
+ await browser.contextualIdentities.remove(missingIdentity.cookieStoreId);
+ const replacement=await browser.contextualIdentities.create({name:'Existing smoke replacement',icon:'tree',color:'blue'});
+ state=await command({type:'snapshot'});check(state.spaces.find(item=>item.id===missingSpace)?.unavailable,'removed container is marked unavailable');
+ for(let attempt=0;attempt<100&&ui.querySelector('.spaces-current').textContent!=='Основное';attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ if(ui.querySelector('.spaces-trigger').getAttribute('aria-expanded')==='true')ui.querySelector('.spaces-trigger').click();
+ ui.querySelector('.spaces-trigger').click();
+ for(let attempt=0;attempt<100&&!ui.querySelector('[data-space-id="'+missingSpace+'"]');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ ui.querySelector('[data-space-id="'+missingSpace+'"]').click();
+ const replacementOption=[...ui.querySelectorAll('.spaces-rebind-option')].find(item=>item.textContent==='Existing smoke replacement');
+ check(Boolean(replacementOption),'missing space offers existing Firefox containers');replacementOption.click();
+ for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.activeSpaceId===missingSpace)break;await new Promise(resolve=>setTimeout(resolve,50));}
+ check(state.activeSpaceId===missingSpace&&state.groups.some(item=>item.title==='Recovered smoke group'),'reconnecting preserves space groups');
+ state=await command({type:'createTab',groupId:state.activeGroupId});
+ check(state.tabs.some(item=>item.cookieStoreId===replacement.cookieStoreId),'reconnected space uses selected Firefox container');
+ await command({type:'activateSpace',spaceId:'default'});
+
+ const smokeTab=await browser.tabs.getCurrent();await browser.tabs.show([smokeTab.id]);await browser.tabs.update(smokeTab.id,{active:true});
  const stressResult=new Promise(resolve=>{const listener=event=>{if(event.data?.channel==='tavvy-stress'){window.removeEventListener('message',listener);resolve(event.data);}};window.addEventListener('message',listener);});
  const stressFrame=document.createElement('iframe');stressFrame.src=browser.runtime.getURL('stress.html');document.documentElement.append(stressFrame);
  const stress=await stressResult;check(stress.ok,stress.error||'1000-tab renderer: bounded DOM, last row reachable, 100 open/close cycles, listener cleanup');results.push('stress metrics: '+JSON.stringify(stress));
@@ -202,6 +284,7 @@ const args = [
   "--source-dir",
   dir,
   "--arg=-headless",
+  "--pref=privacy.userContext.enabled=true",
   "--no-input",
   "--no-reload",
   "--start-url",

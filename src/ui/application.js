@@ -1,3 +1,4 @@
+import { SPACE_ICONS, spaceIcon } from "../domain/spaces.js";
 import { buildViewIndex, windowRange } from "../ui/view-index.js";
 import { animatePanelChange } from "../ui/panel-layout.js";
 import { mountSettings } from "../features/settings/settings.js";
@@ -100,7 +101,7 @@ export async function mountApplication(api) {
     tabViews = new Map(),
     archiveViews = new Map();
   let snapshot,
-    opened = new Set(),
+    opened = new Set(api.isDemo ? api.previewExpandedGroupIds || [] : []),
     archiveOpen = false,
     searchTimer,
     refreshTimer,
@@ -128,8 +129,21 @@ export async function mountApplication(api) {
   function paletteKey(event) {
     if (event.key === "Escape" && !palette.hidden) {
       event.preventDefault();
+      event.stopImmediatePropagation();
       closePalette(true);
     }
+  }
+  function showPalette(anchor, label, iconMode = false) {
+    paletteAnchor = anchor;
+    anchor.setAttribute("aria-expanded", "true");
+    palette.setAttribute("aria-label", label);
+    palette.classList.toggle("space-icon-palette", iconMode);
+    palette.hidden = false;
+    const anchorRect = anchor.getBoundingClientRect();
+    const paletteRect = palette.getBoundingClientRect();
+    palette.style.left = `${Math.max(4, Math.min(anchorRect.left, window.innerWidth - paletteRect.width - 4))}px`;
+    palette.style.top = `${Math.max(4, Math.min(anchorRect.bottom + 4, window.innerHeight - paletteRect.height - 4))}px`;
+    palette.querySelector('[aria-pressed="true"]')?.focus();
   }
   document.addEventListener("pointerdown", outsidePalette);
   document.addEventListener("keydown", paletteKey);
@@ -219,6 +233,7 @@ export async function mountApplication(api) {
   mountSettings({
     ...navigation,
     appVersion: api.runtime.getManifest?.().version ?? api.appVersion,
+    requestSpacesPermission: () => api.permissions?.request({ permissions: ["cookies"] }),
     onLanguageChange: () => {
       create.textContent = t("groups.new_group_action");
       create.setAttribute("aria-label", t("groups.create_group"));
@@ -260,6 +275,172 @@ export async function mountApplication(api) {
       },
     },
   });
+  const spaceIconUrl = (name) => api.spaceIconUrl?.(name) || `resource://usercontext-content/${name}.svg`;
+  const spacesBar = document.querySelector(".spaces-bar");
+  const spacesTrigger = spacesBar.querySelector(".spaces-trigger");
+  const spacesCurrent = spacesBar.querySelector(".spaces-current");
+  const spacesIcon = spacesTrigger.querySelector(".spaces-icon");
+  const spacesMenu = spacesBar.querySelector(".spaces-menu");
+  const spacesOptions = spacesMenu.querySelector(".spaces-options");
+  let spacesCloseTimer, spacesOpenFrame, spacesSignature, rebindSpaceId = null;
+  function setSpacesMenu(open, restoreFocus = false) {
+    clearTimeout(spacesCloseTimer);
+    cancelAnimationFrame(spacesOpenFrame);
+    spacesTrigger.setAttribute("aria-expanded", String(open));
+    spacesMenu.setAttribute("aria-hidden", String(!open));
+    spacesMenu.inert = !open;
+    if (open) {
+      spacesMenu.hidden = false;
+      renderSpaces();
+      run({ type: "snapshot" });
+      spacesOpenFrame = requestAnimationFrame(() => spacesMenu.classList.add("is-open"));
+    } else {
+      rebindSpaceId = null;
+      spacesSignature = undefined;
+      if (paletteAnchor && spacesBar.contains(paletteAnchor)) closePalette();
+      spacesMenu.classList.remove("is-open");
+      if (document.documentElement.classList.contains("animations-off") || matchMedia("(prefers-reduced-motion: reduce)").matches)
+        spacesMenu.hidden = true;
+      else spacesCloseTimer = setTimeout(() => { spacesMenu.hidden = true; }, 140);
+      if (restoreFocus) spacesTrigger.focus();
+    }
+  }
+  spacesTrigger.addEventListener("click", () => setSpacesMenu(spacesTrigger.getAttribute("aria-expanded") !== "true"));
+  function outsideSpaces(event) {
+    if (spacesTrigger.getAttribute("aria-expanded") === "true" && !spacesBar.contains(event.target) && !palette.contains(event.target)) setSpacesMenu(false);
+  }
+  function spacesKey(event) {
+    if (spacesTrigger.getAttribute("aria-expanded") !== "true") return;
+    if (event.key === "Escape") { event.preventDefault(); setSpacesMenu(false, true); return; }
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+    const items = [...spacesMenu.querySelectorAll('button:not([hidden])')].filter((item) => !item.closest("[hidden]"));
+    if (!items.length) return;
+    const current = items.indexOf(document.activeElement);
+    const next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 :
+      event.key === "ArrowDown" ? (current + 1) % items.length : (current <= 0 ? items.length - 1 : current - 1);
+    event.preventDefault();
+    items[next].focus();
+  }
+  document.addEventListener("pointerdown", outsideSpaces);
+  document.addEventListener("focusin", outsideSpaces);
+  document.addEventListener("keydown", spacesKey);
+  function renderSpaces() {
+    const spaces = snapshot.spaces || [{ id: "default", name: "" }];
+    const selectedId = snapshot.activeSpaceId || "default";
+    const selected = spaces.find((item) => item.id === selectedId) || spaces[0];
+    spacesBar.hidden = !snapshot.settings.experimentalSpaces;
+    if (spacesBar.hidden && spacesTrigger.getAttribute("aria-expanded") === "true") setSpacesMenu(false);
+    spacesCurrent.textContent = selected.id === "default" ? t("spaces.default") : selected.name;
+    spacesTrigger.setAttribute("aria-label", `${t("spaces.title")}: ${spacesCurrent.textContent}`);
+    spacesIcon.hidden = selected.id === "default";
+    spacesIcon.classList.toggle("spaces-icon-default", selected.id === "default");
+    spacesIcon.classList.toggle("spaces-icon-container", selected.id !== "default");
+    spacesIcon.style.maskImage = selected.id === "default" ? "" : `url("${spaceIconUrl(spaceIcon(selected.icon))}")`;
+    const signature = JSON.stringify([spaces, selectedId, getLanguage(), rebindSpaceId]);
+    if (spacesSignature === signature) return;
+    spacesSignature = signature;
+    if (rebindSpaceId) {
+      const heading = element("div", "spaces-rebind-title", t("spaces.choose_existing_container"));
+      const choices = spaces.filter((item) => item.firefoxContainer);
+      const nodes = choices.map((item) => {
+        const choice = button(item.name, "spaces-option spaces-rebind-option", document.createTextNode(item.name), () => {
+          const missingId = rebindSpaceId;
+          rebindSpaceId = null;
+          setSpacesMenu(false, true);
+          run({ type: "rebindSpace", spaceId: missingId, cookieStoreId: item.id.slice("container:".length) });
+        });
+        choice.setAttribute("role", "menuitem");
+        return choice;
+      });
+      if (!choices.length) nodes.push(element("div", "spaces-rebind-empty", t("spaces.no_available_containers")));
+      const back = button(t("spaces.cancel"), "spaces-option spaces-rebind-back", document.createTextNode(t("spaces.cancel")), () => {
+        rebindSpaceId = null;
+        renderSpaces();
+      });
+      back.setAttribute("role", "menuitem");
+      spacesOptions.replaceChildren(heading, ...nodes, back);
+      return;
+    }
+    spacesOptions.replaceChildren(...spaces.map((space) => {
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "spaces-option";
+      option.dataset.spaceId = space.id;
+      option.setAttribute("role", "menuitemradio");
+      option.setAttribute("aria-checked", String(space.id === selectedId));
+      const marker = document.createElement("span");
+      marker.className = `spaces-icon ${space.id === "default" ? "spaces-icon-default" : "spaces-icon-container"}`;
+      marker.setAttribute("aria-hidden", "true");
+      const label = document.createElement("span");
+      label.className = "spaces-option-label";
+      label.textContent = space.id === "default" ? t("spaces.default") : space.name;
+      option.append(label);
+      if (space.unavailable) {
+        option.title = t("spaces.container_unavailable");
+        option.setAttribute("aria-label", `${space.name}: ${t("spaces.container_unavailable")}`);
+        const missing = element("span", "spaces-unavailable", "!");
+        missing.setAttribute("aria-hidden", "true");
+        option.append(missing);
+      }
+      option.addEventListener("click", () => {
+        if (space.unavailable) {
+          rebindSpaceId = space.id;
+          renderSpaces();
+          return;
+        }
+        setSpacesMenu(false, true);
+        if (space.id === selectedId) return;
+        opened.clear();
+        run({ type: "activateSpace", spaceId: space.id });
+      });
+      const row = document.createElement("div");
+      row.className = "spaces-option-row";
+      if (space.id !== "default") {
+        marker.style.maskImage = `url("${spaceIconUrl(spaceIcon(space.icon))}")`;
+        const iconButton = document.createElement("button");
+        iconButton.type = "button";
+        iconButton.className = "spaces-icon-button";
+        iconButton.setAttribute("aria-label", `${t("spaces.choose_icon")}: ${space.name}`);
+        iconButton.setAttribute("aria-expanded", "false");
+        iconButton.setAttribute("aria-haspopup", "true");
+        iconButton.append(marker);
+        iconButton.addEventListener("click", () => {
+          if (paletteAnchor === iconButton) { closePalette(); return; }
+          closePalette();
+          palette.replaceChildren();
+          for (const name of SPACE_ICONS) {
+            const glyph = element("span", "spaces-icon spaces-icon-container");
+            glyph.style.maskImage = `url("${spaceIconUrl(name)}")`;
+            glyph.setAttribute("aria-hidden", "true");
+            const choice = button(`${t("spaces.choose_icon")}: ${name}`, "group-color-swatch spaces-icon-choice", glyph, () => {
+              closePalette(true);
+              run({ type: "setSpaceIcon", spaceId: space.id, icon: name });
+            });
+            choice.setAttribute("aria-pressed", String(name === spaceIcon(space.icon)));
+            palette.append(choice);
+          }
+          showPalette(iconButton, t("spaces.choose_icon"), true);
+        });
+        row.append(iconButton);
+      }
+      row.append(option);
+      if (space.unavailable) {
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "tab-close spaces-delete";
+        remove.setAttribute("aria-label", `${t("spaces.delete")}: ${space.name}`);
+        remove.title = t("spaces.delete");
+        remove.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4 4 12" /></svg>';
+        remove.addEventListener("click", () => {
+          if (!window.confirm(t("spaces.delete_confirm").replace("{name}", space.name))) return;
+          opened.clear();
+          run({ type: "deleteSpace", spaceId: space.id }).then(() => setSpacesMenu(false, true));
+        });
+        row.append(remove);
+      }
+      return row;
+    }));
+  }
   function showArchive(show) {
     animatePanelChange(() => {
       archiveOpen = show;
@@ -383,8 +564,6 @@ export async function mountApplication(api) {
     const colorInput = button(`${t("groups.group_color")}: ${group.title}`, "group-color-input", document.createTextNode(""), () => {
       if (paletteAnchor === colorInput) { closePalette(); return; }
       closePalette();
-      paletteAnchor = colorInput;
-      colorInput.setAttribute("aria-expanded", "true");
       palette.replaceChildren();
       const markerShape = groupMarker(group.id);
       palette.style.setProperty("--swatch-radius", markerShape.borderRadius);
@@ -403,12 +582,7 @@ export async function mountApplication(api) {
         swatch.setAttribute("aria-pressed", String(selected === color));
         palette.append(swatch);
       }
-      palette.hidden = false;
-      const anchorRect = colorInput.getBoundingClientRect();
-      const paletteRect = palette.getBoundingClientRect();
-      palette.style.left = `${Math.max(4, Math.min(anchorRect.left, window.innerWidth - paletteRect.width - 4))}px`;
-      palette.style.top = `${Math.max(4, Math.min(anchorRect.bottom + 4, window.innerHeight - paletteRect.height - 4))}px`;
-      palette.querySelector('[aria-pressed="true"]')?.focus();
+      showPalette(colorInput, t("groups.choose_group_color"));
     });
     colorInput.setAttribute("aria-expanded", "false");
     colorInput.setAttribute("aria-haspopup", "true");
@@ -701,6 +875,7 @@ export async function mountApplication(api) {
       recentButton.setAttribute("aria-expanded", "false");
     }
     renderArchive();
+    renderSpaces();
     const query = search.value.trim().toLocaleLowerCase();
     filterResult = viewIndex.search(query);
     for (const [id, view] of groupViews)
@@ -773,6 +948,11 @@ export async function mountApplication(api) {
     () => {
       disposed = true;
       disposeScrollbar();
+      clearTimeout(spacesCloseTimer);
+      cancelAnimationFrame(spacesOpenFrame);
+      document.removeEventListener("pointerdown", outsideSpaces);
+      document.removeEventListener("focusin", outsideSpaces);
+      document.removeEventListener("keydown", spacesKey);
       document.removeEventListener("pointerdown", outsidePalette);
       document.removeEventListener("keydown", paletteKey);
       disposeDragState();
