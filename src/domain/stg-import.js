@@ -14,7 +14,7 @@ export function parseStgBackup(input) {
     if (
       !value ||
       typeof value.url !== "string" ||
-      !/^(https?:\/\/|file:\/\/|about:blank$|about:newtab$)/i.test(value.url)
+      !/^(https?:\/\/|file:\/\/|about:blank$|about:newtab$|about:[a-z0-9-]+(?:[?#][^\s]*)?$)/i.test(value.url)
     )
       throw new Error("В бэкапе есть неподдерживаемая ссылка");
     if (++total > 10000) throw new Error("Слишком много вкладок");
@@ -62,10 +62,12 @@ export function parseStgBackup(input) {
   });
   if (input.pinnedTabs && !Array.isArray(input.pinnedTabs))
     throw new Error("Повреждён список закреплённых вкладок");
+  const pinnedTabs = (input.pinnedTabs || []).map(tab);
   return {
     groups,
-    pinnedTabs: (input.pinnedTabs || []).map(tab),
+    pinnedTabs,
     tabCount: total,
+    browserPages: [...groups.flatMap((g) => g.tabs), ...pinnedTabs].filter((t) => /^about:(?!blank$|newtab$)/i.test(t.url)).length,
     localFiles: groups
       .flatMap((g) => g.tabs)
       .filter((t) => t.url.startsWith("file:")).length,

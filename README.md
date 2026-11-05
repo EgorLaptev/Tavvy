@@ -22,6 +22,9 @@ and choose `build/firefox/manifest.json`. Firefox removes temporary add-ons
 after a restart. After rebuilding, reload the temporary add-on in
 `about:debugging` to use the new files.
 
+On a fresh install, Tavvy starts managing tabs only after you confirm the
+onboarding notice about other tab managers.
+
 ## Development
 
 ```sh

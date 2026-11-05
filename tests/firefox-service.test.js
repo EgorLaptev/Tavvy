@@ -403,6 +403,7 @@ test("cycles rejected; deleting a group keeps its tabs and reparents children", 
     /саму себя/,
   );
   await service.dispatch({ type: "moveTab", tabId: 2, groupId: parent }, 1);
+  snap = await service.dispatch({ type: "saveSettings", settings: { ...snap.settings, closeTabsOnGroupDelete: false } }, 1);
   snap = await service.dispatch({ type: "deleteGroup", groupId: parent }, 1);
   assert.ok(snap.tabs.some((t) => t.id === 2 && t.groupId === "inbox"));
   assert.equal(snap.groups.find((g) => g.id === child).parentId, null);
@@ -478,6 +479,7 @@ test("STG import preserves empty groups, titles, colors and URLs, and is idempot
         tabs: [
           { title: "Документ", url: "https://example.test/doc" },
           { title: "Файл", url: "file:///D:/notes.pdf" },
+          { title: "Дополнения", url: "about:addons" },
         ],
       },
     ],
@@ -488,6 +490,12 @@ test("STG import preserves empty groups, titles, colors and URLs, and is idempot
   assert.equal(snapshot.groups[1].title, "Пустая");
   assert.equal(snapshot.groups[1].color, "hsla(150, 100%, 50%, 1)");
   assert.equal(snapshot.importReport.localFiles, 1);
+  assert.equal(snapshot.importReport.browserPages, 1);
+  assert.ok(f.records.some((tab) => tab.url.includes("local-file.html#") && JSON.parse(decodeURIComponent(tab.url.split("#")[1])).url === "about:addons"));
+  const exported = await service.dispatch({ type: "exportBackup" }, 1);
+  assert.ok(exported.tabs.some((tab) => tab.url === "about:addons"));
+  await service.dispatch({ type: "importBackup", backup: exported }, 1);
+  assert.equal(f.records.filter((tab) => tab.url.includes("local-file.html#") && JSON.parse(decodeURIComponent(tab.url.split("#")[1])).url === "about:addons").length, 2);
   assert.ok(
     f.records.some((tab) =>
       tab.url.startsWith("moz-extension://test/local-file.html#"),
@@ -918,4 +926,19 @@ test("untagged tabs follow their Firefox container rather than the previous spac
   snap = await service.dispatch({ type: "snapshot" }, 1);
   assert.equal(snap.activeSpaceId, "default");
   assert.equal(snap.tabs.find((tab) => tab.id === ordinary.id).groupId, "inbox");
+});
+
+test("deleting a group closes its own tabs by default, keeps children and archives closed tabs", async () => {
+  const f = fixture(), service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "Parent" }, 1);
+  const parent = snap.groups.find((g) => g.title === "Parent").id;
+  snap = await service.dispatch({ type: "createGroup", title: "Child", parentId: parent }, 1);
+  const child = snap.groups.find((g) => g.title === "Child").id;
+  await service.dispatch({ type: "moveTab", tabId: 2, groupId: parent }, 1);
+  snap = await service.dispatch({ type: "deleteGroup", groupId: parent }, 1);
+  assert.equal(snap.tabs.some((tab) => tab.id === 2), false);
+  assert.equal(snap.groups.find((g) => g.id === child).parentId, null);
+  assert.ok(snap.archive.some((tab) => tab.url === "https://mozilla.org" && tab.groupId === "inbox"));
+  assert.ok(snap.tabs.some((tab) => tab.id === 3 && tab.pinned));
+  assert.ok(f.records.some((tab) => tab.id === 4));
 });

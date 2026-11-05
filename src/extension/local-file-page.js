@@ -8,7 +8,14 @@ browser.storage.local.get("tavvy:workspace:v1").then((data) => {
 const input = document.querySelector("input");
 try {
   const data = JSON.parse(decodeURIComponent(location.hash.slice(1)));
-  if (!data.url?.startsWith("file:")) throw new Error();
+  const browserPage = typeof data.url === "string" && /^about:[a-z0-9-]+(?:[?#][^\s]*)?$/i.test(data.url);
+  if (!data.url?.startsWith("file:") && !browserPage) throw new Error();
+  if (browserPage) {
+    document.querySelector("h1").dataset.i18n = "local_file.browser_page";
+    document.querySelector("main > p").dataset.i18n = "local_file.browser_page_instructions";
+    document.querySelector("input").dataset.i18nAriaLabel = "local_file.page_address";
+    translateStatic(document.documentElement);
+  }
   input.value = data.url;
   if (data.title) { document.title = data.title; document.querySelector("h1").textContent = data.title; }
 } catch { document.querySelector('[role="status"]').textContent = t("local_file.the_link_is_invalid"); }

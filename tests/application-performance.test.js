@@ -84,6 +84,160 @@ for (const n of [100, 500, 1000])
     }
   });
 
+test("width slider stays in place while dragging and commits on release", async () => {
+  const f = await page(10);
+  try {
+    const { document: doc, dom } = f;
+    const slider = doc.querySelector("#panel-width");
+    const before = doc.documentElement.style.getPropertyValue("--panel-width");
+    slider.value = "600";
+    slider.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+    assert.equal(doc.documentElement.style.getPropertyValue("--panel-width"), before);
+    assert.equal(slider.parentElement.querySelector("output").textContent, "600 px");
+    slider.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
+    assert.equal(doc.documentElement.style.getPropertyValue("--panel-width"), "600px");
+    await pause(100);
+    assert.equal((await f.service.dispatch({ type: "snapshot" }, 1)).settings.width, 600);
+  } finally { f.close(); }
+});
+
+test("height slider keeps the window steady while dragging and commits on release", async () => {
+  const f = await page(10);
+  try {
+    const { document: doc, dom } = f;
+    const slider = doc.querySelector("#panel-height");
+    const before = doc.documentElement.style.getPropertyValue("--panel-height");
+    slider.value = "600";
+    slider.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+    assert.equal(doc.documentElement.style.getPropertyValue("--panel-height"), before);
+    assert.equal(slider.parentElement.querySelector("output").textContent, "600 px");
+    slider.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
+    assert.equal(doc.documentElement.style.getPropertyValue("--panel-height"), "600px");
+    await pause(100);
+    assert.equal((await f.service.dispatch({ type: "snapshot" }, 1)).settings.height, 600);
+  } finally { f.close(); }
+});
+
+test("commands submitted before popup closure reach the background in order", async () => {
+  let releaseFirst;
+  const gate = new Promise((resolve) => { releaseFirst = resolve; });
+  const sent = [];
+  const f = await page(10, 2, ({ api }) => {
+    const send = api.runtime.sendMessage;
+    api.runtime.sendMessage = async (message) => {
+      if (message.command.type !== "createGroup") return send(message);
+      sent.push(message.command.title);
+      const result = send(message);
+      if (sent.length === 1) await gate;
+      return result;
+    };
+  });
+  try {
+    const { document: doc, dom } = f;
+    doc.querySelector(".create-group").click();
+    const form = doc.querySelector(".new-group-form");
+    const input = form.querySelector("input");
+    for (const title of ["First pending", "Second pending"]) {
+      input.value = title;
+      form.dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+      await pause(10);
+    }
+    assert.deepEqual(sent, ["First pending", "Second pending"], "both commands must be dispatched before the popup closes");
+    dom.window.dispatchEvent(new dom.window.PageTransitionEvent("pagehide"));
+    dom.window.close();
+    releaseFirst();
+    await pause(100);
+    const snapshot = await f.service.dispatch({ type: "snapshot" }, 1);
+    assert.deepEqual(sent, ["First pending", "Second pending"]);
+    assert.deepEqual(snapshot.groups.filter((group) => group.title.endsWith(" pending")).map((group) => group.title), sent);
+  } finally { releaseFirst(); f.close(); }
+});
+
+test("virtualized rows update after delayed animation frames resume", async () => {
+  const f = await page(1000, 1);
+  try {
+    const { document: doc, dom } = f;
+    const scroller = doc.querySelector(".groups");
+    const group = doc.querySelector(".group");
+    const inner = group.querySelector(".tabs-inner");
+    Object.defineProperty(scroller, "clientHeight", { configurable: true, value: 300 });
+    scroller.getBoundingClientRect = () => ({ top: 0, bottom: 300, height: 300 });
+    inner.getBoundingClientRect = () => ({ top: -scroller.scrollTop, bottom: 30000, height: 30000 });
+    group.querySelector(".group-toggle").click();
+    assert.ok(doc.querySelector('[data-tab-id="1"]'));
+    const frames = [];
+    const originalFrame = dom.window.requestAnimationFrame;
+    dom.window.requestAnimationFrame = (callback) => { frames.push(callback); return frames.length; };
+    scroller.scrollTop = 29700;
+    scroller.dispatchEvent(new dom.window.Event("scroll"));
+    assert.equal(doc.querySelector('[data-tab-id="1000"]'), null);
+    assert.ok(frames.length > 0);
+    for (const frame of frames.splice(0)) frame(100);
+    assert.ok(doc.querySelector('[data-tab-id="1000"]'));
+    assert.ok(doc.querySelectorAll(".tab-row").length <= 30);
+    dom.window.requestAnimationFrame = originalFrame;
+  } finally { f.close(); }
+});
+
+for (const eventType of ["pointercancel", "lostpointercapture"]) test(`group drag cancels cleanly on ${eventType}`, async () => {
+  const f = await page(10, 3);
+  try {
+    const { document: doc, dom } = f;
+    dom.window.Element.prototype.animate = () => ({ finished: Promise.resolve() });
+    const source = doc.querySelector('[data-group-id="g2"]');
+    const target = doc.querySelector('[data-group-id="g1"]');
+    const header = source.querySelector(":scope > .group-controls > .group-header");
+    const controls = target.querySelector(":scope > .group-controls");
+    const rect = { left: 0, right: 200, top: 100, bottom: 140, width: 200, height: 40 };
+    target.getBoundingClientRect = controls.getBoundingClientRect = () => rect;
+    header.setPointerCapture = () => {};
+    doc.elementFromPoint = () => controls;
+    const pointer = (type, y) => header.dispatchEvent(new dom.window.MouseEvent(type, { bubbles: true, button: 0, clientX: 40, clientY: y }));
+    pointer("pointerdown", 180);
+    pointer("pointermove", 120);
+    await pause(300);
+    assert.ok(doc.body.classList.contains("group-dragging"));
+    pointer(eventType, 120);
+    await pause(50);
+    const snapshot = await f.service.dispatch({ type: "snapshot" }, 1);
+    assert.deepEqual(snapshot.groups.map((group) => group.id), ["inbox", "g1", "g2"]);
+    assert.equal(snapshot.groups.find((group) => group.id === "g2").parentId, null);
+    assert.equal(doc.querySelector(".group-placeholder"), null);
+    assert.equal(doc.querySelector(".group-drag-ghost"), null);
+    assert.equal(doc.body.classList.contains("group-dragging"), false);
+    assert.equal(doc.querySelector(".group-nest-target"), null);
+  } finally { f.close(); }
+});
+
+test("closing the popup during group dragging clears drag state without moving groups", async () => {
+  const f = await page(10, 3);
+  try {
+    const { document: doc, dom } = f;
+    dom.window.Element.prototype.animate = () => ({ finished: Promise.resolve() });
+    const source = doc.querySelector('[data-group-id="g2"]');
+    const target = doc.querySelector('[data-group-id="g1"]');
+    const header = source.querySelector(":scope > .group-controls > .group-header");
+    const controls = target.querySelector(":scope > .group-controls");
+    const rect = { left: 0, right: 200, top: 100, bottom: 140, width: 200, height: 40 };
+    target.getBoundingClientRect = controls.getBoundingClientRect = () => rect;
+    header.setPointerCapture = () => {};
+    doc.elementFromPoint = () => controls;
+    header.dispatchEvent(new dom.window.MouseEvent("pointerdown", { bubbles: true, button: 0, clientX: 40, clientY: 180 }));
+    header.dispatchEvent(new dom.window.MouseEvent("pointermove", { bubbles: true, clientX: 40, clientY: 120 }));
+    await pause(300);
+    assert.ok(target.classList.contains("group-nest-target"));
+    dom.window.dispatchEvent(new dom.window.PageTransitionEvent("pagehide"));
+    assert.equal(doc.querySelector(".group-placeholder"), null);
+    assert.equal(doc.querySelector(".group-drag-ghost"), null);
+    assert.equal(doc.querySelector(".group-nest-target"), null);
+    assert.equal(doc.body.classList.contains("group-dragging"), false);
+    assert.equal(doc.querySelector(".group-trash").classList.contains("visible"), false);
+    const snapshot = await f.service.dispatch({ type: "snapshot" }, 1);
+    assert.deepEqual(snapshot.groups.map((group) => group.id), ["inbox", "g1", "g2"]);
+    assert.equal(snapshot.groups.find((group) => group.id === "g2").parentId, null);
+  } finally { f.close(); }
+});
+
 test("experimental spaces can be enabled, created and switched in the popup", async () => {
   const f = await page(10, 2, ({ api }) => {
     api.permissions = { request: async () => true, contains: async () => true };

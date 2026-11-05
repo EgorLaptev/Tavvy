@@ -1,7 +1,7 @@
 import { LANGUAGES } from "../domain/languages.js";
 import { setLanguage, t } from "../locales/index.js";
+import { ONBOARDING_KEY as KEY } from "../background/onboarding-gate.js";
 
-const KEY = "tavvy:tab-manager-notice:v1";
 
 export async function showCompatibilityNotice(api, popup, windowId) {
   if (api.isDemo) return;
@@ -69,14 +69,11 @@ export async function showCompatibilityNotice(api, popup, windowId) {
       button.disabled = true;
       select.disabled = true;
       try {
-        if (language !== initialLanguage) {
-          const send = (command) => api.runtime.sendMessage({ channel: "tavvy-command", windowId, command });
-          const current = await send({ type: "snapshot" });
-          if (!current?.ok) throw new Error("Could not load settings");
-          const saved = await send({ type: "saveSettings", settings: { ...current.snapshot.settings, language } });
-          if (!saved?.ok) throw new Error("Could not save language");
-        }
-        await api.storage.local.set({ [KEY]: true });
+        const result = await api.runtime.sendMessage({
+          channel: "tavvy-command", windowId,
+          command: { type: "completeOnboarding", language },
+        });
+        if (!result?.ok) throw new Error("Could not activate Tavvy");
         notice.remove();
         popup.classList.remove("showing-compatibility-notice");
         resolve();

@@ -13,7 +13,11 @@ loaded by the extension.
 `src/background/index.js` registers Firefox handlers synchronously so the
 browser can wake the non-persistent Manifest V3 background page.
 `workspace-service.js` runs commands sequentially; closing the popup does not
-stop operations. Each service instance loads state from `browser.storage.local`:
+stop operations. On a fresh install, `onboarding-gate.js` blocks workspace
+commands, tab/window processing, context menus and scheduled backups until the
+user confirms the onboarding notice. The acknowledgement is stored in
+`tavvy:tab-manager-notice:v1`; existing acknowledged installs stay active.
+The workspace service is initialized only after confirmation. Each service instance loads state from `browser.storage.local`:
 `tavvy:workspace:v1` contains groups, archive, imports and settings, while
 `tavvy:known:v1` contains compact tab records. The previous format with `known`
 inside the workspace is read and migrated on save. Ordinary snapshots avoid
@@ -56,8 +60,10 @@ notify open popups; snapshot messages do not trigger another notification.
 
 ## UI
 
-The shared renderer sends commands through `runtime.sendMessage` or the memory
-adapter. It stores UI state and the last confirmed snapshot. Search indexes are
+The shared renderer sends commands promptly through `runtime.sendMessage` or
+the memory adapter, allowing the background queue to receive them before the
+popup closes. It applies responses in order and stores UI state and the last
+confirmed snapshot. Search indexes are
 built once per snapshot change. Card DOM is reused, and rows for closed groups
 are not created. Groups with more than 120 rows use virtualization with fixed
 30 px rows and an overscan of eight. Runtime listeners and timers are cleaned up
@@ -171,3 +177,13 @@ before `discard`, so caching does not weaken the safety check.
 
 `npm run benchmark` reproduces API counts for 100, 500 and 1000 tabs. See
 [performance.md](performance.md) for measurements and limitations.
+
+## Restore safety
+
+The background restore manager validates the input, captures the current
+window's eligible tab IDs, and waits for a fresh Tavvy backup download to
+complete before importing. After a successful restore it closes those original
+tabs only when the import page option is checked; tabs opened during import,
+other windows and extension pages are kept. A failed backup or import and an
+already-imported STG backup never trigger closing. Existing groups are kept.
+Firefox session state such as unsaved forms is not part of the JSON backup.

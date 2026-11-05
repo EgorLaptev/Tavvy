@@ -415,5 +415,7 @@ export function disposeDragState() {
   }
   groupDrag = null;
   draggedTab = null;
+  document.querySelectorAll(".group-nest-target").forEach((node) => node.classList.remove("group-nest-target"));
+  document.querySelector(".group-trash")?.classList.remove("visible", "holding", "ready");
   document.body.classList.remove("group-dragging");
 }

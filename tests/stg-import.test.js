@@ -44,3 +44,9 @@ test("fingerprint is stable regardless of backup time and STG settings", async (
     ),
   );
 });
+
+test("STG parser preserves Firefox pages in groups and pinned tabs", () => {
+  const plan = parseStgBackup({ version: "5", groups: [{ title: "Group", tabs: [{ url: "about:addons" }] }], pinnedTabs: [{ url: "about:config" }] });
+  assert.equal(plan.groups[0].tabs[0].url, "about:addons");
+  assert.equal(plan.browserPages, 2);
+});

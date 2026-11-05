@@ -5,6 +5,22 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.9 — Bouncy Badger — 2026-11-05
+
+- Keep the window size sliders steady while dragging and apply the new size on release.
+
+- Close a deleted group’s tabs by default, with an option to keep them.
+
+- Set the default automatic backup frequency to every four hours.
+
+- Back up the current workspace before restoring, with an option to keep existing tabs.
+
+- Preserve Firefox system pages when importing Simple Tab Groups backups.
+
+- Keep tab management, context menus and backups inactive until onboarding is confirmed.
+
+- Send popup actions to the background promptly so queued actions survive popup closure.
+
 ## 0.2.8 — Wandering Otter — 2026-11-05
 
 - Refresh the local interface preview with English demo groups, nested groups, tabs and mock Firefox containers.

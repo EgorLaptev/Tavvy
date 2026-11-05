@@ -9,14 +9,16 @@ developer. To display favicons, Firefox may request the icon URLs from the
 websites hosting them, exposing the request and IP address to those sites.
 Private windows are not supported.
 
-Automatic backups are enabled by default and saved daily as unencrypted JSON
+Automatic backups are enabled by default and saved every four hours as unencrypted JSON
 files containing tab URLs and titles in the Tavvy folder under Downloads.
 Disable them or change the schedule and folder in Settings → Backups. These
 files remain after the extension is removed.
 
 ## Reviewer notes
 
-No account is required. Open the toolbar popup to create groups, switch groups,
+No account is required. On a fresh install, open the toolbar popup and confirm
+the compatibility notice before Tavvy starts managing tabs or schedules backups.
+Then use the popup to create groups, switch groups,
 open settings, and use the archive. For backups, open Settings → Backups; choose
 Create backup now or change the schedule. A backup file is saved in Downloads.
 For import, select a Tavvy or Simple Tab Groups JSON backup through the import

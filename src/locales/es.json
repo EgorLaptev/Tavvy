@@ -52,6 +52,7 @@
     },
     "animations": "animaciones",
     "unload_inactive_tabs": "Descargar pestañas inactivas",
+    "close_tabs_on_group_delete": "Cerrar pestañas al eliminar un grupo",
     "group_pinned_tabs": "Agrupar pestañas fijadas",
     "nested_groups": {
       "title": "Grupos anidados",
@@ -146,7 +147,8 @@
     "curious_capybara": "Carpincho curioso",
     "cosmic_wombat": "Wombat cósmico",
     "dancing_red_panda": "Panda rojo bailarín",
-    "wandering_otter": "Nutria viajera"
+    "wandering_otter": "Nutria viajera",
+    "bouncy_badger": "Tejón saltarín"
   },
   "errors": {
     "background_process_is_unavailable": "El proceso en segundo plano no está disponible",
@@ -184,13 +186,14 @@
     "this_backup_has_already_been_imported": "Esta copia de seguridad ya ha sido importada.",
     "import_title": "Importar",
     "import_tavvy": "Importar — Tavvy",
-    "import_page_description": "Importe una copia de seguridad de Grupos de pestañas simples o la configuración de Tavvy. Se mantienen los grupos existentes.",
+    "import_page_description": "Antes de restaurar, Tavvy guarda una copia. Las pestañas compatibles de esta ventana se cerrarán tras la restauración; las demás ventanas y páginas de extensiones se conservarán.",
     "choose_json_file": "Elija el archivo JSON",
+    "close_existing_tabs": "Cerrar las pestañas actuales de esta ventana después de restaurar",
     "choose_a_backup_file": "Elija un archivo de respaldo.",
     "retry_import": "Reintentar importación",
     "done": "hecho",
     "reading_file": "Leyendo archivo…",
-    "backup_restored": "Copia de seguridad de Tavvy restaurada. Se mantuvieron las pestañas existentes; Las pestañas restauradas se agregaron a la ventana actual.",
+    "backup_restored": "Copia de Tavvy restaurada.",
     "backup_already_imported_no_duplicates": "Esta copia de seguridad ya fue importada. No se crearon duplicados.",
     "this_is_not_an_stg_backup_or_tavvy_settings_file": "Esta no es una copia de seguridad de STG ni un archivo de configuración de Tavvy.",
     "settings_imported": "Configuraciones importadas.",
@@ -199,10 +202,14 @@
     "import_result_missing": "No se recibió ningún resultado de importación. Compruebe que esté instalada la última versión de Tavvy.",
     "import_in_progress": "Importando grupos {groups} y pestañas {tabs}. \n Mantenga esta página abierta para ver el resultado.",
     "import_complete": "Hecho. Grupos: {groups}. Pestañas: {tabs}. Fijado: {pinned}.",
+    "import_browser_pages_result": "\nPáginas del navegador ({count}) guardadas con sus direcciones originales.",
     "import_local_files_result": " \n Los archivos locales ({count}) se guardaron con sus direcciones originales.",
     "import_failed_error": "Error de importación: {error}"
   },
   "local_file": {
+    "browser_page": "Página del navegador",
+    "browser_page_instructions": "Firefox no permite que las extensiones abran esta página directamente. Copia la dirección en la barra del navegador.",
+    "page_address": "Dirección de la página",
     "local_file": "archivo local",
     "local_file_instructions": "Este enlace se guardó desde una copia de seguridad. Firefox no puede abrir este archivo local directamente desde la extensión. Copie la dirección y péguela en la barra de direcciones del navegador.",
     "file_address": "Dirección del archivo",

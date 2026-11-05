@@ -2,3 +2,6 @@ node_modules/
 dist/
 
 build/
+
+# Local competitor research; not part of the repository.
+.local-research/

@@ -52,6 +52,7 @@
     },
     "animations": "Animations",
     "unload_inactive_tabs": "Unload inactive tabs",
+    "close_tabs_on_group_delete": "Close tabs when deleting a group",
     "group_pinned_tabs": "Group pinned tabs",
     "nested_groups": {
       "title": "Nested groups",
@@ -146,7 +147,8 @@
     "curious_capybara": "Curious Capybara",
     "cosmic_wombat": "Cosmic Wombat",
     "dancing_red_panda": "Dancing Red Panda",
-    "wandering_otter": "Wandering Otter"
+    "wandering_otter": "Wandering Otter",
+    "bouncy_badger": "Bouncy Badger"
   },
   "errors": {
     "background_process_is_unavailable": "Background process is unavailable",
@@ -184,13 +186,14 @@
     "this_backup_has_already_been_imported": "This backup has already been imported",
     "import_title": "Import",
     "import_tavvy": "Import — Tavvy",
-    "import_page_description": "Import a Simple Tab Groups backup or Tavvy settings. Existing groups are kept.",
+    "import_page_description": "Before restoring, Tavvy saves a backup. Current supported tabs in this window will be closed after a successful restore; other windows and extension pages are kept.",
     "choose_json_file": "Choose JSON file",
+    "close_existing_tabs": "Close current tabs in this window after restoring",
     "choose_a_backup_file": "Choose a backup file.",
     "retry_import": "Retry import",
     "done": "Done",
     "reading_file": "Reading file…",
-    "backup_restored": "Tavvy backup restored. Existing tabs were kept; restored tabs were added to the current window.",
+    "backup_restored": "Tavvy backup restored.",
     "backup_already_imported_no_duplicates": "This backup was already imported. No duplicates were created.",
     "this_is_not_an_stg_backup_or_tavvy_settings_file": "This is not an STG backup or Tavvy settings file.",
     "settings_imported": "Settings imported.",
@@ -199,10 +202,14 @@
     "import_result_missing": "No import result received. Check that the latest Tavvy build is installed.",
     "import_in_progress": "Importing {groups} groups and {tabs} tabs.\nKeep this page open to see the result.",
     "import_complete": "Done. Groups: {groups}. Tabs: {tabs}. Pinned: {pinned}.",
+    "import_browser_pages_result": "\nBrowser pages ({count}) were saved with their original addresses.",
     "import_local_files_result": "\nLocal files ({count}) were saved with their original addresses.",
     "import_failed_error": "Import failed: {error}"
   },
   "local_file": {
+    "browser_page": "Browser page",
+    "browser_page_instructions": "Firefox does not allow extensions to open this page directly. Copy the address and paste it into the browser address bar.",
+    "page_address": "Page address",
     "local_file": "Local file",
     "local_file_instructions": "This link was saved from a backup. Firefox cannot open this local file directly from the extension. Copy the address and paste it into the browser address bar.",
     "file_address": "File address",

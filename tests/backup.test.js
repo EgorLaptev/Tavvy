@@ -45,7 +45,9 @@ test("backups are scheduled by default while an explicit opt-out is respected", 
   const manager = createBackupManager(api, {});
   await manager.schedule();
   assert.equal(alarms.length, 1);
-  assert.ok(alarms[0].when > Date.now() + 23 * 3600000);
+  assert.ok(alarms[0].when > Date.now() + 3 * 3600000 && alarms[0].when <= Date.now() + 4 * 3600000);
+  assert.equal(normalizeSettings({}).backupFrequency, "fourHours");
+  assert.equal(normalizeSettings({ backupFrequency: "daily" }).backupFrequency, "daily");
   stored = { settings: { backupEnabled: false } };
   await manager.schedule();
   assert.equal(alarms.length, 1);

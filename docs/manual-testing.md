@@ -10,6 +10,16 @@ rebuilding. Enable animations in Tavvy and check both dark and light themes
 when changing layout or motion. Resize the popup to its minimum supported width
 for truncation and overflow checks.
 
+## First launch
+
+- In a fresh disposable profile, load the extension but do not confirm the
+  notice. Open, move, activate and close ordinary tabs; verify Tavvy does not
+  hide, group or archive them and does not offer its tab context menu.
+- Open the popup and close it without confirmation; repeat after restarting the
+  browser. The extension must stay inactive. Then confirm onboarding and verify
+  group management and the context menu work. Previously confirmed installations
+  must remain enabled after an update, with their data intact.
+
 ## Groups and tabs
 
 - Create several groups and tabs. Switch groups, move a tab through its Firefox

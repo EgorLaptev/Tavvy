@@ -448,7 +448,14 @@ export function createWorkspaceService(
     });
     state.archive = state.archive.slice(0, 200);
   }
+  function isRestrictedPage(url) {
+    return /^about:[a-z0-9-]+(?:[?#][^\s]*)?$/i.test(url) && !/^about:(blank|newtab)$/i.test(url);
+  }
+  function placeholderUrl(url, title) {
+    return api.runtime.getURL("local-file.html") + "#" + encodeURIComponent(JSON.stringify({ url, title }));
+  }
   function safeUrl(url) {
+    if (isRestrictedPage(url)) return placeholderUrl(url, url);
     if (
       api.runtime?.getURL &&
       url.startsWith(api.runtime.getURL("local-file.html") + "#")
@@ -514,13 +521,8 @@ export function createWorkspaceService(
       const marker = fingerprint + ":" + key;
       let existing = existingByMarker.get(marker);
       if (!existing) {
-        const local = record.url.startsWith("file:");
-        const url = local
-          ? api.runtime.getURL("local-file.html") +
-            "#" +
-            encodeURIComponent(
-              JSON.stringify({ url: record.url, title: record.title }),
-            )
+        const url = record.url.startsWith("file:") || isRestrictedPage(record.url)
+          ? placeholderUrl(record.url, record.title)
           : record.url;
         existing = await api.tabs.create({
           windowId,
@@ -549,6 +551,7 @@ export function createWorkspaceService(
       tabs: plan.groups.reduce((n, g) => n + g.tabs.length, 0),
       pinnedTabs: plan.pinnedTabs.length,
       localFiles: plan.localFiles,
+      browserPages: plan.browserPages,
     };
     state.importReport = job.report;
     delete job.completed;
@@ -561,7 +564,7 @@ export function createWorkspaceService(
     if (type === "snapshot") return snapshot(windowId);
     if (type === "exportBackup") {
       const records = await scan();
-      const safe = /^(https?:\/\/|file:\/\/|about:blank$|about:newtab$)/i;
+      const safe = /^(https?:\/\/|file:\/\/|about:blank$|about:newtab$|about:[a-z0-9-]+(?:[?#][^\s]*)?$)/i;
       const ids = new Set(state.groups.map((g) => g.id));
       const serialize = (entry) => {
         let url = entry.url;
@@ -599,8 +602,8 @@ export function createWorkspaceService(
       await save();
       const selected = await active(windowId);
       for (const entry of plan.tabs) {
-        const local = entry.url.startsWith("file:");
-        const url = local ? api.runtime.getURL("local-file.html") + "#" + encodeURIComponent(JSON.stringify({ url: entry.url, title: entry.title })) : entry.url;
+        const local = entry.url.startsWith("file:") || isRestrictedPage(entry.url);
+        const url = local ? placeholderUrl(entry.url, entry.title) : entry.url;
         const tab = await api.tabs.create({ windowId, active: false, pinned: entry.pinned, ...await tabContainer(mapping.get(entry.groupId)), ...(url === "about:newtab" ? {} : { url }), ...(!entry.pinned && !url.startsWith("about:") ? { discarded: true, title: entry.title } : {}) });
         await api.sessions.setTabValue(tab.id, TAG, mapping.get(entry.groupId));
         await api.sessions.setTabValue(tab.id, "tavvy:import-metadata", { title: entry.title });
@@ -823,15 +826,32 @@ export function createWorkspaceService(
       for (const tab of currentTabs)
         if (!windowGroups.has(tab.windowId))
           windowGroups.set(tab.windowId, await active(tab.windowId));
+      const closeTabs = state.settings?.closeTabsOnGroupDelete !== false;
+      const targetTabs = currentTabs.filter((tab) => tab.groupId === deleting.id &&
+        (!tab.pinned || state.settings?.groupPinnedTabs));
+      if (closeTabs) {
+        // Switch first so closing the last visible tab cannot close the window.
+        for (const [affectedWindowId, activeId] of windowGroups)
+          if (activeId === deleting.id || targetTabs.some((tab) => tab.windowId === affectedWindowId && tab.active))
+            await activate(affectedWindowId, replacement.id);
+        for (const tab of targetTabs) {
+          await api.tabs.remove(tab.id);
+          archive({ ...tab, groupId: replacement.id });
+          forgetKnown(tab.id);
+        }
+      } else {
+        for (const tab of targetTabs)
+          await api.sessions.setTabValue(tab.id, TAG, replacement.id);
+      }
+      // Global pinned tabs remain open and are no longer associated with the deleted group.
       for (const tab of currentTabs)
-        if (tab.groupId === deleting.id)
+        if (tab.groupId === deleting.id && tab.pinned && !state.settings?.groupPinnedTabs)
           await api.sessions.setTabValue(tab.id, TAG, replacement.id);
       for (const child of state.groups)
         if (child.parentId === deleting.id) child.parentId = deleting.parentId;
       for (const entry of state.archive)
         if (entry.groupId === deleting.id) entry.groupId = replacement.id;
       state.groups = state.groups.filter((item) => item.id !== deleting.id);
-      // Deleting a group never closes its real tabs.
       for (const [affectedWindowId, activeId] of windowGroups) {
         if (activeId === deleting.id) await activate(affectedWindowId, replacement.id);
         else await visibility(affectedWindowId, activeId);

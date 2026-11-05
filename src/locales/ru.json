@@ -52,6 +52,7 @@
     },
     "animations": "Анимации",
     "unload_inactive_tabs": "Выгружать неактивные вкладки",
+    "close_tabs_on_group_delete": "Закрывать вкладки при удалении группы",
     "group_pinned_tabs": "Закреплённые вкладки по группам",
     "nested_groups": {
       "title": "Вложенные группы",
@@ -146,7 +147,8 @@
     "curious_capybara": "Любопытная капибара",
     "cosmic_wombat": "Космический вомбат",
     "dancing_red_panda": "Танцующая малая панда",
-    "wandering_otter": "Странствующая выдра"
+    "wandering_otter": "Странствующая выдра",
+    "bouncy_badger": "Прыгучий барсук"
   },
   "errors": {
     "background_process_is_unavailable": "Фоновый процесс недоступен",
@@ -184,13 +186,14 @@
     "this_backup_has_already_been_imported": "Этот бэкап уже импортирован",
     "import_title": "Импорт",
     "import_tavvy": "Импорт — Tavvy",
-    "import_page_description": "Бэкап Simple Tab Groups или настройки Tavvy. Существующие группы сохранятся.",
+    "import_page_description": "Перед восстановлением Tavvy сохранит резервную копию. После успешного восстановления поддерживаемые вкладки этого окна будут закрыты; другие окна и страницы расширений сохранятся.",
     "choose_json_file": "Выбрать JSON-файл",
+    "close_existing_tabs": "Закрыть текущие вкладки этого окна после восстановления",
     "choose_a_backup_file": "Выберите файл бэкапа.",
     "retry_import": "Повторить импорт",
     "done": "Готово",
     "reading_file": "Чтение файла…",
-    "backup_restored": "Копия Tavvy восстановлена. Существующие вкладки сохранены; вкладки из копии добавлены в текущее окно.",
+    "backup_restored": "Бэкап Tavvy восстановлен.",
     "backup_already_imported_no_duplicates": "Этот бэкап уже импортирован. Новые дубликаты не созданы.",
     "this_is_not_an_stg_backup_or_tavvy_settings_file": "Это не бэкап STG и не файл настроек Tavvy.",
     "settings_imported": "Настройки импортированы.",
@@ -199,10 +202,14 @@
     "import_result_missing": "Не получен результат импорта. Проверьте, что установлена последняя сборка Tavvy.",
     "import_in_progress": "Импорт групп: {groups}, вкладок: {tabs}.\nМожно оставить эту страницу открытой — она покажет результат.",
     "import_complete": "Готово. Групп: {groups}. Вкладок: {tabs}. Закреплённых: {pinned}.",
+    "import_browser_pages_result": "\nСтраницы браузера ({count}) сохранены с исходными адресами.",
     "import_local_files_result": "\nЛокальные файлы ({count}) сохранены вкладками с исходным адресом.",
     "import_failed_error": "Импорт не выполнен: {error}"
   },
   "local_file": {
+    "browser_page": "Страница браузера",
+    "browser_page_instructions": "Firefox не разрешает расширениям открывать эту страницу напрямую. Скопируйте адрес и вставьте его в адресную строку браузера.",
+    "page_address": "Адрес страницы",
     "local_file": "Локальный файл",
     "local_file_instructions": "Ссылка сохранена из бэкапа. Firefox не разрешает расширению открыть этот файл напрямую. Скопируйте адрес и вставьте его в адресную строку браузера.",
     "file_address": "Адрес файла",

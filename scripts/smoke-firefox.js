@@ -60,11 +60,43 @@ await build({
  const loadedIcon = await new Promise((resolve) => { const img = new Image(); img.onload = () => resolve(true); img.onerror = () => resolve(false); img.src = 'http://127.0.0.1:${port}/test-favicon.png'; });
  check(loadedIcon,'remote favicon loads in extension page');
  for(const icon of ['fingerprint']){const loaded=await new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(true);img.onerror=()=>resolve(false);img.src='resource://usercontext-content/'+icon+'.svg';});check(loaded,'Firefox container icon loads: '+icon);}
+ const {id:windowId}=await browser.windows.getCurrent();
+ async function command(command){ const result=await browser.runtime.sendMessage({channel:'tavvy-command',windowId,command});if(!result?.ok)throw new Error(result?.error || 'No background response');return result.snapshot; }
+ const smokeBeforeConsent=await browser.tabs.getCurrent();
+ const beforeConsent=await browser.tabs.create({windowId,active:false,url:'about:blank'});
+ const closedBeforeConsent=await browser.tabs.create({windowId,active:false,url:'about:blank'});
+ await browser.tabs.update(beforeConsent.id,{active:true});
+ await browser.tabs.move(beforeConsent.id,{index:0});
+ await browser.tabs.remove(closedBeforeConsent.id);
+ await browser.tabs.update(smokeBeforeConsent.id,{active:true});
+ await new Promise(resolve=>setTimeout(resolve,300));
+ const rejected=await browser.runtime.sendMessage({channel:'tavvy-command',windowId,command:{type:'snapshot'}});
+ check(rejected?.ok===false,'background rejects commands before onboarding');
+ check((await browser.sessions.getTabValue(beforeConsent.id,'tavvy:group'))===undefined,'tabs remain unassigned before onboarding');
+ check(!(await browser.tabs.get(beforeConsent.id)).hidden,'tabs stay visible before onboarding');
+ check(!(await browser.storage.local.get('tavvy:workspace:v1'))['tavvy:workspace:v1'],'workspace is not initialized before onboarding');
+ check(!(await browser.alarms.get('tavvy-backup')),'backup is not scheduled before onboarding');
+ const frame=document.createElement('iframe');frame.style.width='440px';frame.style.height='300px';frame.src=browser.runtime.getURL('popup.html');document.documentElement.append(frame);
+ for(let attempt=0;attempt<100&&!frame.contentDocument?.querySelector('.compatibility-notice button');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ const notice=frame.contentDocument.querySelector('.compatibility-notice');check(Boolean(notice),'first launch shows compatibility notice');
+ check(!frame.contentDocument.querySelector('.group-header'),'groups are unavailable before acknowledgement');
+ const noticeLanguage=notice.querySelector('select');noticeLanguage.value='ru';noticeLanguage.dispatchEvent(new Event('change'));
+ check(notice.querySelector('h1').textContent==='Прежде чем начать'&&notice.querySelector('button').textContent==='Понятно','notice language updates immediately');
+ const noticeHeight=frame.contentDocument.querySelector('.popup').getBoundingClientRect().height;
+ const noticeBounds=notice.getBoundingClientRect();const popupStyle=frame.contentWindow.getComputedStyle(frame.contentDocument.querySelector('.popup'));
+ check(Math.abs(noticeHeight-noticeBounds.height-parseFloat(popupStyle.paddingTop)-parseFloat(popupStyle.paddingBottom))<1,'notice popup fits its content');
+ notice.querySelector('button').click();
+ for(let attempt=0;attempt<100&&!frame.contentDocument?.querySelector('.group-header');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ const ui=frame.contentDocument;check(Boolean(ui.querySelector('.group-header')),'live popup renders');
+ check((await command({type:'snapshot'})).settings.language==='ru'&&ui.documentElement.lang==='ru','notice language persists in settings');
+ check(ui.querySelector('.popup').getBoundingClientRect().height>noticeHeight,'normal popup height is restored after acknowledgement');
+ check((await browser.storage.local.get('tavvy:tab-manager-notice:v1'))['tavvy:tab-manager-notice:v1']===true,'notice acknowledgement is saved');
+ const reopened=document.createElement('iframe');reopened.src=browser.runtime.getURL('popup.html');document.documentElement.append(reopened);
+ for(let attempt=0;attempt<100&&!reopened.contentDocument?.querySelector('.group-header');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ check(Boolean(reopened.contentDocument.querySelector('.group-header'))&&!reopened.contentDocument.querySelector('.compatibility-notice'),'notice is not shown after reopening');reopened.remove();
  const iconCanvas=document.createElement('canvas');iconCanvas.width=iconCanvas.height=32;iconCanvas.getContext('2d').fillRect(0,0,16,16);
  await new Promise((resolve,reject)=>browser.menus.create({id:'smoke-menu-icon',parentId:'tavvy-move-tab',title:'Smoke marker',contexts:['tab'],icons:{32:iconCanvas.toDataURL('image/png')}},()=>browser.runtime.lastError?reject(new Error(browser.runtime.lastError.message)):resolve()));
  check(true,'Firefox accepts generated menu marker');await browser.menus.remove('smoke-menu-icon');
- const {id:windowId}=await browser.windows.getCurrent();
- async function command(command){ const result=await browser.runtime.sendMessage({channel:'tavvy-command',windowId,command});if(!result?.ok)throw new Error(result?.error || 'No background response');return result.snapshot; }
  let state=await command({type:'snapshot'});check(state.groups.some(g=>g.id==='inbox'),'background snapshot');
  const sample=await browser.tabs.create({url:'http://127.0.0.1:${port}/sample',active:false});
  for(let attempt=0;attempt<100;attempt++){const current=await browser.tabs.get(sample.id);if(current.status==='complete'&&current.url.includes('/sample'))break;await new Promise(resolve=>setTimeout(resolve,50));}
@@ -85,7 +117,7 @@ await build({
  state=await command({type:'restoreTab',entryId:entry.id});check(!state.archive.some(e=>e.id===entry.id),'restore removes archive entry');for(let attempt=0;attempt<100&&!state.tabs.some(t=>t.url?.includes('/sample'));attempt++){await new Promise(resolve=>setTimeout(resolve,50));state=await command({type:'snapshot'});}
  check(state.tabs.some(t=>t.url?.includes('/sample')),'real tab recreated');
  await command({type:'saveSettings',settings:{theme:'Тёмная',animations:false}});state=await command({type:'snapshot'});check(state.settings.animations===false,'settings persisted in Firefox storage');
- state=await command({type:'deleteGroup',groupId});check(!state.groups.some(g=>g.id===groupId),'group deletion');check(state.tabs.some(t=>t.url?.includes('/sample')),'group deletion preserves real tabs');
+ state=await command({type:'deleteGroup',groupId});check(!state.groups.some(g=>g.id===groupId),'group deletion');check(!state.tabs.some(t=>t.url?.includes('/sample')),'group deletion closes its tabs by default');check(state.archive.some(t=>t.url?.includes('/sample')),'group deletion archives closed tabs');
  state=await command({type:'createGroup',title:'Visibility parent'});const visibilityParent=state.groups.find(g=>g.title==='Visibility parent').id;
  await command({type:'activateGroup',groupId:visibilityParent});state=await command({type:'snapshot'});const parentTab=state.tabs.find(t=>t.groupId===visibilityParent).id;
  state=await command({type:'createGroup',title:'Visibility child',parentId:visibilityParent});const visibilityChild=state.groups.find(g=>g.title==='Visibility child').id;
@@ -96,24 +128,6 @@ await build({
  state=await command({type:'snapshot'});state=await command({type:'saveSettings',settings:{...state.settings,nestedGroups:false}});check((await browser.tabs.get(childTab)).hidden,'disabled nesting isolates group tabs');check(state.groups.find(g=>g.id===visibilityChild).parentId===visibilityParent,'disabled nesting preserves hierarchy');
  state=await command({type:'saveSettings',settings:{...state.settings,nestedGroups:true,nestedTabsVisibility:'parents'}});await command({type:'deleteGroup',groupId:visibilityChild});await command({type:'deleteGroup',groupId:visibilityParent});
 
- const frame=document.createElement('iframe');frame.style.width='440px';frame.style.height='300px';frame.src=browser.runtime.getURL('popup.html');document.documentElement.append(frame);
- for(let attempt=0;attempt<100&&!frame.contentDocument?.querySelector('.compatibility-notice button');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
- const notice=frame.contentDocument.querySelector('.compatibility-notice');check(Boolean(notice),'first launch shows compatibility notice');
- check(!frame.contentDocument.querySelector('.group-header'),'groups are unavailable before acknowledgement');
- const noticeLanguage=notice.querySelector('select');noticeLanguage.value='ru';noticeLanguage.dispatchEvent(new Event('change'));
- check(notice.querySelector('h1').textContent==='Прежде чем начать'&&notice.querySelector('button').textContent==='Понятно','notice language updates immediately');
- const noticeHeight=frame.contentDocument.querySelector('.popup').getBoundingClientRect().height;
- const noticeBounds=notice.getBoundingClientRect();const popupStyle=frame.contentWindow.getComputedStyle(frame.contentDocument.querySelector('.popup'));
- check(Math.abs(noticeHeight-noticeBounds.height-parseFloat(popupStyle.paddingTop)-parseFloat(popupStyle.paddingBottom))<1,'notice popup fits its content');
- notice.querySelector('button').click();
- for(let attempt=0;attempt<100&&!frame.contentDocument?.querySelector('.group-header');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
- const ui=frame.contentDocument;check(Boolean(ui.querySelector('.group-header')),'live popup renders');
- check((await command({type:'snapshot'})).settings.language==='ru'&&ui.documentElement.lang==='ru','notice language persists in settings');
- check(ui.querySelector('.popup').getBoundingClientRect().height>noticeHeight,'normal popup height is restored after acknowledgement');
- check((await browser.storage.local.get('tavvy:tab-manager-notice:v1'))['tavvy:tab-manager-notice:v1']===true,'notice acknowledgement is saved');
- const reopened=document.createElement('iframe');reopened.src=browser.runtime.getURL('popup.html');document.documentElement.append(reopened);
- for(let attempt=0;attempt<100&&!reopened.contentDocument?.querySelector('.group-header');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
- check(Boolean(reopened.contentDocument.querySelector('.group-header'))&&!reopened.contentDocument.querySelector('.compatibility-notice'),'notice is not shown after reopening');reopened.remove();
  check(!ui.body.textContent.includes('Глубокое обучение'),'popup uses live data, not fixtures');
  let retainedGroup=ui.querySelector('.group'); let retainedMarker=retainedGroup.querySelector('.marker');
  const fixedHeight=ui.querySelector('.popup').getBoundingClientRect().height;ui.querySelector('.settings-button').click();ui.querySelector('.theme-open').click();check(Math.abs(ui.querySelector('.popup').getBoundingClientRect().height-fixedHeight)<1,'popup height stays fixed across settings screens');
@@ -197,7 +211,7 @@ await build({
  parentToggle.click();check(frame.contentWindow.getComputedStyle(children).display==='none','closing parent hides nested groups');
 
 
- const backup={version:'5.3.2',groups:[{id:1,title:'Imported empty',iconColor:'#ff7800',tabs:[]},{id:2,title:'Imported tabs',iconColor:'#398dff',tabs:[{url:'http://127.0.0.1:${port}/imported',title:'Imported page'},{url:'file:///D:/smoke.pdf',title:'Imported file'}]}],pinnedTabs:[{url:'http://127.0.0.1:${port}/pinned',title:'Imported pinned'}]};
+ const backup={version:'5.3.2',groups:[{id:1,title:'Imported empty',iconColor:'#ff7800',tabs:[]},{id:2,title:'Imported tabs',iconColor:'#398dff',tabs:[{url:'http://127.0.0.1:${port}/imported',title:'Imported page'},{url:'file:///D:/smoke.pdf',title:'Imported file'},{url:'about:addons',title:'Add-ons'}]}],pinnedTabs:[{url:'http://127.0.0.1:${port}/pinned',title:'Imported pinned'}]};
 
  ui.querySelector('.settings-button').click();ui.querySelector('.backup-open').click();ui.querySelector('.backup-import').click();
  let importTab;
@@ -205,11 +219,16 @@ await build({
  check(Boolean(importTab),'import button opens a persistent import page');
  const importFrame=document.createElement('iframe');importFrame.src=importTab.url;document.documentElement.append(importFrame);
  for(let attempt=0;attempt<100&&!importFrame.contentDocument?.querySelector('input[type=file]');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ importFrame.contentDocument.querySelector('#close-existing').checked=false;
  const backupFile=new importFrame.contentWindow.File([JSON.stringify(backup)],'stg.json',{type:'application/json'});
  const importer=importFrame.contentDocument.querySelector('input[type=file]');Object.defineProperty(importer,'files',{configurable:true,value:[backupFile]});importer.dispatchEvent(new Event('change'));
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.importReport?.groups===2)break;await new Promise(resolve=>setTimeout(resolve,50));}
- check(state.importReport.groups===2 && state.importReport.tabs===2,'existing import button recognizes STG backups');
+ check(state.importReport.groups===2 && state.importReport.tabs===3 && state.importReport.browserPages===1,'existing import button recognizes STG backups');
  check(state.tabs.some(t=>t.url.includes('local-file.html')),'local-file links preserved as explanatory tabs');
+ const browserPage=state.tabs.find(t=>t.url.includes('local-file.html#')&&JSON.parse(decodeURIComponent(t.url.split('#')[1])).url==='about:addons');check(Boolean(browserPage),'browser page preserved as explanatory tab');
+ const pageFrame=document.createElement('iframe');pageFrame.src=browserPage.url;document.documentElement.append(pageFrame);
+ for(let attempt=0;attempt<100&&!pageFrame.contentDocument?.querySelector('input')?.value;attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ check(pageFrame.contentDocument.querySelector('input').value==='about:addons','browser page shows original address');pageFrame.remove();
  const importedCount=(await browser.tabs.query({windowId})).length;state=await command({type:'importStg',backup});check((await browser.tabs.query({windowId})).length===importedCount,'reimport creates no duplicates');
 
  const second=await browser.windows.create({url:'http://127.0.0.1:${port}/discard',focused:false});
@@ -251,9 +270,22 @@ await build({
  await command({type:'activateSpace',spaceId:'default'});
 
  const smokeTab=await browser.tabs.getCurrent();await browser.tabs.show([smokeTab.id]);await browser.tabs.update(smokeTab.id,{active:true});
- const stressResult=new Promise(resolve=>{const listener=event=>{if(event.data?.channel==='tavvy-stress'){window.removeEventListener('message',listener);resolve(event.data);}};window.addEventListener('message',listener);});
+ const backgroundTab=await browser.tabs.create({windowId,active:true,url:'about:blank'});
+ let resumedHiddenStress=false;
+ const stressResult=new Promise(resolve=>{const listener=event=>{if(event.data?.channel==='tavvy-stress-waiting'){resumedHiddenStress=document.hidden;browser.tabs.update(smokeTab.id,{active:true}).catch(error=>resolve({ok:false,error:error.message}));}if(event.data?.channel==='tavvy-stress'){window.removeEventListener('message',listener);resolve(event.data);}};window.addEventListener('message',listener);});
  const stressFrame=document.createElement('iframe');stressFrame.src=browser.runtime.getURL('stress.html');document.documentElement.append(stressFrame);
- const stress=await stressResult;check(stress.ok,stress.error||'1000-tab renderer: bounded DOM, last row reachable, 100 open/close cycles, listener cleanup');results.push('stress metrics: '+JSON.stringify(stress));
+ const stress=await stressResult;check(resumedHiddenStress,'hidden virtualized page resumes after returning');check(stress.ok,stress.error||'1000-tab renderer: bounded DOM, last row reachable, 100 open/close cycles, listener cleanup');await browser.tabs.remove(backgroundTab.id);results.push('stress metrics: '+JSON.stringify(stress));
+ const restoreWindow=await browser.windows.create({url:'http://127.0.0.1:${port}/before-restore',focused:false});
+ const oldRestoreTab=restoreWindow.tabs[0].id;
+ const beforeDownloads=(await browser.downloads.search({})).length;
+ const replaceBackup={version:'5.3.2',groups:[{id:65432,title:'Replace smoke',tabs:[{url:'http://127.0.0.1:${port}/after-restore',title:'Restored tab'}]}]};
+ const replaceResult=await browser.runtime.sendMessage({channel:'tavvy-command',windowId:restoreWindow.id,command:{type:'importStg',backup:replaceBackup,closeExistingTabs:true}});
+ check(replaceResult.ok,'restore with replace succeeds: '+replaceResult.error);
+ check((await browser.downloads.search({})).length>beforeDownloads,'safety backup download created before restore');
+ check(!(await browser.tabs.query({windowId:restoreWindow.id})).some(t=>t.id===oldRestoreTab),'restore closes old tab when enabled');
+ check((await browser.tabs.query({windowId:restoreWindow.id})).some(t=>t.url?.includes('/after-restore')),'restore retains imported tab');
+ await browser.windows.remove(restoreWindow.id);
+
  await fetch('http://127.0.0.1:${port}',{method:'POST',body:JSON.stringify({ok:true,results})});
  }catch(error){await fetch('http://127.0.0.1:${port}',{method:'POST',body:JSON.stringify({ok:false,error:error.message,stack:error.stack,results})});}
 })();`,

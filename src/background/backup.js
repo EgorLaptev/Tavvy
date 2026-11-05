@@ -16,8 +16,11 @@ export function createBackupManager(browser, service, notify = () => {}) {
     await browser.storage.local.set({ [KEY]: value });
     notify();
   }
-  async function download(windowId) {
-    if (pending) return pending;
+  async function download(windowId, { fresh = false } = {}) {
+    if (pending) {
+      if (!fresh) return pending;
+      await pending;
+    }
     pending = (async () => {
       let url;
       try {
@@ -49,7 +52,7 @@ export function createBackupManager(browser, service, notify = () => {}) {
     const info = await status();
     const last = info.lastSuccess || info.enabledAt || Date.now();
     if (!info.lastSuccess && !info.enabledAt) await saveStatus({ ...info, enabledAt: last });
-    await browser.alarms.create(ALARM, { when: Math.max(Date.now() + 1000, last + (intervals[config.backupFrequency] || intervals.daily)) });
+    await browser.alarms.create(ALARM, { when: Math.max(Date.now() + 1000, last + (intervals[config.backupFrequency] || intervals.fourHours)) });
   }
   async function runAlarm(alarm) {
     if (alarm.name !== ALARM) return;

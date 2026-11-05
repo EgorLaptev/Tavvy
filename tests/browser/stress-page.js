@@ -41,6 +41,7 @@ import { createWorkspaceService } from "../../src/background/workspace-service.j
     const scroller = document.querySelector(".groups");
     scroller.scrollTop = scroller.scrollHeight;
     scroller.dispatchEvent(new Event("scroll"));
+    parent.postMessage({ channel: "tavvy-stress-waiting" }, "*");
     await new Promise((resolve) =>
       requestAnimationFrame(() => requestAnimationFrame(resolve)),
     );

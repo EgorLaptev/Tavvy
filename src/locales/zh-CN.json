@@ -52,6 +52,7 @@
     },
     "animations": "动画",
     "unload_inactive_tabs": "卸载不活动的标签页",
+    "close_tabs_on_group_delete": "删除分组时关闭标签页",
     "group_pinned_tabs": "按分组管理固定标签页",
     "nested_groups": {
       "title": "嵌套分组",
@@ -146,7 +147,8 @@
     "curious_capybara": "好奇的水豚",
     "cosmic_wombat": "宇宙袋熊",
     "dancing_red_panda": "跳舞的小熊猫",
-    "wandering_otter": "漫游水獭"
+    "wandering_otter": "漫游水獭",
+    "bouncy_badger": "蹦跳的獾"
   },
   "errors": {
     "background_process_is_unavailable": "后台进程不可用",
@@ -184,13 +186,14 @@
     "this_backup_has_already_been_imported": "此备份已导入",
     "import_title": "导入",
     "import_tavvy": "导入 — Tavvy",
-    "import_page_description": "导入 Simple Tab Groups 备份或 Tavvy 设置。现有分组将保留。",
+    "import_page_description": "恢复之前，Tavvy 会保存备份。恢复成功后将关闭此窗口中受支持的标签页；其他窗口和扩展页面会保留。",
     "choose_json_file": "选择 JSON 文件",
+    "close_existing_tabs": "恢复后关闭此窗口中当前的标签页",
     "choose_a_backup_file": "请选择备份文件。",
     "retry_import": "重试导入",
     "done": "完成",
     "reading_file": "正在读取文件…",
-    "backup_restored": "Tavvy 备份已恢复。现有标签页已保留；备份中的标签页已添加到当前窗口。",
+    "backup_restored": "Tavvy 备份已恢复。",
     "backup_already_imported_no_duplicates": "此备份已导入，不会创建重复项。",
     "this_is_not_an_stg_backup_or_tavvy_settings_file": "这不是 STG 备份或 Tavvy 设置文件。",
     "settings_imported": "设置已导入。",
@@ -199,10 +202,14 @@
     "import_result_missing": "未收到导入结果。请确认已安装最新版本的 Tavvy。",
     "import_in_progress": "正在导入 {groups} 个分组和 {tabs} 个标签页。\n请保持此页面打开以查看结果。",
     "import_complete": "完成。分组：{groups}，标签页：{tabs}，固定标签页：{pinned}。",
+    "import_browser_pages_result": "\n浏览器页面（{count}）已保存原始地址。",
     "import_local_files_result": "\n已保存 {count} 个包含原始地址的本地文件标签页。",
     "import_failed_error": "导入失败：{error}"
   },
   "local_file": {
+    "browser_page": "浏览器页面",
+    "browser_page_instructions": "Firefox 不允许扩展直接打开此页面。请复制地址并粘贴到浏览器地址栏中。",
+    "page_address": "页面地址",
     "local_file": "本地文件",
     "local_file_instructions": "此链接保存在备份中。Firefox 不允许扩展直接打开本地文件。请复制地址并粘贴到浏览器地址栏中。",
     "file_address": "文件地址",

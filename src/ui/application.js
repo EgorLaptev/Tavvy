@@ -165,14 +165,21 @@ export async function mountApplication(api) {
   function run(command) {
     if (disposed) return Promise.resolve();
     if (command.type === "snapshot" && pendingSnapshot) return pendingSnapshot;
+    // Send while the popup is alive; the background serializes commands. UI
+    // responses are still applied in order even if the popup closes meanwhile.
+    const closedGroup = command.type === "closeTab"
+      ? viewIndex.tabs.get(command.tabId)?.groupId
+      : null;
+    const pending = request(command).then(
+      (value) => ({ value }),
+      (error) => ({ error }),
+    );
     const result = commandTail.then(async () => {
-      status.textContent = "";
-      const closedGroup =
-        command.type === "closeTab"
-          ? viewIndex.tabs.get(command.tabId)?.groupId
-          : null;
-      const next = await request(command);
+      const response = await pending;
       if (disposed) return;
+      status.textContent = "";
+      if (response.error) throw response.error;
+      const next = response.value;
       const changed =
         next.viewVersion !== undefined
           ? next.viewVersion !== snapshot.viewVersion

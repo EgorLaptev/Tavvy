@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mountTabContextMenu } from "../src/background/tab-context-menu.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 10));
-function fixture() {
+function fixture(isEnabled = async () => true) {
   const handlers = {};
   const items = new Map();
   const calls = [];
@@ -31,8 +31,8 @@ function fixture() {
     canvases.push(canvas);
     return canvas;
   };
-  mountTabContextMenu({ menus }, service, () => calls.push("notify"), createCanvas);
-  return { handlers, items, calls, state, canvases };
+  const menu = mountTabContextMenu({ menus }, service, () => calls.push("notify"), createCanvas, isEnabled);
+  return { handlers, items, calls, state, canvases, menu };
 }
 
 test("tab context menu follows groups and moves the clicked tab in its window", async () => {
@@ -82,4 +82,24 @@ test("menu markers follow the chosen style, including letters and no marker", as
   show();
   await tick();
   assert.deepEqual(canvases.slice(-2).map((canvas) => canvas.drawing), [[], []]);
+});
+
+
+test("context menu stays inactive before onboarding and becomes available afterward", async () => {
+  let enabled = false;
+  const { handlers, items, calls, menu } = fixture(async () => enabled);
+  await tick();
+  assert.equal(items.has("tavvy-move-tab"), false);
+  handlers.shown({ contexts: ["tab"] }, { id: 1, windowId: 1 });
+  handlers.clicked({ menuItemId: "tavvy-move-tab-0" }, { id: 1, windowId: 1 });
+  await tick();
+  assert.equal(calls.length, 0);
+  assert.equal(items.size, 0);
+  enabled = true;
+  await menu.enable();
+  assert.equal(items.has("tavvy-move-tab"), true);
+  handlers.shown({ contexts: ["tab"] }, { id: 1, windowId: 1 });
+  await tick();
+  assert.ok(calls.some((entry) => entry.command?.type === "snapshot"));
+  assert.equal(items.has("tavvy-move-tab-0"), true);
 });

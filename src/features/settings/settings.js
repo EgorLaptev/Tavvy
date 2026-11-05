@@ -21,6 +21,7 @@ export function mountSettings({
     'input[aria-label="Выгружать неактивные вкладки"]',
   );
   const animationInput = document.querySelector('input[aria-label="Анимации"]');
+  const closeTabsOnGroupDelete = document.querySelector(".close-tabs-on-group-delete");
   const groupPinnedInput = document.querySelector('input[aria-label="Закреплённые вкладки по группам"]');
   const nestedInput = document.querySelector('input[aria-label="Вложенные группы"]');
   const nestedVisibility = document.querySelector('select[aria-label="Показывать вкладки"]');
@@ -138,6 +139,7 @@ export function mountSettings({
     languageView.querySelectorAll('input[name="language"]').forEach((input) => {
       input.checked = input.value === savedSettings.language;
     });
+    closeTabsOnGroupDelete.checked = savedSettings.closeTabsOnGroupDelete !== false;
     groupPinnedInput.checked = Boolean(savedSettings.groupPinnedTabs);
     nestedInput.checked = savedSettings.nestedGroups !== false;
     nestedVisibility.value = savedSettings.nestedTabsVisibility;
@@ -146,7 +148,7 @@ export function mountSettings({
     experimentalSpaces.checked = savedSettings.experimentalSpaces;
     archiveInput.checked = savedSettings.archiveEnabled !== false;
     backupInput.checked = Boolean(savedSettings.backupEnabled);
-    backupFrequency.value = savedSettings.backupFrequency || "daily";
+    backupFrequency.value = savedSettings.backupFrequency || "fourHours";
     backupFolder.value = savedSettings.backupFolder || "Tavvy";
     backupFrequencyRow.hidden = !backupInput.checked;
     discardInput.checked = Boolean(savedSettings.discardInactiveTabs);
@@ -199,6 +201,11 @@ export function mountSettings({
   });
   listen(animationInput, "change", () => {
     savedSettings.animations = animationInput.checked;
+    applySettings();
+    saveSettings();
+  });
+  listen(closeTabsOnGroupDelete, "change", () => {
+    savedSettings.closeTabsOnGroupDelete = closeTabsOnGroupDelete.checked;
     applySettings();
     saveSettings();
   });
@@ -282,14 +289,18 @@ export function mountSettings({
       );
     }),
   );
-  [panelWidth, panelHeight].forEach((input) =>
-    listen(input, "input", () => {
-      savedSettings.width = Number(panelWidth.value);
-      savedSettings.height = Number(panelHeight.value);
-      applySettings();
-      saveSettings();
-    }),
-  );
+  // Resizing the popup while dragging its width slider moves the slider under
+  // the pointer (Firefox anchors the popup to the toolbar). Commit on release.
+  listen(panelWidth, "change", () => {
+    savedSettings.width = Number(panelWidth.value);
+    applySettings();
+    saveSettings();
+  });
+  listen(panelHeight, "change", () => {
+    savedSettings.height = Number(panelHeight.value);
+    applySettings();
+    saveSettings();
+  });
   listen(systemTheme, "change", applySettings);
   applySettings();
   const importButton = document.querySelector('[aria-label="Импортировать"]');

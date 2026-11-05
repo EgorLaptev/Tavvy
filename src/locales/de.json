@@ -52,6 +52,7 @@
     },
     "animations": "Animationen",
     "unload_inactive_tabs": "Entladen Sie inaktive Tabs",
+    "close_tabs_on_group_delete": "Tabs beim Löschen einer Gruppe schließen",
     "group_pinned_tabs": "Angeheftete Tabs gruppieren",
     "nested_groups": {
       "title": "Verschachtelte Gruppen",
@@ -146,7 +147,8 @@
     "curious_capybara": "Neugieriges Capybara",
     "cosmic_wombat": "Kosmischer Wombat",
     "dancing_red_panda": "Tanzender Roter Panda",
-    "wandering_otter": "Wandernder Otter"
+    "wandering_otter": "Wandernder Otter",
+    "bouncy_badger": "Hüpfender Dachs"
   },
   "errors": {
     "background_process_is_unavailable": "Der Hintergrundprozess ist nicht verfügbar",
@@ -184,13 +186,14 @@
     "this_backup_has_already_been_imported": "Dieses Backup wurde bereits importiert",
     "import_title": "Importieren",
     "import_tavvy": "Importieren – Tavvy",
-    "import_page_description": "Importieren Sie ein Simple Tab Groups-Backup oder Tavvy-Einstellungen. Bestehende Gruppen bleiben erhalten.",
+    "import_page_description": "Vor der Wiederherstellung sichert Tavvy den aktuellen Stand. Unterstützte Tabs in diesem Fenster werden danach geschlossen; andere Fenster und Erweiterungsseiten bleiben erhalten.",
     "choose_json_file": "Wählen Sie eine JSON-Datei",
+    "close_existing_tabs": "Aktuelle Tabs dieses Fensters nach der Wiederherstellung schließen",
     "choose_a_backup_file": "Wählen Sie eine Sicherungsdatei.",
     "retry_import": "Wiederholen Sie den Import",
     "done": "Fertig",
     "reading_file": "Datei wird gelesen…",
-    "backup_restored": "Tavvy-Backup wiederhergestellt. Vorhandene Registerkarten wurden beibehalten; Wiederhergestellte Registerkarten wurden dem aktuellen Fenster hinzugefügt.",
+    "backup_restored": "Tavvy-Sicherung wiederhergestellt.",
     "backup_already_imported_no_duplicates": "Dieses Backup wurde bereits importiert. Es wurden keine Duplikate erstellt.",
     "this_is_not_an_stg_backup_or_tavvy_settings_file": "Dies ist keine STG-Sicherung oder Tavvy-Einstellungsdatei.",
     "settings_imported": "Einstellungen importiert.",
@@ -199,10 +202,14 @@
     "import_result_missing": "Kein Importergebnis erhalten. Überprüfen Sie, ob der neueste Tavvy-Build installiert ist.",
     "import_in_progress": "Importieren von {groups}-Gruppen und {tabs}-Registerkarten. \n Lassen Sie diese Seite geöffnet, um das Ergebnis zu sehen.",
     "import_complete": "Erledigt. Gruppen: {groups}. Registerkarten: {tabs}. Angepinnt: {pinned}.",
+    "import_browser_pages_result": "\nBrowserseiten ({count}) wurden mit ihren Originaladressen gespeichert.",
     "import_local_files_result": " \n Lokale Dateien ({count}) wurden mit ihren Originaladressen gespeichert.",
     "import_failed_error": "Import fehlgeschlagen: {error}"
   },
   "local_file": {
+    "browser_page": "Browserseite",
+    "browser_page_instructions": "Firefox erlaubt Erweiterungen nicht, diese Seite direkt zu öffnen. Kopieren Sie die Adresse in die Adressleiste.",
+    "page_address": "Seitenadresse",
     "local_file": "Lokale Datei",
     "local_file_instructions": "Dieser Link wurde aus einem Backup gespeichert. Firefox kann diese lokale Datei nicht direkt aus der Erweiterung öffnen. Kopieren Sie die Adresse und fügen Sie sie in die Adressleiste des Browsers ein.",
     "file_address": "Dateiadresse",
