@@ -7,7 +7,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 
 const script = resolve("scripts/release-pr.js");
 const git = (dir, ...args) => execFileSync("git", args, { cwd: dir, stdio: "pipe" });
-function run(dir, ...args) { return spawnSync(process.execPath, [script, ...args], { cwd: dir, env: { ...process.env, RELEASE_BRANCH: "release/1.2.3" }, encoding: "utf8" }); }
+function run(dir, ...args) { return spawnSync(process.execPath, [script, ...args], { cwd: dir, env: { ...process.env, RELEASE_BRANCH: "release/1.2.3-clean" }, encoding: "utf8" }); }
 test("release PR description includes changes and preserves manual text", async () => {
   const dir = await mkdtemp(join(tmpdir(), "tavvy-pr-"));
   try {
