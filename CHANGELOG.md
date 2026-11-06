@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Show the Tavvy icon in the settings page tab.
+
 ## 0.2.11 — Sunny Meerkat — 2026-11-06
 
 - Create and update release pull requests after branch checks pass.

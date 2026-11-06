@@ -38,7 +38,7 @@ const html = (await readFile("index.html", "utf8"))
   .replace("dist/app.css", "popup.css")
   .replace('<script src="dist/app.js">', '<script type="module" src="popup.js">');
 await writeFile(`${out}/popup.html`, html);
-const settingsHtml = html.replace('class="extension-mode"', 'class="extension-mode settings-page"').replace('<title>Tabs Group</title>', '<title>Tavvy — Settings</title>');
+const settingsHtml = html.replace('class="extension-mode"', 'class="extension-mode settings-page"').replace('<title>Tabs Group</title>', '<title>Tavvy — Settings</title>\n    <link rel="icon" type="image/svg+xml" href="icon.svg">');
 await writeFile(`${out}/settings.html`, settingsHtml);
 for (const file of ["settings-preview.html", "settings-preview.js"]) {
   try { await unlink(`${out}/${file}`); } catch (error) { if (error.code !== "ENOENT") throw error; }
