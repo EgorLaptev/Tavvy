@@ -2,8 +2,8 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 
 const branch = process.env.RELEASE_BRANCH || "";
-const match = branch.match(/^release\/(\d+\.\d+\.\d+)$/);
-if (!match) throw new Error("Expected a branch like release/0.2.11");
+const match = branch.match(/^release\/(\d+\.\d+\.\d+)(?:-[a-z0-9-]+)?$/);
+if (!match) throw new Error("Expected a branch like release/0.2.11 or release/0.2.11-clean");
 const start = "<!-- tavvy-release-start -->", end = "<!-- tavvy-release-end -->";
 const changelog = await readFile("CHANGELOG.md", "utf8");
 const version = match[1];
