@@ -31,6 +31,14 @@ jobs:
           else
             git diff-tree --check --root "$GITHUB_SHA"
           fi
+      - name: Verify new release commit messages
+        if: (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')) || (github.event_name == 'pull_request' && startsWith(github.head_ref, 'release/'))
+        env:
+          COMMIT_BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
+          COMMIT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          git fetch origin main
+          node scripts/check-commit-range.js
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
