@@ -40,3 +40,23 @@ For future releases, record the size and SHA-256 of the final archive after
 building it. On PowerShell, use `Get-Item` for its byte length and
 `Get-FileHash -Algorithm SHA256` for its hash. Never reuse the hash of an
 unsigned package to identify a Mozilla-signed one.
+
+## Release workflow
+
+1. Start a release branch from the latest `main`, for example `release/0.2.11`.
+2. Commit each task separately on that branch. Keep user-visible changes in
+   `CHANGELOG.md` under Unreleased.
+3. Prepare the release in its own commit: synchronize versions, add the
+   playful version name and its translations, and date the changelog section.
+4. Run the relevant tests, Firefox validation and the isolated Firefox smoke
+   test. Rebase the branch onto the latest `main`, then merge it into `main`
+   with `--ff-only`. Do not force-push or rewrite shared commits.
+5. Push `main`, create the matching `vX.Y.Z` tag on the merged release commit,
+   and push the tag. GitHub Actions checks that the tag is reachable from
+   `main`, reruns tests and Firefox validation, builds the unsigned ZIP, and
+   publishes a GitHub Release with its changelog, package and `SHA256SUMS`.
+
+The tag must match all version fields and a dated changelog section. The
+workflow does not run the Firefox smoke test, sign packages or overwrite an
+existing GitHub Release. GitHub's generated ZIP may have a different hash
+from a local build; the release's checksum refers to the attached ZIP.
