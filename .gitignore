@@ -2,6 +2,7 @@ node_modules/
 dist/
 
 build/
+tmp/
 
 # Local competitor research; not part of the repository.
 .local-research/
