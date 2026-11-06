@@ -36,6 +36,13 @@ jobs:
         run: npm test
       - name: Validate Firefox extension
         run: npm run lint:firefox
+      - name: Install Firefox
+        uses: browser-actions/setup-firefox@v1
+        id: firefox
+      - name: Run isolated Firefox smoke test
+        env:
+          FIREFOX_BINARY: ${{ steps.firefox.outputs.firefox-path }}
+        run: npm run smoke:firefox
       - name: Build unsigned package
         run: npm run package:firefox
       - name: Prepare release notes and checksum

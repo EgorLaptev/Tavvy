@@ -46,8 +46,8 @@ GitHub Actions runs whitespace checks, tests and Firefox extension validation on
 pushes and pull requests. Successful release-branch CI opens or updates a PR
 to `main`. Pushing a version tag on `main` also builds an
 unsigned Firefox package and publishes a GitHub Release with the changelog,
-package and SHA-256 checksum. It does not run the Firefox smoke test or sign
-packages. See [release workflow](docs/releases.md#release-workflow).
+package and SHA-256 checksum. Release branch and release CI also run the
+isolated Firefox smoke test; packages remain unsigned. See [release workflow](docs/releases.md#release-workflow).
 
 Open http://127.0.0.1:5173 after `npm run dev` to preview `index.html`.
 The preview uses mock groups, tabs and Firefox containers in memory and does not
