@@ -29,4 +29,4 @@
 - `npm run lint:firefox` builds and validates the Firefox extension.
 - `npm run smoke:firefox` runs an isolated headless Firefox profile; use `FIREFOX_BINARY` if Firefox cannot be found. It does not test the user's Firefox profile or visual smoothness.
 - `npm run build:firefox` writes `build/firefox`; `npm run package:firefox` produces an unsigned ZIP. Builds do not update an installed extension.
-- The configured commit-msg hook validates Conventional Commit subjects; the pre-commit hook runs staged whitespace checks, `npm test` and Firefox validation; CI runs equivalent checks. The release workflow publishes a GitHub Release on a version tag; release-branch and release workflows also run the Firefox smoke test.
+- The commit-msg hook and release-branch CI validate Conventional Commit subjects (with temporary exceptions for commits published before adoption); the pre-commit hook runs staged whitespace checks, `npm test` and Firefox validation; CI runs equivalent checks. The release workflow publishes a GitHub Release on a version tag; release-branch and release workflows also run the Firefox smoke test.
