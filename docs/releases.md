@@ -44,7 +44,8 @@ unsigned package to identify a Mozilla-signed one.
 ## Release workflow
 
 1. Start a release branch from the latest `main`, for example `release/0.2.11`.
-2. Commit each task separately on that branch. Keep user-visible changes in
+2. Commit each task separately using Conventional Commits, such as `feat: add search`
+   or `fix(settings): save theme`. Keep user-visible changes in
    `CHANGELOG.md` under Unreleased. After branch CI succeeds, Actions creates
    or updates a PR to `main` with the changelog and commit list. Manual text
    outside the generated markers is preserved.
