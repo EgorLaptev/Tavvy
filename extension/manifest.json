@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tavvy — Tabs Group",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Tab groups and workspaces for Firefox",
   "incognito": "not_allowed",
   "content_security_policy": {
@@ -24,6 +24,7 @@
       "background.js"
     ]
   },
+  "options_ui": { "page": "settings.html", "open_in_tab": true },
   "action": {
     "default_icon": "icon.svg",
     "default_title": "Tavvy",

@@ -6,6 +6,10 @@
     "save_failed": "Не удалось сохранить ваш выбор. Попробуйте ещё раз."
   },
   "settings": {
+    "general": "Основные",
+    "backup_tab": "Резервные копии",
+    "hotkeys": "Горячие клавиши",
+    "in_development": "В разработке",
     "theme": {
       "title": "Тема",
       "black": "Чёрная",
@@ -25,6 +29,13 @@
       "maximum_height_label": "Максимальная высота окна"
     },
     "backup": {
+      "preview_counts": "Групп: {groups} · Вкладок: {tabs} · Закреплено: {pinned}",
+      "preview_spaces": "Пространств: {count}",
+      "preview_legacy": "Ранее закрытых: {count}",
+      "preview_more": "И ещё групп: {count}",
+      "drop_file": "Перетащите бэкап сюда или выберите файл",
+      "safety_backup": "Перед восстановлением будет создана резервная копия текущих вкладок.",
+      "restore_selected": "Восстановить",
       "backups": "Резервные копии",
       "automatic_backups": "Автоматические копии",
       "frequency": "Частота",
@@ -81,15 +92,6 @@
     "search": "Поиск",
     "settings": "Настройки",
     "error_message": "Ошибка: {error}"
-  },
-  "archive": {
-    "hold_to_clear_recently_closed": "Удерживайте для очистки архива",
-    "recently_closed_tabs": "Недавно закрытые вкладки",
-    "restore_tab": "Вернуть вкладку",
-    "delete_recently_closed_tab": "Удалить вкладку из архива",
-    "just_now": "только что",
-    "minutes_ago": "{count} мин назад",
-    "closed_tabs_archive": "Архив закрытых вкладок"
   },
   "groups": {
     "rename_group": "Переименовать группу",
@@ -148,7 +150,8 @@
     "cosmic_wombat": "Космический вомбат",
     "dancing_red_panda": "Танцующая малая панда",
     "wandering_otter": "Странствующая выдра",
-    "bouncy_badger": "Прыгучий барсук"
+    "bouncy_badger": "Прыгучий барсук",
+    "clever_quokka": "Сообразительная квокка"
   },
   "errors": {
     "background_process_is_unavailable": "Фоновый процесс недоступен",
@@ -163,7 +166,6 @@
     "enter_a_group_name": "Введите название группы",
     "invalid_group_color": "Некорректный цвет группы",
     "the_tab_is_closed_or_belongs_to_another_window": "Вкладка уже закрыта или находится в другом окне",
-    "recently_closed_entry_not_found": "Запись архива не найдена",
     "a_group_cannot_contain_itself": "Нельзя вложить группу в саму себя",
     "the_main_group_is_required_for_ungrouped_tabs": "Основная группа нужна для несортированных вкладок",
     "unknown_command": "Неизвестная команда",

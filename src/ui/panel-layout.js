@@ -15,7 +15,7 @@ export function animatePanelChange(change) {
   }
   const bounds = panel.getBoundingClientRect();
   const visibleNodes = () =>
-    [...panel.querySelectorAll(".group,.tab-row,.recent-row")]
+    [...panel.querySelectorAll(".group,.tab-row")]
       .flatMap((node) => {
         const rect = node.getBoundingClientRect();
         return rect.height &&

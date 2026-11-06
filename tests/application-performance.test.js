@@ -14,7 +14,7 @@ async function page(n, groupCount = 2, configure = () => {}) {
     });
   dom.window.browser = f.api;
   dom.window.matchMedia = () => ({ matches: false, addEventListener() {} });
-  dom.window.eval(await readFile("build/firefox/popup.js", "utf8"));
+  dom.window.eval(await readFile("build/test/popup.js", "utf8"));
   for (
     let i = 0;
     i < 100 && !dom.window.document.querySelector(".group-header");

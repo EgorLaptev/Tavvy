@@ -9,6 +9,7 @@ export const VERSION_NAMES = Object.freeze({
   "0.2.7": "Dancing Red Panda",
   "0.2.8": "Wandering Otter",
   "0.2.9": "Bouncy Badger",
+  "0.2.10": "Clever Quokka",
 });
 
 export function versionLabel(version) {

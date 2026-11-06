@@ -366,22 +366,6 @@ test("Tavvy backup restores nested groups and tabs without deleting existing tab
   assert.equal(target.records.length, 8);
   assert.ok(restored.tabs.some((tab) => tab.groupId === restoredChild.id && tab.url === "https://mozilla.org"));
 });
-test("archive survives service restart and restore removes exactly one entry", async () => {
-  const f = fixture();
-  let service = f.service();
-  await service.dispatch({ type: "snapshot" }, 1);
-  let snap = await service.dispatch({ type: "closeTab", tabId: 2 }, 1);
-  await service.removed(2, false); // native event must not duplicate our own command
-  service = f.service();
-  snap = await service.dispatch({ type: "snapshot" }, 1);
-  assert.equal(snap.archive.length, 1);
-  snap = await service.dispatch(
-    { type: "restoreTab", entryId: snap.archive[0].id },
-    1,
-  );
-  assert.equal(snap.archive.length, 0);
-  assert.ok(snap.tabs.some((t) => t.url === "https://mozilla.org"));
-});
 test("cycles rejected; deleting a group keeps its tabs and reparents children", async () => {
   const f = fixture(),
     service = f.service();
@@ -410,41 +394,6 @@ test("cycles rejected; deleting a group keeps its tabs and reparents children", 
   await assert.rejects(
     service.dispatch({ type: "deleteGroup", groupId: "inbox" }, 1),
   );
-});
-test("external closure is archived; closing a window is not archived", async () => {
-  const f = fixture(),
-    service = f.service();
-  await service.dispatch({ type: "snapshot" }, 1);
-  await f.api.tabs.remove(2);
-  await service.removed(2, false);
-  await f.api.tabs.remove(4);
-  await service.removed(4, true);
-  const snap = await service.dispatch({ type: "snapshot" }, 1);
-  assert.equal(snap.archive.length, 1);
-});
-test("the archive is enabled by default and starts empty when re-enabled", async () => {
-  const f = fixture(), service = f.service();
-  let snap = await service.dispatch({ type: "snapshot" }, 1);
-  assert.equal(snap.settings.archiveEnabled, true);
-  snap = await service.dispatch({ type: "closeTab", tabId: 2 }, 1);
-  assert.equal(snap.archive.length, 1);
-  snap = await service.dispatch({ type: "saveSettings", settings: { ...snap.settings, archiveEnabled: false } }, 1);
-  snap = await service.dispatch({ type: "closeTab", tabId: 1 }, 1);
-  await f.api.tabs.remove(4);
-  await service.removed(4, false);
-  snap = await service.dispatch({ type: "snapshot" }, 1);
-  assert.equal(snap.archive.length, 1);
-  assert.equal(snap.settings.archiveEnabled, false);
-  const restarted = f.service();
-  snap = await restarted.dispatch({ type: "snapshot" }, 1);
-  assert.equal(snap.archive.length, 1);
-  assert.equal(snap.settings.archiveEnabled, false);
-  snap = await restarted.dispatch({ type: "saveSettings", settings: { ...snap.settings, archiveEnabled: true } }, 1);
-  assert.equal(snap.archive.length, 0);
-  assert.equal(snap.settings.archiveEnabled, true);
-  snap = await f.service().dispatch({ type: "snapshot" }, 1);
-  assert.equal(snap.archive.length, 0);
-  assert.equal(snap.settings.archiveEnabled, true);
 });
 test("commands are serialized and tab operations reject another window", async () => {
   const service = fixture().service();
@@ -820,38 +769,6 @@ test("missing container permission does not alter existing tabs", async () => {
   assert.equal(f.records.length, 4);
 });
 
-test("deleting a group retains its archived tabs in the same space", async () => {
-  const f = fixture();
-  const service = f.service();
-  let snapshot = await service.dispatch({ type: "createGroup", title: "Temporary" }, 1);
-  const groupId = snapshot.groups.find((group) => group.title === "Temporary").id;
-  await service.dispatch({ type: "moveTab", tabId: 2, groupId }, 1);
-  await service.dispatch({ type: "closeTab", tabId: 2 }, 1);
-  snapshot = await service.dispatch({ type: "deleteGroup", groupId }, 1);
-  assert.ok(snapshot.archive.some((entry) => entry.title === "Вторая" && entry.groupId === "inbox"));
-});
-
-test("clearing an archive does not delete entries from another space", async () => {
-  const f = fixture();
-  f.api.permissions = { contains: async () => true };
-  f.api.contextualIdentities = {
-    create: async ({ name }) => ({ name, cookieStoreId: "firefox-container-1" }),
-    get: async (cookieStoreId) => ({ cookieStoreId }),
-  };
-  const service = f.service();
-  let snapshot = await attachTestSpace(f, service);
-  const workId = snapshot.activeSpaceId;
-  const workTab = snapshot.tabs.find((tab) => tab.active);
-  await service.dispatch({ type: "closeTab", tabId: workTab.id }, 1);
-  await service.dispatch({ type: "activateSpace", spaceId: "default" }, 1);
-  snapshot = await service.dispatch({ type: "closeTab", tabId: 2 }, 1);
-  assert.equal(snapshot.archive.length, 1);
-  snapshot = await service.dispatch({ type: "clearArchive" }, 1);
-  assert.equal(snapshot.archive.length, 0);
-  snapshot = await service.dispatch({ type: "activateSpace", spaceId: workId }, 1);
-  assert.equal(snapshot.archive.length, 1);
-});
-
 test("workspace backup restore refuses missing permission before creating containers or tabs", async () => {
   const f = fixture();
   let created = false;
@@ -928,7 +845,7 @@ test("untagged tabs follow their Firefox container rather than the previous spac
   assert.equal(snap.tabs.find((tab) => tab.id === ordinary.id).groupId, "inbox");
 });
 
-test("deleting a group closes its own tabs by default, keeps children and archives closed tabs", async () => {
+test("deleting a group closes its own tabs by default and keeps children", async () => {
   const f = fixture(), service = f.service();
   let snap = await service.dispatch({ type: "createGroup", title: "Parent" }, 1);
   const parent = snap.groups.find((g) => g.title === "Parent").id;
@@ -938,7 +855,18 @@ test("deleting a group closes its own tabs by default, keeps children and archiv
   snap = await service.dispatch({ type: "deleteGroup", groupId: parent }, 1);
   assert.equal(snap.tabs.some((tab) => tab.id === 2), false);
   assert.equal(snap.groups.find((g) => g.id === child).parentId, null);
-  assert.ok(snap.archive.some((tab) => tab.url === "https://mozilla.org" && tab.groupId === "inbox"));
   assert.ok(snap.tabs.some((tab) => tab.id === 3 && tab.pinned));
   assert.ok(f.records.some((tab) => tab.id === 4));
+});
+
+test("legacy archived entries remain in backups without collecting newly closed tabs", async () => {
+  const f = fixture();
+  const oldArchive = [{ id: "old", groupId: "inbox", title: "Saved", url: "https://old.example", closedAt: 123 }];
+  await f.api.storage.local.set({ "tavvy:workspace:v1": { version: 1, groups: [{ id: "inbox", title: "Main", color: "#398dff", parentId: null }], archive: oldArchive, settings: {} } });
+  let service = f.service();
+  await service.dispatch({ type: "closeTab", tabId: 2 }, 1);
+  await service.removed(2, false);
+  service = f.service();
+  const backup = await service.dispatch({ type: "exportBackup" }, 1);
+  assert.deepEqual(backup.archive.map((entry) => entry.url), ["https://old.example"]);
 });

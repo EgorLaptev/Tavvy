@@ -4,8 +4,7 @@
 
 `src/app.js` starts the memory browser and demo data from `src/mocks/`. `src/extension/index.js`
 starts the Firefox adapter. Both use `src/ui/application.js` and the same
-workspace service. Historical implementations are in `prototype/`, outside
-production sources. The build entry point selects the mode; demo data is not
+workspace service. The build entry point selects the mode; demo data is not
 loaded by the extension.
 
 ## Background process as the source of truth
@@ -18,7 +17,7 @@ commands, tab/window processing, context menus and scheduled backups until the
 user confirms the onboarding notice. The acknowledgement is stored in
 `tavvy:tab-manager-notice:v1`; existing acknowledged installs stay active.
 The workspace service is initialized only after confirmation. Each service instance loads state from `browser.storage.local`:
-`tavvy:workspace:v1` contains groups, archive, imports and settings, while
+`tavvy:workspace:v1` contains groups, legacy archive data, imports and settings, while
 `tavvy:known:v1` contains compact tab records. The previous format with `known`
 inside the workspace is read and migrated on save. Ordinary snapshots avoid
 writing workspace storage; when spaces are disabled, a snapshot can activate
@@ -35,10 +34,10 @@ in the current window.
 The main state contains `version`, `groups`, `archive`, `settings` and
 `imports`. Separate `known` records hold the latest descriptions of open tabs,
 used by `onRemoved` when Firefox no longer allows `tabs.get` on a closed tab.
-Private tabs are excluded. The archive is serializable, with no DOM references.
+Private tabs are excluded. Legacy archive entries are preserved in storage and backups; new closed tabs are not recorded.
 
 Commands include `snapshot`, `createGroup`, `activateGroup`, `createTab`,
-`activateTab`, `closeTab`, `moveTab`, `restoreTab`, `clearArchive`, `moveGroup`,
+`activateTab`, `closeTab`, `moveTab`, `moveGroup`,
 `deleteGroup` and `saveSettings`. The response is `{ok:true,snapshot}` or
 `{ok:false,error}`. The sender is checked against the extension ID. Changes
 notify open popups; snapshot messages do not trigger another notification.
@@ -53,8 +52,7 @@ notify open popups; snapshot messages do not trigger another notification.
   group. When nesting is disabled, only the selected group's tabs are shown;
   the stored hierarchy is preserved for later use.
 - Cycles and operations on tabs in another window are rejected.
-- Deleting a group does not close its pages; children move to its parent.
-- UI closure and native `onRemoved` do not create duplicate archive entries.
+- Deleting a group closes its tabs by default; the setting can keep them. Children move to its parent.
 - If Firefox cannot hide some tabs, the UI displays the error.
 - After a failed command, the UI returns to the last confirmed snapshot.
 
@@ -146,7 +144,7 @@ language; the Default space label is translated.
 ## Verification
 
 Unit and integration tests cover the command queue, window isolation, pinned
-tabs, archive persistence and restoration, closure outside the UI, cycles and
+tabs, legacy backup compatibility, closure outside the UI, cycles and
 group deletion. `scripts/smoke-firefox.js` loads a temporary extension copy
 into a separate headless Firefox profile, tests real operations and UI, then
 stops only its own runner and child processes. Extra access to a local HTTP

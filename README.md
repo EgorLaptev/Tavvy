@@ -3,7 +3,7 @@
 A minimal tab group manager for Firefox.
 
 - Organize tabs into nested groups and switch between them.
-- Search, reorder and restore recently closed tabs.
+- Search and reorder tabs.
 - Customize themes and group markers.
 - Back up groups and tabs, or import a Simple Tab Groups backup.
 - Use the interface in English, Russian, Simplified Chinese, Spanish, French or German.

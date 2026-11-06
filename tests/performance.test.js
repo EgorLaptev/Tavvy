@@ -43,7 +43,7 @@ test("search indexes group tabs once and preserves no-match fallback", async () 
     windowRange(1000, 3000, 300).end - windowRange(1000, 3000, 300).start <= 26,
   );
 });
-test("closing a 1000-tab window batches persistence and does not fill the archive", async () => {
+test("closing a 1000-tab window batches persistence", async () => {
   const f = workload(1000);
   await f.service.dispatch({ type: "snapshot" }, 1);
   f.reset();
@@ -52,6 +52,5 @@ test("closing a 1000-tab window batches persistence and does not fill the archiv
   );
   assert.ok((f.counts["storage.set"] || 0) <= 1);
   const snapshot = await f.service.dispatch({ type: "snapshot" }, 1);
-  assert.equal(snapshot.archive.length, 0);
   assert.equal(snapshot.tabs.length, 0);
 });

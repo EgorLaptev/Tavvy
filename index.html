@@ -82,7 +82,6 @@
         </section>
         <section class="settings-group" aria-labelledby="settings-data-title">
         <h2 data-i18n="settings.data" id="settings-data-title">Данные</h2>
-        <label class="setting"><span><strong data-i18n="archive.closed_tabs_archive">Архив закрытых вкладок</strong></span><span class="switch"><input data-i18n-aria-label="archive.closed_tabs_archive" type="checkbox" aria-label="Архив закрытых вкладок" /><span class="switch-track"></span></span></label>
         <button class="setting backup-open theme-open" type="button">
           <strong data-i18n="settings.backup.backups">Резервные копии</strong>
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 4 4 4-4 4" /></svg>
@@ -123,39 +122,6 @@
           ><span data-i18n="common.back" class="back-label">Назад</span></button
         ><a data-i18n-aria-label="common.project_on_github" data-i18n-title="common.project_on_github" class="backup-icon github-link" href="https://github.com/EgorLaptev/Tavvy" target="_blank" rel="noopener noreferrer" aria-label="Проект на GitHub" title="Проект на GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .8a11.2 11.2 0 0 0-3.54 21.82c.56.1.76-.24.76-.54v-2.09c-3.11.68-3.77-1.32-3.77-1.32-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.71 2.62 1.22 3.26.93.1-.72.39-1.22.71-1.5-2.48-.29-5.1-1.24-5.1-5.54 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.08 1.15a10.7 10.7 0 0 1 5.61 0c2.13-1.45 3.08-1.15 3.08-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.31-2.62 5.25-5.12 5.53.4.35.76 1.03.76 2.07v3.09c0 .3.2.65.77.54A11.2 11.2 0 0 0 12 .8Z" /></svg></a>
       </div>
-      <div class="recent-list" hidden></div>
-      <div class="archive-bar" hidden>
-        <button class="archive-back" type="button">
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M10 3 5 8l5 5" /></svg
-          ><span data-i18n="common.back" class="back-label">Назад</span></button
-        ><button data-i18n-aria-label="archive.hold_to_clear_recently_closed"
-          class="archive-clear"
-          type="button"
-          aria-label="Удерживайте для очистки архива"
-        >
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <defs>
-              <clipPath id="flame-clip">
-                <path
-                  d="M8 1.5c.3 3-2 3.8-2.3 5.7-.8-.4-1.1-1-1.2-1.7C2 8.6 3.5 14 8 14s6-4.4 3.3-7.6c-.1 1-.7 1.6-1.2 1.8C10.4 5.5 9 3.1 8 1.5Z"
-                />
-              </clipPath>
-            </defs>
-            <rect
-              class="flame-fill"
-              x="0"
-              y="0"
-              width="16"
-              height="16"
-              clip-path="url(#flame-clip)"
-            />
-            <path
-              d="M8 1.5c.3 3-2 3.8-2.3 5.7-.8-.4-1.1-1-1.2-1.7C2 8.6 3.5 14 8 14s6-4.4 3.3-7.6c-.1 1-.7 1.6-1.2 1.8C10.4 5.5 9 3.1 8 1.5Z"
-            />
-          </svg>
-        </button>
-      </div>
       <div class="bottom-bar">
         <label class="search"
           ><svg viewBox="0 0 16 16" aria-hidden="true">
@@ -187,21 +153,7 @@
             <path
               d="M232.7 69.9C237.1 56.8 249.3 48 263.1 48L377 48C390.8 48 403 56.8 407.4 69.9L416 96L512 96C529.7 96 544 110.3 544 128C544 145.7 529.7 160 512 160L128 160C110.3 160 96 145.7 96 128C96 110.3 110.3 96 128 96L224 96L232.7 69.9zM128 208L512 208L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 208zM216 272C202.7 272 192 282.7 192 296L192 488C192 501.3 202.7 512 216 512C229.3 512 240 501.3 240 488L240 296C240 282.7 229.3 272 216 272zM320 272C306.7 272 296 282.7 296 296L296 488C296 501.3 306.7 512 320 512C333.3 512 344 501.3 344 488L344 296C344 282.7 333.3 272 320 272zM424 272C410.7 272 400 282.7 400 296L400 488C400 501.3 410.7 512 424 512C437.3 512 448 501.3 448 488L448 296C448 282.7 437.3 272 424 272z"
             />
-          </svg></button
-        ><button data-i18n-aria-label="archive.recently_closed_tabs"
-          class="recent-button"
-          type="button"
-          aria-label="Недавно закрытые вкладки"
-          aria-expanded="false"
-        >
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <path
-              class="recent-ring"
-              d="M2.5 7.5a5.5 5.5 0 1 1 1.61 3.89M1 4.7l1.5 2.8 2.8-1.5"
-            />
-            <path d="M8 5v3l2 1.2" />
-          </svg>
-        </button>
+          </svg></button>
       </div>
     </main>
     <script src="dist/app.js"></script>

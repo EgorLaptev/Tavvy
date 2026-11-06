@@ -1,3 +1,4 @@
+import { previewBackup } from "../../domain/backup-preview.js";
 import { LANGUAGES } from "../../domain/languages.js";
 import { createEventScope } from "../../ui/event-scope.js";
 import { normalizeSettings, THEMES, validBackupFolder } from "../../domain/settings.js";
@@ -8,6 +9,7 @@ export function mountSettings({
   languageView,
   repository,
   onImportGroups,
+  onRestoreBackup,
   onOpenImport,
   cachePopupSize = false,
   onBackup,
@@ -29,7 +31,6 @@ export function mountSettings({
   const experimentalSpaces = document.querySelector(".experimental-spaces");
   const spacesPermissionNotice = document.querySelector(".spaces-permission-notice");
   const dynamicIconInput = document.querySelector('input[aria-label="Динамическая иконка"]');
-  const archiveInput = document.querySelector('input[aria-label="Архив закрытых вкладок"]');
   const backupInput = document.querySelector('input[aria-label="Автоматические копии"]');
   const backupFrequency = document.querySelector('select[aria-label="Частота копирования"]');
   const backupFrequencyRow = document.querySelector(".backup-frequency");
@@ -37,6 +38,39 @@ export function mountSettings({
   const backupNotice = document.querySelector(".backup-notice");
   const appearanceGroup = document.querySelector(".settings-appearance");
   const languageCurrent = document.querySelector(".language-current");
+  let themeSelect, languageSelect;
+  if (document.documentElement.classList.contains("settings-page")) {
+    function makeSelect(button, labelKey, labelText) {
+      const row = document.createElement("label");
+      row.className = "setting";
+      const title = document.createElement("strong");
+      title.dataset.i18n = labelKey;
+      title.textContent = labelText;
+      const select = document.createElement("select");
+      select.setAttribute("aria-label", labelText);
+      select.setAttribute("data-i18n-aria-label", labelKey);
+      row.append(title, select);
+      button.before(row);
+      button.hidden = true;
+      return select;
+    }
+    themeSelect = makeSelect(appearanceGroup.querySelector(".theme-open:not(.language-open)"), "settings.theme.title", "Тема");
+    for (const [value, key, label] of [["Чёрная", "black", "Чёрная"], ["Тёмная", "dark", "Тёмная"], ["Светлая", "light", "Светлая"], ["Стандартная", "default", "Стандартная"], ["Как в системе", "system", "Как в системе"]]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.dataset.i18n = `settings.theme.${key}`;
+      option.textContent = label;
+      themeSelect.append(option);
+    }
+    languageSelect = makeSelect(appearanceGroup.querySelector(".language-open"), "settings.language", "Язык");
+    document.querySelector("#settings-tabs-title").after(languageSelect.closest(".setting"));
+    for (const [value, label] of LANGUAGES) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      languageSelect.append(option);
+    }
+  }
   for (const [value, text] of LANGUAGES) {
     const label = document.createElement("label");
     label.className = "theme-option";
@@ -50,13 +84,15 @@ export function mountSettings({
     languageView.append(label);
   }
   let savePending = Promise.resolve();
-  listen(document.querySelector(".backup-open"), "click", async () => {
+  async function updateBackupStatus() {
     if (!onBackupStatus) return;
     try {
       const status = await onBackupStatus();
       backupNotice.textContent = status.error ? format("common.error_message", {error: translateText(status.error)}) : status.lastSuccess ? format("settings.backup.last_backup_date", {date: new Date(status.lastSuccess).toLocaleString(getLanguage())}) : t("settings.backup.the_folder_is_inside_firefox_downloads");
     } catch { backupNotice.textContent = t("settings.backup.could_not_get_backup_status"); }
-  });
+  }
+  listen(document.querySelector(".backup-open"), "click", updateBackupStatus);
+  if (document.documentElement.classList.contains("settings-page")) void updateBackupStatus();
   listen(document.querySelector(".backup-create"), "click", async () => {
     if (!onBackup) { backupNotice.textContent = t("settings.backup.backups_are_available_in_the_firefox_extension"); return; }
     backupNotice.textContent = t("settings.backup.creating_backup");
@@ -135,6 +171,8 @@ export function mountSettings({
       input.checked = input.value === (savedSettings.markerStyle);
     });
     animationInput.checked = Boolean(savedSettings.animations);
+    if (themeSelect) themeSelect.value = savedSettings.theme;
+    if (languageSelect) languageSelect.value = savedSettings.language;
     languageCurrent.textContent = LANGUAGES.find(([code]) => code === savedSettings.language)?.[1] || "English";
     languageView.querySelectorAll('input[name="language"]').forEach((input) => {
       input.checked = input.value === savedSettings.language;
@@ -146,7 +184,6 @@ export function mountSettings({
     nestedVisibilityRow.hidden = !nestedInput.checked;
     dynamicIconInput.checked = savedSettings.dynamicIcon !== false;
     experimentalSpaces.checked = savedSettings.experimentalSpaces;
-    archiveInput.checked = savedSettings.archiveEnabled !== false;
     backupInput.checked = Boolean(savedSettings.backupEnabled);
     backupFrequency.value = savedSettings.backupFrequency || "fourHours";
     backupFolder.value = savedSettings.backupFolder || "Tavvy";
@@ -189,16 +226,19 @@ export function mountSettings({
     savedSettings = normalizeSettings(savedSettings);
     savePending = Promise.resolve(repository.write(savedSettings));
   }
-  listen(languageView, "change", (event) => {
-    if (!event.target.matches('input[name="language"]')) return;
-    savedSettings.language = event.target.value;
+  function chooseLanguage(value) {
+    savedSettings.language = value;
     setLanguage(savedSettings.language);
     translateStatic(document.querySelector(".popup"));
     applySettings();
     if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion);
     saveSettings();
     onLanguageChange?.();
+  }
+  listen(languageView, "change", (event) => {
+    if (event.target.matches('input[name="language"]')) chooseLanguage(event.target.value);
   });
+  if (languageSelect) listen(languageSelect, "change", () => chooseLanguage(languageSelect.value));
   listen(animationInput, "change", () => {
     savedSettings.animations = animationInput.checked;
     applySettings();
@@ -241,10 +281,6 @@ export function mountSettings({
     savedSettings.dynamicIcon = dynamicIconInput.checked;
     saveSettings();
   });
-  listen(archiveInput, "change", () => {
-    savedSettings.archiveEnabled = archiveInput.checked;
-    saveSettings();
-  });
   listen(backupInput, "change", () => {
     savedSettings.backupEnabled = backupInput.checked;
     applySettings();
@@ -276,19 +312,16 @@ export function mountSettings({
     applySettings();
     saveSettings();
   });
-  themeInputs.forEach((input) =>
-    listen(input, "change", () => {
-      document.documentElement.classList.add("theme-changing");
-      savedSettings.theme = input.value;
-      delete savedSettings.brightness;
-      applySettings();
-      saveSettings();
-      setTimeout(
-        () => document.documentElement.classList.remove("theme-changing"),
-        300,
-      );
-    }),
-  );
+  function chooseTheme(value) {
+    document.documentElement.classList.add("theme-changing");
+    savedSettings.theme = value;
+    delete savedSettings.brightness;
+    applySettings();
+    saveSettings();
+    setTimeout(() => document.documentElement.classList.remove("theme-changing"), 300);
+  }
+  themeInputs.forEach((input) => listen(input, "change", () => chooseTheme(input.value)));
+  if (themeSelect) listen(themeSelect, "change", () => chooseTheme(themeSelect.value));
   // Resizing the popup while dragging its width slider moves the slider under
   // the pointer (Firefox anchors the popup to the toolbar). Commit on release.
   listen(panelWidth, "change", () => {
@@ -304,6 +337,110 @@ export function mountSettings({
   listen(systemTheme, "change", applySettings);
   applySettings();
   const importButton = document.querySelector('[aria-label="Импортировать"]');
+  if (document.documentElement.classList.contains("settings-page")) {
+    const area = document.createElement("div");
+    area.className = "backup-restore";
+    area.innerHTML = `<label class="backup-dropzone"><span class="backup-dropzone-title" data-i18n="settings.backup.drop_file">Перетащите файл сюда или выберите</span><span class="backup-dropzone-filename" aria-live="polite"></span><input class="backup-file-input" type="file" accept=".json,application/json" data-i18n-aria-label="import_page.choose_json_file" aria-label="Выбрать JSON-файл"></label><div class="backup-file-summary" hidden aria-live="polite"><strong class="backup-file-counts"></strong><p class="backup-file-extra"></p><ul class="backup-file-groups"></ul><p class="backup-file-more"></p></div><p class="backup-restore-help" data-i18n="settings.backup.safety_backup">Перед восстановлением будет создана резервная копия текущих вкладок.</p><label class="backup-restore-option"><input class="backup-close-existing" type="checkbox" checked><span data-i18n="import_page.close_existing_tabs">Закрыть текущие вкладки этого окна после восстановления</span></label><button class="backup-restore-submit" type="button" disabled data-i18n="settings.backup.restore_selected">Восстановить</button><p class="backup-restore-status" role="status" aria-live="polite"></p>`;
+    importButton.before(area);
+    importButton.hidden = true;
+    const zone = area.querySelector(".backup-dropzone");
+    const picker = area.querySelector(".backup-file-input");
+    const filename = area.querySelector(".backup-dropzone-filename");
+    const submit = area.querySelector(".backup-restore-submit");
+    const result = area.querySelector(".backup-restore-status");
+    const closeExisting = area.querySelector(".backup-close-existing");
+    const summary = area.querySelector(".backup-file-summary");
+    const counts = area.querySelector(".backup-file-counts");
+    const extra = area.querySelector(".backup-file-extra");
+    const groups = area.querySelector(".backup-file-groups");
+    const more = area.querySelector(".backup-file-more");
+    let selectedData = null, selectionId = 0;
+    async function selectFile(file) {
+      const current = ++selectionId;
+      selectedData = null;
+      summary.hidden = true;
+      filename.textContent = file?.name || "";
+      submit.disabled = true;
+      result.textContent = file ? t("import_page.reading_file") : "";
+      result.dataset.error = "false";
+      if (!file) return;
+      try {
+        const data = JSON.parse((await file.text()).replace(/^\uFEFF/, ""));
+        const preview = previewBackup(data);
+        if (current !== selectionId) return;
+        selectedData = data;
+        counts.textContent = format("settings.backup.preview_counts", { groups: preview.groups.length, tabs: preview.tabs, pinned: preview.pinned });
+        const details = [];
+        if (preview.spaces) details.push(format("settings.backup.preview_spaces", { count: preview.spaces }));
+        if (preview.legacy) details.push(format("settings.backup.preview_legacy", { count: preview.legacy }));
+        extra.textContent = details.join(" · ");
+        groups.replaceChildren(...preview.groups.slice(0, 30).map((group) => {
+          const row = document.createElement("li");
+          const name = document.createElement("span");
+          name.textContent = group.title;
+          const count = document.createElement("span");
+          count.textContent = String(group.tabs);
+          row.append(name, count);
+          return row;
+        }));
+        more.textContent = preview.groups.length > 30 ? format("settings.backup.preview_more", { count: preview.groups.length - 30 }) : "";
+        summary.hidden = false;
+        result.textContent = "";
+        submit.disabled = false;
+      } catch (error) {
+        if (current !== selectionId) return;
+        result.dataset.error = "true";
+        result.textContent = format("import_page.import_failed_error", { error: translateText(error.message) });
+      }
+    }
+    listen(picker, "change", () => selectFile(picker.files?.[0]));
+    for (const name of ["dragenter", "dragover"]) listen(zone, name, (event) => {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+      zone.classList.add("is-dragging");
+    });
+    listen(zone, "dragleave", (event) => { if (!zone.contains(event.relatedTarget)) zone.classList.remove("is-dragging"); });
+    listen(zone, "drop", (event) => {
+      event.preventDefault();
+      zone.classList.remove("is-dragging");
+      if (!picker.disabled) selectFile(event.dataTransfer?.files?.[0]);
+    });
+    listen(submit, "click", async () => {
+      if (!selectedData || !onRestoreBackup) return;
+      summary.hidden = true;
+      submit.disabled = true;
+      picker.disabled = true;
+      closeExisting.disabled = true;
+      result.dataset.error = "false";
+      result.textContent = t("import_page.reading_file");
+      try {
+        const data = selectedData;
+        await savePending;
+        const restored = await onRestoreBackup(data, closeExisting.checked);
+        if (data.format === "tavvy-backup") {
+          savedSettings = normalizeSettings(restored.settings);
+          setLanguage(savedSettings.language);
+          translateStatic(document.querySelector(".popup"));
+          applySettings();
+          onLanguageChange?.();
+          result.textContent = t("import_page.backup_restored");
+        } else {
+          const report = restored.importReport;
+          if (!report) throw new Error(t("import_page.import_result_missing"));
+          result.textContent = report.alreadyImported ? t("import_page.backup_already_imported_no_duplicates") : format("import_page.import_complete", { groups: report.groups, tabs: report.tabs, pinned: report.pinnedTabs });
+          if (report.browserPages) result.textContent += format("import_page.import_browser_pages_result", { count: report.browserPages });
+          if (report.localFiles) result.textContent += format("import_page.import_local_files_result", { count: report.localFiles });
+        }
+      } catch (error) {
+        result.dataset.error = "true";
+        result.textContent = format("import_page.import_failed_error", { error: translateText(error.message) });
+      } finally {
+        submit.disabled = !selectedData;
+        picker.disabled = false;
+        closeExisting.disabled = false;
+      }
+    });
+  }
   const importInput = document.createElement("input");
   importInput.type = "file";
   importInput.accept = ".json,application/json";

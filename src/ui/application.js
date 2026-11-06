@@ -98,17 +98,13 @@ export async function mountApplication(api) {
     scrollFrame,
     disposed = false;
   const groupViews = new Map(),
-    tabViews = new Map(),
-    archiveViews = new Map();
+    tabViews = new Map();
   let snapshot,
     opened = new Set(api.isDemo ? api.previewExpandedGroupIds || [] : []),
-    archiveOpen = false,
     searchTimer,
     refreshTimer,
     commandTail = Promise.resolve();
   const container = document.querySelector(".groups");
-  const recentList = document.querySelector(".recent-list");
-  const recentButton = document.querySelector(".recent-button");
   const search = document.querySelector(".search input");
   const palette = element("div", "group-color-palette");
   palette.hidden = true;
@@ -235,7 +231,13 @@ export async function mountApplication(api) {
   snapshot = await request({ type: "snapshot" });
   viewIndex = buildViewIndex(snapshot);
   document.querySelector("#panel-height").max = "600";
-  const navigation = mountNavigation();
+  const settingsPage = document.documentElement.classList.contains("settings-page");
+  const navigation = mountNavigation({
+    settingsPage,
+    onOpenSettings: !api.isDemo && !settingsPage && api.runtime.openOptionsPage
+      ? () => api.runtime.openOptionsPage().then(() => window.close()).catch((error) => { status.textContent = error.message; })
+      : undefined,
+  });
   const disposeScrollbar = mountCompactScrollbar(document.querySelector(".popup"));
   mountSettings({
     ...navigation,
@@ -250,7 +252,6 @@ export async function mountApplication(api) {
       for (const view of groupViews.values()) view.node.remove();
       groupViews.clear();
       tabViews.clear();
-      archiveViews.clear();
       render();
     },
     cachePopupSize: !api.isDemo,
@@ -264,6 +265,13 @@ export async function mountApplication(api) {
       return result.status;
     },
     onImportGroups: (backup) => run({ type: "importStg", backup }),
+    onRestoreBackup: api.isDemo ? null : async (backup, closeExistingTabs) => {
+      const type = backup?.format === "tavvy-backup" ? "importBackup" : "importStg";
+      const result = await api.runtime.sendMessage({ channel: "tavvy-command", windowId, command: { type, backup, closeExistingTabs } });
+      if (!result?.ok) throw new Error(translateText(result?.error || "Фоновый процесс недоступен"));
+      await run({ type: "snapshot" });
+      return result.snapshot;
+    },
     onOpenImport: api.isDemo
       ? undefined
       : () =>
@@ -448,44 +456,6 @@ export async function mountApplication(api) {
       return row;
     }));
   }
-  function showArchive(show) {
-    animatePanelChange(() => {
-      archiveOpen = show;
-      opened.clear();
-      document
-        .querySelectorAll(".group-toggle[aria-expanded=true]")
-        .forEach((toggle) => {
-          if (toggle.getAttribute("aria-expanded") === "true") toggle.click();
-        });
-      container.hidden = show;
-      recentList.hidden = !show;
-      document.querySelector(".bottom-bar").hidden = show;
-      document.querySelector(".archive-bar").hidden = !show;
-      recentButton.setAttribute("aria-expanded", String(show));
-      render();
-    });
-  }
-
-  recentButton.addEventListener("click", () => showArchive(true));
-  document
-    .querySelector(".archive-back")
-    .addEventListener("click", () => showArchive(false));
-  const clear = document.querySelector(".archive-clear");
-  let hold;
-  clear.addEventListener("pointerdown", (event) => {
-    if (event.button !== 0) return;
-    clear.setPointerCapture(event.pointerId);
-    clear.classList.add("holding");
-    hold = setTimeout(() => {
-      run({ type: "clearArchive" });
-      clear.classList.remove("holding");
-    }, 500);
-  });
-  for (const name of ["pointerup", "pointercancel", "lostpointercapture"])
-    clear.addEventListener(name, () => {
-      clearTimeout(hold);
-      clear.classList.remove("holding");
-    });
   search.addEventListener("input", () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => animatePanelChange(render), 180);
@@ -700,8 +670,7 @@ export async function mountApplication(api) {
         isOpen = opened.has(group.id),
         reachable =
           expandedPath(group) &&
-          filterResult.visible.has(group.id) &&
-          !archiveOpen;
+          filterResult.visible.has(group.id);
       view.toggle.setAttribute("aria-expanded", String(isOpen));
       view.tabs.classList.toggle("is-closed", !isOpen);
       if (!isOpen || !reachable) {
@@ -818,70 +787,8 @@ export async function mountApplication(api) {
     },
     { passive: true },
   );
-  function renderArchive() {
-    if (!archiveOpen) {
-      recentList.replaceChildren();
-      archiveViews.clear();
-      return;
-    }
-    const rows = [],
-      live = new Set();
-    for (const entry of snapshot.archive) {
-      let item = archiveViews.get(entry.id);
-      if (!item) {
-        const row = element("div", "recent-row"),
-          time = element("time");
-        row.dataset.archiveId = entry.id;
-        row.append(
-          favicon(entry),
-          element("span", "recent-title", entry.title),
-          time,
-          button(
-            t("archive.restore_tab"),
-            "restore-button",
-            icon("M3 7a5 5 0 1 1 1.2 4M3 3v4h4"),
-            () => run({ type: "restoreTab", entryId: entry.id }),
-          ),
-          button(
-            t("archive.delete_recently_closed_tab"),
-            "restore-button archive-delete-button",
-            icon("M4 4l8 8M12 4l-8 8"),
-            () => run({ type: "deleteArchivedTab", entryId: entry.id }),
-          ),
-        );
-        item = { row, time };
-        archiveViews.set(entry.id, item);
-      }
-      const minutes = Math.floor((Date.now() - entry.closedAt) / 60000);
-      item.time.textContent =
-        minutes < 1
-          ? t("archive.just_now")
-          : minutes < 60
-            ? format("archive.minutes_ago", { count: minutes })
-            : new Date(entry.closedAt).toLocaleDateString(getLanguage());
-      rows.push(item.row);
-      live.add(entry.id);
-    }
-    order(recentList, rows);
-    for (const id of archiveViews.keys())
-      if (!live.has(id)) archiveViews.delete(id);
-  }
   function render() {
     if (disposed) return;
-    const archiveAvailable = snapshot.settings.archiveEnabled !== false && snapshot.archive.length > 0;
-    recentButton.classList.toggle("is-visible", archiveAvailable);
-    recentButton.setAttribute("aria-hidden", String(!archiveAvailable));
-    recentButton.tabIndex = archiveAvailable ? 0 : -1;
-    if (archiveOpen && !archiveAvailable) {
-      archiveOpen = false;
-      opened.clear();
-      container.hidden = false;
-      recentList.hidden = true;
-      document.querySelector(".bottom-bar").hidden = false;
-      document.querySelector(".archive-bar").hidden = true;
-      recentButton.setAttribute("aria-expanded", "false");
-    }
-    renderArchive();
     renderSpaces();
     const query = search.value.trim().toLocaleLowerCase();
     filterResult = viewIndex.search(query);
@@ -968,12 +875,10 @@ export async function mountApplication(api) {
       filterResult = null;
       clearTimeout(searchTimer);
       clearTimeout(refreshTimer);
-      clearTimeout(hold);
       cancelAnimationFrame(scrollFrame);
       api.runtime.onMessage.removeListener?.(onMessage);
       groupViews.clear();
       tabViews.clear();
-      archiveViews.clear();
     },
     { once: true },
   );

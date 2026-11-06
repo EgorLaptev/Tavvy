@@ -6,6 +6,10 @@
     "save_failed": "Ihre Auswahl konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
   },
   "settings": {
+    "general": "Allgemein",
+    "backup_tab": "Sicherung",
+    "hotkeys": "Tastenkürzel",
+    "in_development": "In Entwicklung",
     "theme": {
       "title": "Thema",
       "black": "Schwarz",
@@ -25,6 +29,13 @@
       "maximum_height_label": "Maximale Fensterhöhe"
     },
     "backup": {
+      "preview_counts": "Gruppen: {groups} · Tabs: {tabs} · Angeheftet: {pinned}",
+      "preview_spaces": "Bereiche: {count}",
+      "preview_legacy": "Zuvor geschlossen: {count}",
+      "preview_more": "Und {count} weitere Gruppen",
+      "drop_file": "Sicherung hier ablegen oder Datei auswählen",
+      "safety_backup": "Vor der Wiederherstellung wird eine Sicherung der aktuellen Tabs erstellt.",
+      "restore_selected": "Wiederherstellen",
       "backups": "Backups",
       "automatic_backups": "Automatische Backups",
       "frequency": "Häufigkeit",
@@ -81,15 +92,6 @@
     "search": "Suchen",
     "settings": "Einstellungen",
     "error_message": "Fehler: {error}"
-  },
-  "archive": {
-    "hold_to_clear_recently_closed": "Halten Sie die Taste gedrückt, um die zuletzt geschlossenen Daten zu löschen",
-    "recently_closed_tabs": "Kürzlich geschlossene Tabs",
-    "restore_tab": "Registerkarte „Wiederherstellen“.",
-    "delete_recently_closed_tab": "Kürzlich geschlossenen Tab löschen",
-    "just_now": "gerade jetzt",
-    "minutes_ago": "{count} vor Minuten",
-    "closed_tabs_archive": "Kürzlich geschlossene Tabs"
   },
   "groups": {
     "rename_group": "Gruppe umbenennen",
@@ -148,7 +150,8 @@
     "cosmic_wombat": "Kosmischer Wombat",
     "dancing_red_panda": "Tanzender Roter Panda",
     "wandering_otter": "Wandernder Otter",
-    "bouncy_badger": "Hüpfender Dachs"
+    "bouncy_badger": "Hüpfender Dachs",
+    "clever_quokka": "Schlaues Quokka"
   },
   "errors": {
     "background_process_is_unavailable": "Der Hintergrundprozess ist nicht verfügbar",
@@ -163,7 +166,6 @@
     "enter_a_group_name": "Geben Sie einen Gruppennamen ein",
     "invalid_group_color": "Ungültige Gruppenfarbe",
     "the_tab_is_closed_or_belongs_to_another_window": "Die Registerkarte ist geschlossen oder gehört zu einem anderen Fenster",
-    "recently_closed_entry_not_found": "Kürzlich geschlossener Eintrag nicht gefunden",
     "a_group_cannot_contain_itself": "Eine Gruppe kann sich nicht selbst enthalten",
     "the_main_group_is_required_for_ungrouped_tabs": "Die Hauptgruppe ist für nicht gruppierte Registerkarten erforderlich",
     "unknown_command": "Unbekannter Befehl",

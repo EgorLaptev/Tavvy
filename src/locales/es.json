@@ -6,6 +6,10 @@
     "save_failed": "No se pudo guardar tu elección. Por favor inténtalo de nuevo."
   },
   "settings": {
+    "general": "General",
+    "backup_tab": "Copia de seguridad",
+    "hotkeys": "Atajos",
+    "in_development": "En desarrollo",
     "theme": {
       "title": "Tema",
       "black": "negro",
@@ -25,6 +29,13 @@
       "maximum_height_label": "Altura máxima de la ventana"
     },
     "backup": {
+      "preview_counts": "Grupos: {groups} · Pestañas: {tabs} · Fijadas: {pinned}",
+      "preview_spaces": "Espacios: {count}",
+      "preview_legacy": "Cerradas anteriormente: {count}",
+      "preview_more": "Y {count} grupos más",
+      "drop_file": "Arrastra una copia aquí o elige un archivo",
+      "safety_backup": "Antes de restaurar se guardará una copia de las pestañas actuales.",
+      "restore_selected": "Restaurar",
       "backups": "Copias de seguridad",
       "automatic_backups": "Copias de seguridad automáticas",
       "frequency": "Frecuencia",
@@ -81,15 +92,6 @@
     "search": "Buscar",
     "settings": "Configuración",
     "error_message": "Error: {error}"
-  },
-  "archive": {
-    "hold_to_clear_recently_closed": "Mantener para borrar cerrado recientemente",
-    "recently_closed_tabs": "Pestañas cerradas recientemente",
-    "restore_tab": "Restaurar pestaña",
-    "delete_recently_closed_tab": "Eliminar pestaña cerrada recientemente",
-    "just_now": "justo ahora",
-    "minutes_ago": "{count} hace minutos",
-    "closed_tabs_archive": "Pestañas cerradas recientemente"
   },
   "groups": {
     "rename_group": "Cambiar nombre de grupo",
@@ -148,7 +150,8 @@
     "cosmic_wombat": "Wombat cósmico",
     "dancing_red_panda": "Panda rojo bailarín",
     "wandering_otter": "Nutria viajera",
-    "bouncy_badger": "Tejón saltarín"
+    "bouncy_badger": "Tejón saltarín",
+    "clever_quokka": "Quokka ingenioso"
   },
   "errors": {
     "background_process_is_unavailable": "El proceso en segundo plano no está disponible",
@@ -163,7 +166,6 @@
     "enter_a_group_name": "Introduzca un nombre de grupo",
     "invalid_group_color": "Color de grupo no válido",
     "the_tab_is_closed_or_belongs_to_another_window": "La pestaña está cerrada o pertenece a otra ventana.",
-    "recently_closed_entry_not_found": "Entrada cerrada recientemente no encontrada",
     "a_group_cannot_contain_itself": "Un grupo no puede contenerse a sí mismo.",
     "the_main_group_is_required_for_ungrouped_tabs": "El grupo principal es obligatorio para pestañas desagrupadas.",
     "unknown_command": "Comando desconocido",

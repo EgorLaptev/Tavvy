@@ -1,5 +1,5 @@
 export function mountCompactScrollbar(panel) {
-  const scrollers = [...panel.querySelectorAll(".groups, .recent-list, .settings-view, .theme-view, .backup-view")];
+  const scrollers = [...panel.querySelectorAll(".groups, .settings-view, .theme-view, .backup-view")];
   const track = document.createElement("div");
   track.className = "compact-scrollbar";
   track.hidden = true;

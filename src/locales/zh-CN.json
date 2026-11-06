@@ -6,6 +6,10 @@
     "save_failed": "无法保存您的选择，请重试。"
   },
   "settings": {
+    "general": "常规",
+    "backup_tab": "备份",
+    "hotkeys": "快捷键",
+    "in_development": "开发中",
     "theme": {
       "title": "主题",
       "black": "黑色",
@@ -25,6 +29,13 @@
       "maximum_height_label": "窗口最大高度"
     },
     "backup": {
+      "preview_counts": "分组：{groups} · 标签页：{tabs} · 固定：{pinned}",
+      "preview_spaces": "空间：{count}",
+      "preview_legacy": "以前关闭：{count}",
+      "preview_more": "另有 {count} 个分组",
+      "drop_file": "将备份拖到此处或选择文件",
+      "safety_backup": "恢复前将保存当前标签页的备份。",
+      "restore_selected": "恢复",
       "backups": "备份",
       "automatic_backups": "自动备份",
       "frequency": "频率",
@@ -81,15 +92,6 @@
     "search": "搜索",
     "settings": "设置",
     "error_message": "错误：{error}"
-  },
-  "archive": {
-    "hold_to_clear_recently_closed": "按住以清空最近关闭的标签页",
-    "recently_closed_tabs": "最近关闭的标签页",
-    "restore_tab": "恢复标签页",
-    "delete_recently_closed_tab": "从最近关闭中删除标签页",
-    "just_now": "刚刚",
-    "minutes_ago": "{count} 分钟前",
-    "closed_tabs_archive": "最近关闭的标签页"
   },
   "groups": {
     "rename_group": "重命名分组",
@@ -148,7 +150,8 @@
     "cosmic_wombat": "宇宙袋熊",
     "dancing_red_panda": "跳舞的小熊猫",
     "wandering_otter": "漫游水獭",
-    "bouncy_badger": "蹦跳的獾"
+    "bouncy_badger": "蹦跳的獾",
+    "clever_quokka": "聪明的短尾矮袋鼠"
   },
   "errors": {
     "background_process_is_unavailable": "后台进程不可用",
@@ -163,7 +166,6 @@
     "enter_a_group_name": "请输入分组名称",
     "invalid_group_color": "分组颜色无效",
     "the_tab_is_closed_or_belongs_to_another_window": "标签页已关闭或属于其他窗口",
-    "recently_closed_entry_not_found": "找不到最近关闭的记录",
     "a_group_cannot_contain_itself": "分组不能包含自身",
     "the_main_group_is_required_for_ungrouped_tabs": "主分组用于存放未分类的标签页",
     "unknown_command": "未知命令",

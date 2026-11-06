@@ -1,4 +1,6 @@
+import { mountPageTheme } from "./page-theme.js";
 import { setLanguage, t, translateStatic } from "../locales/index.js";
+mountPageTheme(browser);
 setLanguage("en");
 translateStatic(document.documentElement);
 browser.storage.local.get("tavvy:workspace:v1").then((data) => {

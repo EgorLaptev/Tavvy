@@ -19,7 +19,7 @@ files remain after the extension is removed.
 No account is required. On a fresh install, open the toolbar popup and confirm
 the compatibility notice before Tavvy starts managing tabs or schedules backups.
 Then use the popup to create groups, switch groups,
-open settings, and use the archive. For backups, open Settings → Backups; choose
+and open settings. For backups, open Settings → Backups; choose
 Create backup now or change the schedule. A backup file is saved in Downloads.
 For import, select a Tavvy or Simple Tab Groups JSON backup through the import
 control. The GitHub button opens the project page in a tab.
@@ -41,7 +41,7 @@ Backups contain space names and tab URLs, not cookies or logged-in sessions.
 
 Permissions: `contextualIdentities` manages Firefox containers for experimental spaces; `menus` adds a tab context menu for moving tabs between groups; `tabs` reads and manages tabs; `tabHide` switches visible groups;
 `sessions` stores group associations across restarts; `storage` saves groups,
-settings and the archive; `alarms` schedules backups; `downloads` saves backup
+settings and legacy archive data; `alarms` schedules backups; `downloads` saves backup
 files. Private windows are excluded by the manifest.
 
 ## Source and reproducible build

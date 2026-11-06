@@ -126,7 +126,7 @@ test("preview shows mock containers and switches without Firefox APIs", async ()
   } finally { dom.window.close(); }
 });
 
-test("built app mounts and connects settings, groups, archive and navigation", async () => {
+test("built app mounts and connects settings, groups and navigation", async () => {
   const dom = new JSDOM(await readFile("index.html", "utf8"), {
     url: "http://localhost",
     runScripts: "outside-only",
@@ -169,25 +169,6 @@ test("built app mounts and connects settings, groups, archive and navigation", a
   await new Promise((resolve) => setTimeout(resolve, 30));
   assert.equal(group.querySelector(".group-toggle").getAttribute("aria-expanded"), "true");
   assert.equal(group.querySelectorAll(".tab-row").length, 1);
-  document.querySelector(".settings-button").click();
-  const archiveSetting = document.querySelector('input[aria-label="Recently closed tabs"]');
-  assert.equal(archiveSetting.checked, true);
-  archiveSetting.checked = false;
-  archiveSetting.dispatchEvent(new window.Event("change"));
-  await new Promise((resolve) => setTimeout(resolve, 30));
-  assert.equal(document.querySelector(".recent-button").getAttribute("aria-hidden"), "true");
-  archiveSetting.checked = true;
-  archiveSetting.dispatchEvent(new window.Event("change"));
-  await new Promise((resolve) => setTimeout(resolve, 30));
-  assert.equal(document.querySelector(".recent-button").getAttribute("aria-hidden"), "true");
-  document.querySelector(".settings-back").click();
-  group.querySelector(".group-toggle").click();
-  group.querySelector(".tab-close").click();
-  await new Promise((resolve) => setTimeout(resolve, 30));
-  assert.equal(document.querySelector(".recent-button").getAttribute("aria-hidden"), "false");
-  document.querySelector(".recent-button").click();
-  assert.equal(document.querySelectorAll(".recent-row").length, 1);
-  document.querySelector(".archive-back").click();
   document.querySelector(".settings-button").click();
   assert.equal(document.querySelector(".language-current").textContent, "English");
   document.querySelector(".language-open").click();

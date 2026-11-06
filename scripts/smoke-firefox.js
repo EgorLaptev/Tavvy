@@ -113,11 +113,11 @@ await build({
  await command({type:'activateGroup',groupId});actualPin=await browser.tabs.get(pinned.id);check(actualPin.pinned && !actualPin.hidden,'grouped pinned tab is restored on return');
  await command({type:'activateGroup',groupId:'inbox'});state=await command({type:'snapshot'});await command({type:'saveSettings',settings:{...state.settings,groupPinnedTabs:false}});actualPin=await browser.tabs.get(pinned.id);check(actualPin.pinned && !actualPin.hidden,'disabling grouping restores pinned tabs');
  await command({type:'activateGroup',groupId});
- state=await command({type:'closeTab',tabId:sample.id});const entry=state.archive.find(e=>e.url?.includes('/sample'));check(Boolean(entry),'real tab closure archived');
- state=await command({type:'restoreTab',entryId:entry.id});check(!state.archive.some(e=>e.id===entry.id),'restore removes archive entry');for(let attempt=0;attempt<100&&!state.tabs.some(t=>t.url?.includes('/sample'));attempt++){await new Promise(resolve=>setTimeout(resolve,50));state=await command({type:'snapshot'});}
- check(state.tabs.some(t=>t.url?.includes('/sample')),'real tab recreated');
+ state=await command({type:'closeTab',tabId:sample.id});check(!state.tabs.some(t=>t.id===sample.id),'real tab is closed');
+ const replacementTab=await browser.tabs.create({url:'http://127.0.0.1:${port}/sample',active:false});
+ await command({type:'moveTab',tabId:replacementTab.id,groupId});
  await command({type:'saveSettings',settings:{theme:'Тёмная',animations:false}});state=await command({type:'snapshot'});check(state.settings.animations===false,'settings persisted in Firefox storage');
- state=await command({type:'deleteGroup',groupId});check(!state.groups.some(g=>g.id===groupId),'group deletion');check(!state.tabs.some(t=>t.url?.includes('/sample')),'group deletion closes its tabs by default');check(state.archive.some(t=>t.url?.includes('/sample')),'group deletion archives closed tabs');
+ state=await command({type:'deleteGroup',groupId});check(!state.groups.some(g=>g.id===groupId),'group deletion');check(!state.tabs.some(t=>t.id===replacementTab.id),'group deletion closes its tabs by default');
  state=await command({type:'createGroup',title:'Visibility parent'});const visibilityParent=state.groups.find(g=>g.title==='Visibility parent').id;
  await command({type:'activateGroup',groupId:visibilityParent});state=await command({type:'snapshot'});const parentTab=state.tabs.find(t=>t.groupId===visibilityParent).id;
  state=await command({type:'createGroup',title:'Visibility child',parentId:visibilityParent});const visibilityChild=state.groups.find(g=>g.title==='Visibility child').id;
@@ -130,34 +130,53 @@ await build({
 
  check(!ui.body.textContent.includes('Глубокое обучение'),'popup uses live data, not fixtures');
  let retainedGroup=ui.querySelector('.group'); let retainedMarker=retainedGroup.querySelector('.marker');
- const fixedHeight=ui.querySelector('.popup').getBoundingClientRect().height;ui.querySelector('.settings-button').click();ui.querySelector('.theme-open').click();check(Math.abs(ui.querySelector('.popup').getBoundingClientRect().height-fixedHeight)<1,'popup height stays fixed across settings screens');
- const light=ui.querySelector('input[value="Светлая"]');light.checked=true;light.dispatchEvent(new Event('change'));
+ ui.querySelector('.settings-button').click();
+ let settingsTab;for(let attempt=0;attempt<100;attempt++){settingsTab=(await browser.tabs.query({})).find(tab=>tab.url?.includes('/settings.html'));if(settingsTab)break;await new Promise(resolve=>setTimeout(resolve,50));}
+ check(Boolean(settingsTab),'settings opens in a separate tab');
+ const settingsFrame=document.createElement('iframe');settingsFrame.style.width='1200px';settingsFrame.style.height='900px';settingsFrame.src=settingsTab.url;document.documentElement.append(settingsFrame);
+ for(let attempt=0;attempt<100&&!settingsFrame.contentDocument?.querySelector('.theme-open');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ const settingsUi=settingsFrame.contentDocument;
+ for(let attempt=0;attempt<100&&settingsUi.querySelector('.settings-view').hidden;attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ check(!settingsUi.querySelector('.settings-view').hidden,'settings page shows settings');
+ check(!settingsUi.querySelector('#settings-data-title'),'settings page has no empty data section');
+ check(!settingsUi.querySelector('.settings-tabs')&&!settingsUi.querySelector('.settings-preview'),'settings page has no tabs or preview');
+ const settingsGrid=settingsUi.querySelector('.settings-view');
+ check(settingsFrame.contentWindow.getComputedStyle(settingsGrid).gridTemplateColumns.split(' ').length===2,'settings use two columns on wide screens');
+ check(settingsUi.querySelectorAll('.settings-column').length===2,'settings sections use independent columns');
+ check(!settingsUi.querySelector('.settings-backups').hidden,'backup section is on the settings page');
+ const themeSelect=settingsUi.querySelector('select[data-i18n-aria-label="settings.theme.title"]');
+ check(Boolean(themeSelect),'theme uses a select on the settings page');
+ themeSelect.value='Чёрная';themeSelect.dispatchEvent(new Event('change',{bubbles:true}));
+ await new Promise(resolve=>setTimeout(resolve,350));
+ check(settingsFrame.contentWindow.getComputedStyle(settingsUi.body).backgroundColor==='rgb(0, 0, 0)','black theme uses a black settings background');
+ for(const name of ['import.html','local-file.html']){
+  const colorFrame=document.createElement('iframe');colorFrame.src=browser.runtime.getURL(name);document.documentElement.append(colorFrame);
+  for(let attempt=0;attempt<100&&colorFrame.contentDocument?.documentElement.dataset.theme!=='black';attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+  check(colorFrame.contentWindow.getComputedStyle(colorFrame.contentDocument.documentElement).backgroundColor==='rgb(0, 0, 0)','black theme uses black on '+name);colorFrame.remove();
+ }
+ themeSelect.value='Светлая';themeSelect.dispatchEvent(new Event('change',{bubbles:true}));
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.settings.theme==='Светлая')break;await new Promise(resolve=>setTimeout(resolve,50));}
  check(state.settings.theme==='Светлая','popup settings reach background');
- ui.querySelector('.settings-back').click();
- ui.querySelector('.language-open').click();check(!ui.querySelector('.language-view').hidden&&ui.querySelector('.settings-view').hidden,'language settings page opens');
- check(Math.abs(ui.querySelector('.popup').getBoundingClientRect().height-fixedHeight)<1,'language page keeps popup height');
- ui.querySelector('.language-view input[value="fr"]').click();
+ const languageSelect=settingsUi.querySelector('select[data-i18n-aria-label="settings.language"]');
+ check(Boolean(languageSelect),'language uses a select on the settings page');
+ languageSelect.value='fr';languageSelect.dispatchEvent(new Event('change',{bubbles:true}));
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.settings.language==='fr')break;await new Promise(resolve=>setTimeout(resolve,50));}
- check(state.settings.language==='fr'&&ui.documentElement.lang==='fr','language page persists selected language');
- ui.querySelector('.language-view input[value="ru"]').click();
+ check(state.settings.language==='fr'&&settingsUi.documentElement.lang==='fr','language page persists selected language');
+ languageSelect.value='ru';languageSelect.dispatchEvent(new Event('change',{bubbles:true}));
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.settings.language==='ru')break;await new Promise(resolve=>setTimeout(resolve,50));}
- ui.querySelector('.settings-back').click();check(ui.querySelector('.language-view').hidden&&!ui.querySelector('.settings-view').hidden,'back returns from language page');
- for(const selector of ['.settings-appearance > .theme-open:not(.language-open)','.language-open']){
-  const row=ui.querySelector(selector),value=row.querySelector('.theme-current').getBoundingClientRect(),arrow=row.querySelector('svg').getBoundingClientRect();
-  check(arrow.left-value.right<=20&&value.width<row.getBoundingClientRect().width/2,'settings value is aligned next to arrow: '+selector);
- }
- ui.documentElement.style.setProperty('--panel-width','320px');
- const spaceSetting=ui.querySelector('.experimental-spaces').closest('.setting');const settingHeight=spaceSetting.getBoundingClientRect().height;
- ui.querySelector('.experimental-spaces').focus();await new Promise(resolve=>setTimeout(resolve,250));
- const settingText=spaceSetting.querySelector('small');const textStyle=frame.contentWindow.getComputedStyle(settingText);
+ check(!settingsUi.querySelector('.settings-view').hidden&&!settingsUi.querySelector('.settings-backups').hidden,'theme and language changes stay on settings page');
+ settingsFrame.style.width='320px';
+ check(settingsFrame.contentWindow.getComputedStyle(settingsGrid).gridTemplateColumns.split(' ').length===1,'settings use one column on narrow screens');
+ const spaceSetting=settingsUi.querySelector('.experimental-spaces').closest('.setting');const settingHeight=spaceSetting.getBoundingClientRect().height;
+ settingsUi.querySelector('.experimental-spaces').focus();await new Promise(resolve=>setTimeout(resolve,250));
+ const settingText=spaceSetting.querySelector('small');const textStyle=settingsFrame.contentWindow.getComputedStyle(settingText);
  check(Math.abs(spaceSetting.getBoundingClientRect().height-settingHeight)<1,'settings row stays one line when description is shown');
  check(textStyle.whiteSpace==='nowrap'&&textStyle.textOverflow==='ellipsis'&&settingText.scrollWidth>settingText.clientWidth,'long setting description is truncated');
- ui.documentElement.style.setProperty('--panel-width','440px');
- check(!ui.querySelector('.accent-setting'),'accent color control is removed');
+ settingsFrame.style.width='720px';
+ check(!settingsUi.querySelector('.accent-setting'),'accent color control is removed');
  state=await command({type:'snapshot'});await command({type:'saveSettings',settings:{...state.settings,experimentalSpaces:true}});
  for(let attempt=0;attempt<100&&ui.querySelector('.spaces-bar').hidden;attempt++)await new Promise(resolve=>setTimeout(resolve,50));
- ui.querySelector('.settings-back').click();check(!ui.querySelector('.spaces-bar').hidden,'experimental spaces become available');
+ check(!ui.querySelector('.spaces-bar').hidden,'experimental spaces become available');
  const switcher=ui.querySelector('.spaces-trigger'),switcherBounds=switcher.getBoundingClientRect(),panelBounds=ui.querySelector('.popup').getBoundingClientRect();
  check(switcherBounds.width<panelBounds.width*.7&&panelBounds.right-switcherBounds.right<30,'space switcher is compact and right aligned');
  check(frame.contentWindow.getComputedStyle(switcher).backgroundColor==='rgba(0, 0, 0, 0)','space switcher has no background');
@@ -213,7 +232,23 @@ await build({
 
  const backup={version:'5.3.2',groups:[{id:1,title:'Imported empty',iconColor:'#ff7800',tabs:[]},{id:2,title:'Imported tabs',iconColor:'#398dff',tabs:[{url:'http://127.0.0.1:${port}/imported',title:'Imported page'},{url:'file:///D:/smoke.pdf',title:'Imported file'},{url:'about:addons',title:'Add-ons'}]}],pinnedTabs:[{url:'http://127.0.0.1:${port}/pinned',title:'Imported pinned'}]};
 
- ui.querySelector('.settings-button').click();ui.querySelector('.backup-open').click();ui.querySelector('.backup-import').click();
+ check(!settingsUi.querySelector('.settings-backups').hidden,'backup controls remain visible on settings page');
+ const dropzone=settingsUi.querySelector('.backup-dropzone'),restoreSubmit=settingsUi.querySelector('.backup-restore-submit');
+ check(Boolean(dropzone)&&restoreSubmit.disabled,'backup drop zone waits for a file');
+ const dropBackup={version:'5.3.2',groups:[{id:87654,title:'Dropped backup group',tabs:[{url:'http://127.0.0.1:${port}/dropped',title:'Dropped page'}]}]};
+ const transfer=new settingsFrame.contentWindow.DataTransfer();transfer.items.add(new settingsFrame.contentWindow.File([JSON.stringify(dropBackup)],'drop-test.json',{type:'application/json'}));
+ dropzone.dispatchEvent(new settingsFrame.contentWindow.DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:transfer}));
+ for(let attempt=0;attempt<100&&restoreSubmit.disabled;attempt++)await new Promise(resolve=>setTimeout(resolve,20));
+ check(!restoreSubmit.disabled&&settingsUi.querySelector('.backup-dropzone-filename').textContent==='drop-test.json','dropped backup is selected');
+ check(!settingsUi.querySelector('.backup-file-summary').hidden&&settingsUi.querySelector('.backup-file-counts').textContent.includes('1')&&settingsUi.querySelector('.backup-file-groups').textContent.includes('Dropped backup group'),'backup contents are summarized before restore');
+ check(!(await command({type:'snapshot'})).groups.some(g=>g.title==='Dropped backup group'),'dropping a file does not restore without confirmation');
+ settingsUi.querySelector('.backup-close-existing').checked=false;restoreSubmit.click();
+ check(settingsUi.querySelector('.backup-file-summary').hidden,'backup preview hides when restore starts');
+ for(let attempt=0;attempt<200;attempt++){state=await command({type:'snapshot'});if(state.groups.some(g=>g.title==='Dropped backup group'))break;await new Promise(resolve=>setTimeout(resolve,50));}
+ check(state.groups.some(g=>g.title==='Dropped backup group'),'dropped backup restores from settings');
+ for(let attempt=0;attempt<100&&restoreSubmit.disabled;attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+ check(!restoreSubmit.disabled&&settingsUi.querySelector('.backup-restore-status').dataset.error==='false','drop restore completes successfully');
+ settingsUi.querySelector('.backup-import').click();
  let importTab;
  for(let attempt=0;attempt<100;attempt++){importTab=(await browser.tabs.query({windowId})).find(tab=>tab.url?.includes('/import.html'));if(importTab)break;await new Promise(resolve=>setTimeout(resolve,50));}
  check(Boolean(importTab),'import button opens a persistent import page');

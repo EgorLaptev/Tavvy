@@ -5,34 +5,36 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.10 — Clever Quokka — 2026-11-06
+
+- Hide the backup contents preview when restoration starts.
+- Remove completed automatic backup entries from Firefox download history while keeping the files.
+- Reduce settings page margins and give each section a subtle surface.
+- Show settings on one responsive page with sections.
+- Reduce extension package size by sharing utility page code and optimizing the icon.
+- Show a backup summary before restoring it.
+- Add a backup file drop zone to settings.
+- Choose the theme and language from dropdowns on the settings page.
+- Close the popup after opening settings.
+- Remove the recently closed tabs archive.
+
 ## 0.2.9 — Bouncy Badger — 2026-11-05
 
 - Keep the window size sliders steady while dragging and apply the new size on release.
-
 - Close a deleted group’s tabs by default, with an option to keep them.
-
 - Set the default automatic backup frequency to every four hours.
-
 - Back up the current workspace before restoring, with an option to keep existing tabs.
-
 - Preserve Firefox system pages when importing Simple Tab Groups backups.
-
 - Keep tab management, context menus and backups inactive until onboarding is confirmed.
-
 - Send popup actions to the background promptly so queued actions survive popup closure.
 
 ## 0.2.8 — Wandering Otter — 2026-11-05
 
 - Refresh the local interface preview with English demo groups, nested groups, tabs and mock Firefox containers.
-
 - Translate the Default space name in the selected language.
-
 - Show release names in English regardless of the selected language.
-
 - Hide the space switcher when experimental spaces are disabled and return to Default without deleting space data.
-
 - Reconnect spaces with missing containers to an existing Firefox container without losing their groups.
-
 - Show existing Firefox containers as experimental spaces without creating containers. Preserve existing Tavvy groups and allow choosing Firefox icons.
 - Restore space backups into uniquely matching, unassigned Firefox containers.
 - Place the compact space switcher in the upper-right corner and fix menu overflow.
@@ -80,7 +82,6 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 - Allow disabling the recently closed tabs archive; clear previous entries when it is enabled again.
 - Show the archive delete icon in red only when hovered.
 - Collapse an expanded group when its drag begins.
-
 - Add a pre-commit hook for tests and Firefox extension validation.
 - Declare potential browsing activity exposure from favicon requests in Firefox's data consent prompt.
 - Restrict extension network access to favicon images and exclude private windows to protect browsing data.

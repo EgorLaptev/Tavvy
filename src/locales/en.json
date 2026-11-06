@@ -6,6 +6,10 @@
     "save_failed": "Could not save your choice. Please try again."
   },
   "settings": {
+    "general": "General",
+    "backup_tab": "Backup",
+    "hotkeys": "Hotkeys",
+    "in_development": "In development",
     "theme": {
       "title": "Theme",
       "black": "Black",
@@ -25,6 +29,13 @@
       "maximum_height_label": "Maximum window height"
     },
     "backup": {
+      "preview_counts": "Groups: {groups} · Tabs: {tabs} · Pinned: {pinned}",
+      "preview_spaces": "Spaces: {count}",
+      "preview_legacy": "Previously closed: {count}",
+      "preview_more": "And {count} more groups",
+      "drop_file": "Drop a backup here or choose a file",
+      "safety_backup": "A backup of your current tabs will be saved before restoring.",
+      "restore_selected": "Restore",
       "backups": "Backups",
       "automatic_backups": "Automatic backups",
       "frequency": "Frequency",
@@ -81,15 +92,6 @@
     "search": "Search",
     "settings": "Settings",
     "error_message": "Error: {error}"
-  },
-  "archive": {
-    "hold_to_clear_recently_closed": "Hold to clear recently closed",
-    "recently_closed_tabs": "Recently closed tabs",
-    "restore_tab": "Restore tab",
-    "delete_recently_closed_tab": "Delete recently closed tab",
-    "just_now": "just now",
-    "minutes_ago": "{count} min ago",
-    "closed_tabs_archive": "Recently closed tabs"
   },
   "groups": {
     "rename_group": "Rename group",
@@ -148,7 +150,8 @@
     "cosmic_wombat": "Cosmic Wombat",
     "dancing_red_panda": "Dancing Red Panda",
     "wandering_otter": "Wandering Otter",
-    "bouncy_badger": "Bouncy Badger"
+    "bouncy_badger": "Bouncy Badger",
+    "clever_quokka": "Clever Quokka"
   },
   "errors": {
     "background_process_is_unavailable": "Background process is unavailable",
@@ -163,7 +166,6 @@
     "enter_a_group_name": "Enter a group name",
     "invalid_group_color": "Invalid group color",
     "the_tab_is_closed_or_belongs_to_another_window": "The tab is closed or belongs to another window",
-    "recently_closed_entry_not_found": "Recently closed entry not found",
     "a_group_cannot_contain_itself": "A group cannot contain itself",
     "the_main_group_is_required_for_ungrouped_tabs": "The main group is required for ungrouped tabs",
     "unknown_command": "Unknown command",

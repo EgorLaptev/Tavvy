@@ -46,6 +46,8 @@ export function createWorkspaceService(
     if (state.version !== 1)
       throw new Error("Неподдерживаемая версия данных Tavvy");
     state.known ??= {};
+    // Keep older archive data in backups without recording new closures.
+    state.archive ??= [];
     state.spaces ??= [];
     for (const job of Object.values(state.imports || {}))
       if (job.complete) {
@@ -177,11 +179,8 @@ export function createWorkspaceService(
       tabs
         .filter((tab) => !tab.incognito)
         .map(async (tab) => {
-          const utility = api.runtime?.getURL?.("import.html");
-          if (
-            utility &&
-            (tab.url === utility || tab.url?.startsWith(utility + "?"))
-          ) {
+          const utilities = ["import.html", "settings.html"].map((name) => api.runtime?.getURL?.(name)).filter(Boolean);
+          if (utilities.some((url) => tab.url === url || tab.url?.startsWith(url + "?") || tab.url?.startsWith(url + "#"))) {
             forgetKnown(tab.id);
             return null;
           }
@@ -316,8 +315,6 @@ export function createWorkspaceService(
       revision,
       groups,
       tabs,
-      archive: state.archive.filter((entry) => groupIds.has(entry.groupId) ||
-        (activeSpaceId === DEFAULT_SPACE_ID && !state.groups.some((item) => item.id === entry.groupId))),
       activeGroupId,
       activeSpaceId,
       spaces: [{ id: DEFAULT_SPACE_ID, name: "" }, ...state.spaces.map(({ id, name, icon, cookieStoreId }) => {
@@ -436,36 +433,11 @@ export function createWorkspaceService(
       }
     }
   }
-  function archive(record) {
-    if (state.settings?.archiveEnabled === false || !record || record.pinned) return;
-    state.archive.unshift({
-      id: id(),
-      title: record.title,
-      url: record.url,
-      faviconUrl: record.faviconUrl,
-      groupId: record.groupId,
-      closedAt: Date.now(),
-    });
-    state.archive = state.archive.slice(0, 200);
-  }
   function isRestrictedPage(url) {
     return /^about:[a-z0-9-]+(?:[?#][^\s]*)?$/i.test(url) && !/^about:(blank|newtab)$/i.test(url);
   }
   function placeholderUrl(url, title) {
     return api.runtime.getURL("local-file.html") + "#" + encodeURIComponent(JSON.stringify({ url, title }));
-  }
-  function safeUrl(url) {
-    if (isRestrictedPage(url)) return placeholderUrl(url, url);
-    if (
-      api.runtime?.getURL &&
-      url.startsWith(api.runtime.getURL("local-file.html") + "#")
-    )
-      return url;
-    return /^(https?:|file:)/i.test(url) ||
-      url === "about:blank" ||
-      url === "about:newtab"
-      ? url
-      : undefined;
   }
   async function importStg(data, windowId) {
     const plan = parseStgBackup(data);
@@ -749,7 +721,6 @@ export function createWorkspaceService(
       }
       if (type === "closeTab") {
         await api.tabs.remove(tab.id);
-        archive(tab);
         forgetKnown(tab.id);
       }
       if (type === "moveTab") {
@@ -768,32 +739,6 @@ export function createWorkspaceService(
         } else if (tab.active) await activate(windowId, command.groupId, tab.id);
         else await visibility(windowId, await active(windowId));
       }
-    } else if (type === "restoreTab") {
-      const entry = state.archive.find((entry) => entry.id === command.entryId);
-      if (!entry) throw new Error("Запись архива не найдена");
-      const groupId = state.groups.some((g) => g.id === entry.groupId)
-        ? entry.groupId
-        : "inbox";
-      const url = safeUrl(entry.url);
-      const tab = await api.tabs.create({
-        windowId,
-        active: false,
-        ...await tabContainer(groupId),
-        ...(url ? { url } : {}),
-      });
-      await api.sessions.setTabValue(tab.id, TAG, groupId);
-      await activate(windowId, groupId, tab.id);
-      state.archive = state.archive.filter((item) => item.id !== entry.id);
-    } else if (type === "deleteArchivedTab") {
-      state.archive = state.archive.filter(
-        (item) => item.id !== command.entryId,
-      );
-    } else if (type === "clearArchive") {
-      const currentSpace = groupSpaceId(group(await active(windowId)));
-      const ids = new Set(groupsInSpace(state.groups, currentSpace).map((item) => item.id));
-      const allIds = new Set(state.groups.map((item) => item.id));
-      state.archive = state.archive.filter((entry) => !ids.has(entry.groupId) &&
-        !(currentSpace === DEFAULT_SPACE_ID && !allIds.has(entry.groupId)));
     }
     else if (type === "moveGroup") {
       const moving = group(command.groupId);
@@ -836,7 +781,6 @@ export function createWorkspaceService(
             await activate(affectedWindowId, replacement.id);
         for (const tab of targetTabs) {
           await api.tabs.remove(tab.id);
-          archive({ ...tab, groupId: replacement.id });
           forgetKnown(tab.id);
         }
       } else {
@@ -859,9 +803,6 @@ export function createWorkspaceService(
     } else if (type === "saveSettings") {
       const next = normalizeSettings(command.settings);
       const previousSettings = normalizeSettings(state.settings);
-      if (state.settings?.archiveEnabled === false && next.archiveEnabled) {
-        state.archive = [];
-      }
       const wasGrouped = !!state.settings?.groupPinnedTabs;
       if (!wasGrouped && next.groupPinnedTabs) {
         const records = await scan();
@@ -939,7 +880,6 @@ export function createWorkspaceService(
           const batch = [...pendingRemovals];
           pendingRemovals.clear();
           for (const [id, closing] of batch) {
-            if (!closing) archive(state.known[id]);
             forgetKnown(id);
             index.forgetRemoved(id);
           }

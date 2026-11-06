@@ -14,7 +14,7 @@ for truncation and overflow checks.
 
 - In a fresh disposable profile, load the extension but do not confirm the
   notice. Open, move, activate and close ordinary tabs; verify Tavvy does not
-  hide, group or archive them and does not offer its tab context menu.
+  hide or group them and does not offer its tab context menu.
 - Open the popup and close it without confirmation; repeat after restarting the
   browser. The extension must stay inactive. Then confirm onboarding and verify
   group management and the context menu work. Previously confirmed installations
@@ -32,8 +32,8 @@ for truncation and overflow checks.
 - Drag a tab within its group and between groups. Check final order and row
   animations, and repeat with nested groups. An automated pass does not prove
   that motion is smooth.
-- Exercise pinned tabs and the archive using test pages. Confirm that deleting
-  a group does not close its real tabs.
+- Exercise pinned tabs using test pages. Confirm that deleting a group closes
+  its tabs by default, and keeps them when the corresponding setting is off.
 
 ## Settings and spaces
 

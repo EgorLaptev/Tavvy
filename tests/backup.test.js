@@ -68,3 +68,43 @@ test("accent color survives backup parsing and rejects values outside the preset
   assert.equal(normalizeSettings({ accentColor: "red; color: red" }).accentColor, "#398dff");
   assert.equal(normalizeSettings({ accentColor: "#123456" }).accentColor, "#398dff");
 });
+
+test("automatic backup removes only its completed download from history", async () => {
+  const values = {}, calls = [];
+  const api = {
+    storage: { local: { get: async (key) => ({ [key]: values[key] }), set: async (data) => Object.assign(values, data) } },
+    alarms: { clear: async () => {}, create: async () => {} },
+    windows: { getLastFocused: async () => ({ id: 1 }) },
+    downloads: { download: async () => { calls.push("download"); return 42; }, search: async () => { calls.push("complete"); return [{ state: "complete" }]; }, erase: async (query) => { calls.push(["erase", query]); } },
+  };
+  const manager = createBackupManager(api, { dispatch: async () => ({ format: "tavvy-backup" }) });
+  await manager.runAlarm({ name: "tavvy-backup" });
+  assert.deepEqual(calls, ["download", "complete", ["erase", { id: 42 }]]);
+  assert.ok((await manager.status()).lastSuccess);
+  calls.length = 0;
+  await manager.download(1);
+  assert.deepEqual(calls, ["download", "complete"]);
+});
+
+test("automatic backup stays successful if removing its history entry fails", async () => {
+  const values = {};
+  const api = {
+    storage: { local: { get: async (key) => ({ [key]: values[key] }), set: async (data) => Object.assign(values, data) } },
+    downloads: { download: async () => 7, search: async () => [{ state: "complete" }], erase: async () => { throw new Error("history unavailable"); } },
+  };
+  const manager = createBackupManager(api, { dispatch: async () => ({}) });
+  await manager.download(1, { automatic: true });
+  assert.ok((await manager.status()).lastSuccess);
+  assert.equal((await manager.status()).error, "");
+});
+
+test("failed automatic backup does not erase its history entry", async () => {
+  const values = {}; let erased = false;
+  const api = {
+    storage: { local: { get: async (key) => ({ [key]: values[key] }), set: async (data) => Object.assign(values, data) } },
+    downloads: { download: async () => 9, search: async () => [{ state: "interrupted", error: "failed" }], erase: async () => { erased = true; } },
+  };
+  const manager = createBackupManager(api, { dispatch: async () => ({}) });
+  await assert.rejects(manager.download(1, { automatic: true }));
+  assert.equal(erased, false);
+});

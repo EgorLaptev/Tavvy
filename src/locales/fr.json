@@ -6,6 +6,10 @@
     "save_failed": "Impossible d'enregistrer votre choix. Veuillez réessayer."
   },
   "settings": {
+    "general": "Général",
+    "backup_tab": "Sauvegarde",
+    "hotkeys": "Raccourcis",
+    "in_development": "En développement",
     "theme": {
       "title": "Thème",
       "black": "Noir",
@@ -25,6 +29,13 @@
       "maximum_height_label": "Hauteur maximale de la fenêtre"
     },
     "backup": {
+      "preview_counts": "Groupes : {groups} · Onglets : {tabs} · Épinglés : {pinned}",
+      "preview_spaces": "Espaces : {count}",
+      "preview_legacy": "Fermés précédemment : {count}",
+      "preview_more": "Et {count} autres groupes",
+      "drop_file": "Déposez une sauvegarde ici ou choisissez un fichier",
+      "safety_backup": "Une sauvegarde des onglets actuels sera créée avant la restauration.",
+      "restore_selected": "Restaurer",
       "backups": "Sauvegardes",
       "automatic_backups": "Sauvegardes automatiques",
       "frequency": "Fréquence",
@@ -81,15 +92,6 @@
     "search": "Rechercher",
     "settings": "Paramètres",
     "error_message": "Erreur : {error}"
-  },
-  "archive": {
-    "hold_to_clear_recently_closed": "Maintenez pour effacer récemment fermé",
-    "recently_closed_tabs": "Onglets récemment fermés",
-    "restore_tab": "Onglet Restaurer",
-    "delete_recently_closed_tab": "Supprimer l'onglet récemment fermé",
-    "just_now": "juste maintenant",
-    "minutes_ago": "{count} il y a min",
-    "closed_tabs_archive": "Onglets récemment fermés"
   },
   "groups": {
     "rename_group": "Renommer le groupe",
@@ -148,7 +150,8 @@
     "cosmic_wombat": "Wombat cosmique",
     "dancing_red_panda": "Panda roux dansant",
     "wandering_otter": "Loutre vagabonde",
-    "bouncy_badger": "Blaireau bondissant"
+    "bouncy_badger": "Blaireau bondissant",
+    "clever_quokka": "Quokka malin"
   },
   "errors": {
     "background_process_is_unavailable": "Le processus en arrière-plan n'est pas disponible",
@@ -163,7 +166,6 @@
     "enter_a_group_name": "Entrez un nom de groupe",
     "invalid_group_color": "Couleur de groupe invalide",
     "the_tab_is_closed_or_belongs_to_another_window": "L'onglet est fermé ou appartient à une autre fenêtre",
-    "recently_closed_entry_not_found": "Entrée récemment fermée introuvable",
     "a_group_cannot_contain_itself": "Un groupe ne peut pas se contenir",
     "the_main_group_is_required_for_ungrouped_tabs": "Le groupe principal est requis pour les onglets non groupés",
     "unknown_command": "Commande inconnue",

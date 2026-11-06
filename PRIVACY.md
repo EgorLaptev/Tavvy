@@ -3,13 +3,13 @@
 On a fresh install, Tavvy starts managing tabs only after the onboarding notice
 is confirmed. Tavvy manages tabs locally in Firefox. It reads tab titles, URLs, favicons,
 group membership and related tab state to display and manage groups. This data,
-settings and the recently closed list are stored locally using Firefox extension
+settings and legacy recently closed records are stored locally using Firefox extension
 storage and session storage. Tavvy does not use analytics or send these records
 to the developer. Loading favicons can contact the websites hosting those images,
 as explained below.
 
 Automatic backups are enabled by default. Every four hours Tavvy saves a JSON file
-containing group information, tab URLs and titles, recently closed tabs and
+containing group information, tab URLs and titles, any legacy recently closed records and
 settings in the `Tavvy` folder inside Firefox's Downloads folder. Backups are
 ordinary unencrypted files and remain on disk after uninstalling the extension.
 You can disable automatic backups, change the interval or folder, and create a

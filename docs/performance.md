@@ -17,7 +17,7 @@ The project uses a custom DOM renderer rather than React.
 | Medium | Full UI rebuilds | Cards and markers are reused, changed fields are updated, and a snapshot version replaces double `JSON.stringify`. This preserves focus and reduces DOM work. |
 | Medium | Pointer movement and layout measurement | Dragging is processed once per animation frame, the placeholder changes only with its position, and FLIP measurements are bounded. |
 | Medium | Resources retained after popup closure | `pagehide` removes runtime listeners, timers, animation frames, drag references and UI caches. Settings handlers share a disposer. |
-| Low | Duplicate mockup and extension | Shared renderer and workspace service; old implementations moved to `prototype`, outside the production bundle. |
+| Low | Duplicate mockup and extension | Shared renderer and workspace service replace the separate implementations. |
 | Low | Unminified build | Production JS and CSS are minified, reducing file size and code to parse. |
 
 ## API call counts

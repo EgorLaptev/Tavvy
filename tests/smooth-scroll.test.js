@@ -10,7 +10,7 @@ test("wheel scrolling is smooth on every popup screen and respects disabled anim
   window.matchMedia = () => ({ matches: false, addEventListener() {} });
   window.eval(await readFile("dist/app.js", "utf8"));
   await new Promise((resolve) => setTimeout(resolve, 30));
-  for (const selector of [".groups", ".recent-list", ".settings-view", ".theme-view", ".backup-view"]) {
+  for (const selector of [".groups", ".settings-view", ".theme-view", ".backup-view"]) {
     const el = window.document.querySelector(selector);
     Object.defineProperty(el, "scrollHeight", { configurable: true, value: 500 });
     Object.defineProperty(el, "clientHeight", { configurable: true, value: 100 });

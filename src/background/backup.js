@@ -4,7 +4,7 @@ import { normalizeSettings } from "../domain/settings.js";
 const intervals = { hourly: 3600000, fourHours: 14400000, daily: 86400000, weekly: 604800000, monthly: 2592000000 };
 
 export function createBackupManager(browser, service, notify = () => {}) {
-  let pending;
+  let pending, pendingAutomatic = false;
   async function settings() {
     const data = await browser.storage.local.get("tavvy:workspace:v1");
     return normalizeSettings(data["tavvy:workspace:v1"]?.settings);
@@ -16,11 +16,12 @@ export function createBackupManager(browser, service, notify = () => {}) {
     await browser.storage.local.set({ [KEY]: value });
     notify();
   }
-  async function download(windowId, { fresh = false } = {}) {
+  async function download(windowId, { fresh = false, automatic = false } = {}) {
     if (pending) {
-      if (!fresh) return pending;
+      if (!fresh && !automatic && !pendingAutomatic) return pending;
       await pending;
     }
+    pendingAutomatic = automatic;
     pending = (async () => {
       let url;
       try {
@@ -38,11 +39,16 @@ export function createBackupManager(browser, service, notify = () => {}) {
         }
         if (item?.state !== "complete") throw new Error("Не удалось дождаться завершения загрузки");
         await saveStatus({ lastSuccess: Date.now(), error: "" });
+        if (automatic) {
+          // Remove only this completed download from history, never the file.
+          try { await browser.downloads.erase({ id: downloadId }); }
+          catch (error) { console.warn("Could not remove automatic backup from download history:", error); }
+        }
       } catch (error) {
         await saveStatus({ ...(await status()), error: error.message });
         throw error;
       } finally { if (url) URL.revokeObjectURL(url); }
-    })().finally(() => { pending = null; });
+    })().finally(() => { pending = null; pendingAutomatic = false; });
     return pending;
   }
   async function schedule() {
@@ -61,7 +67,7 @@ export function createBackupManager(browser, service, notify = () => {}) {
     try {
       const window = await browser.windows.getLastFocused({ windowTypes: ["normal"] });
       if (!window?.id || window.incognito) throw new Error("Нет доступного обычного окна Firefox");
-      await download(window.id);
+      await download(window.id, { fresh: true, automatic: true });
       await schedule();
     } catch (error) {
       await saveStatus({ ...(await status()), error: error.message });

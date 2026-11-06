@@ -291,3 +291,42 @@ html .space-icon-palette .group-color-swatch::before { content: none; }
 @media (prefers-reduced-motion: reduce) {
   .spaces-trigger, .spaces-trigger svg, .spaces-menu { transition: none; }
 }
+
+/* Backup controls stay on the full settings page. */
+.settings-page .backup-open[hidden], .settings-page .settings-appearance > .theme-open[hidden] { display: none; }
+.settings-page .settings-backups { margin-top: 18px; }
+.settings-page .settings-group + .settings-group { margin-top: 18px; }
+
+.settings-page .backup-import[hidden] { display: none; }
+.backup-restore { margin: 18px 10px; }
+.backup-dropzone { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 120px; padding: 18px; border: 1px dashed #444; border-radius: 12px; color: #aaa; text-align: center; cursor: pointer; transition: border-color .18s, background-color .18s; }
+.backup-dropzone:hover, .backup-dropzone.is-dragging, .backup-dropzone:focus-within { border-color: #398dff; background: #398dff0d; }
+.backup-dropzone input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.backup-dropzone-filename { max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: #ddd; white-space: nowrap; }
+.backup-restore-help, .backup-restore-status { font-size: 12px; line-height: 1.5; color: #888; white-space: pre-line; }
+.backup-restore-option { display: flex; align-items: flex-start; gap: 9px; font-size: 12px; line-height: 1.5; color: #aaa; }
+.backup-restore-option input { margin-top: 3px; accent-color: #398dff; }
+.backup-restore-submit { margin-top: 14px; padding: 8px 16px; border: 0; border-radius: 8px; background: #398dff; color: white; font: inherit; font-size: 12px; cursor: pointer; }
+.backup-restore-submit:disabled { opacity: .4; cursor: default; }
+.backup-restore-status[data-error="true"] { color: #e87373; }
+.light-theme .backup-dropzone { border-color: #bbb; color: #666; }
+.light-theme .backup-dropzone-filename { color: #222; }
+.light-theme .backup-restore-option { color: #555; }
+
+.backup-file-summary { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--settings-control); font-size: 12px; }
+.backup-file-summary[hidden] { display: none; }
+.backup-file-counts { font-weight: 500; }
+.backup-file-extra, .backup-file-more { color: var(--settings-muted); margin: 6px 0 0; }
+.backup-file-extra:empty, .backup-file-more:empty { display: none; }
+.backup-file-groups { list-style: none; margin: 10px 0 0; padding: 0; max-height: 180px; overflow-y: auto; }
+.backup-file-groups li { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; color: var(--settings-muted); }
+.backup-file-groups li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.settings-page .settings-view .settings-group { margin-top: 0; min-width: 0; padding: 10px 8px; border-radius: 14px; background: #0d0d0d; }
+.settings-page.dark-theme .settings-view .settings-group { background: #161719; }
+.settings-page.light-theme .settings-view .settings-group { background: #fff; }
+.settings-page .settings-group h2 { color: #888; }
+.settings-page.light-theme .settings-group h2 { color: #737373; }
+.settings-page .settings-group .setting:hover { background: #191919; }
+.settings-page.dark-theme .settings-group .setting:hover { background: #222326; }
+.settings-page.light-theme .settings-group .setting:hover { background: #f0f0f0; }
