@@ -51,8 +51,9 @@ extension, including `package-lock.json`, and attach it separately for each AMO
 submission. The JavaScript is bundled and minified with esbuild.
 Include `.githooks` and the `scripts` directory in the source archive.
 
-Build environment used for this revision: Windows, Node.js 24.14.1, npm 11.12.1.
-Install these versions, then run from the project root:
+The release source archive includes `AMO-BUILD-ENVIRONMENT.txt` with the exact
+commit, OS, Node.js and npm versions used for the release build. Install the
+listed Node.js and npm versions, then run from the project root:
 
 ```sh
 npm ci
