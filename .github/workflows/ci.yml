@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   checks:
     name: Tests and Firefox validation
@@ -38,6 +42,34 @@ jobs:
         run: npm test
       - name: Validate Firefox extension
         run: npm run lint:firefox
+      - name: Install Firefox
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
+        uses: browser-actions/setup-firefox@v1
+        id: firefox
+      - name: Run isolated Firefox smoke test
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
+        env:
+          FIREFOX_BINARY: ${{ steps.firefox.outputs.firefox-path }}
+        run: npm run smoke:firefox
+      - name: Build unsigned package for review
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
+        run: npm run package:firefox
+      - name: Compare package size with latest release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/package-size.js
+          cat build/package-size.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload review package
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: tavvy-ci-package
+          path: |
+            build/packages/*.zip
+            build/package-size.md
+          retention-days: 7
 
   release-pr:
     name: Open or update release PR
@@ -53,6 +85,11 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Download size report
+        uses: actions/download-artifact@v4
+        with:
+          name: tavvy-ci-package
+          path: build/ci-package
       - name: Prepare release PR description
         env:
           RELEASE_BRANCH: ${{ github.ref_name }}
