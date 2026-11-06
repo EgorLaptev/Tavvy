@@ -70,3 +70,8 @@ Workflow permissions. This setting also permits approvals, although this
 workflow only creates and edits PRs. Branch pushes run CI directly; do not
 rely on the bot-created PR event to run additional workflows. The PR is for
 review; integrate with the documented local rebase and fast-forward flow.
+
+Dependabot proposes npm and GitHub Actions updates weekly against the default
+branch after its configuration reaches `main`. Review dependency changes and
+bring accepted updates into the active release branch; do not merge directly
+into `main` outside the release workflow.
