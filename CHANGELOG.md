@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Publish GitHub releases automatically when a version tag is pushed.
+
 ## 0.2.10 — Clever Quokka — 2026-11-06
 
 - Hide the backup contents preview when restoration starts.
