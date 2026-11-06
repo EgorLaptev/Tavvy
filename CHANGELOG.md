@@ -5,8 +5,11 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.11 — Sunny Meerkat — 2026-11-06
+
 - Create and update release pull requests after branch checks pass.
 - Publish GitHub releases automatically when a version tag is pushed.
+- Include an AMO source archive and build instructions in GitHub releases.
 
 ## 0.2.10 — Clever Quokka — 2026-11-06
 

@@ -151,7 +151,8 @@
     "dancing_red_panda": "Танцующая малая панда",
     "wandering_otter": "Странствующая выдра",
     "bouncy_badger": "Прыгучий барсук",
-    "clever_quokka": "Сообразительная квокка"
+    "clever_quokka": "Сообразительная квокка",
+    "sunny_meerkat": "Солнечный сурикат"
   },
   "errors": {
     "background_process_is_unavailable": "Фоновый процесс недоступен",
