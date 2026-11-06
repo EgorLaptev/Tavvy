@@ -45,7 +45,9 @@ unsigned package to identify a Mozilla-signed one.
 
 1. Start a release branch from the latest `main`, for example `release/0.2.11`.
 2. Commit each task separately on that branch. Keep user-visible changes in
-   `CHANGELOG.md` under Unreleased.
+   `CHANGELOG.md` under Unreleased. After branch CI succeeds, Actions creates
+   or updates a PR to `main` with the changelog and commit list. Manual text
+   outside the generated markers is preserved.
 3. Prepare the release in its own commit: synchronize versions, add the
    playful version name and its translations, and date the changelog section.
 4. Run the relevant tests, Firefox validation and the isolated Firefox smoke
@@ -60,3 +62,10 @@ The tag must match all version fields and a dated changelog section. The
 workflow does not run the Firefox smoke test, sign packages or overwrite an
 existing GitHub Release. GitHub's generated ZIP may have a different hash
 from a local build; the release's checksum refers to the attached ZIP.
+
+Creating PRs with `GITHUB_TOKEN` requires the repository setting **Allow
+GitHub Actions to create and approve pull requests** under Actions → General →
+Workflow permissions. This setting also permits approvals, although this
+workflow only creates and edits PRs. Branch pushes run CI directly; do not
+rely on the bot-created PR event to run additional workflows. The PR is for
+review; integrate with the documented local rebase and fast-forward flow.

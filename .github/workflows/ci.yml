@@ -38,3 +38,37 @@ jobs:
         run: npm test
       - name: Validate Firefox extension
         run: npm run lint:firefox
+
+  release-pr:
+    name: Open or update release PR
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check out release branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prepare release PR description
+        env:
+          RELEASE_BRANCH: ${{ github.ref_name }}
+        run: |
+          git fetch origin main
+          node scripts/release-pr.js
+      - name: Create or update pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_BRANCH: ${{ github.ref_name }}
+        run: |
+          PR_NUMBER="$(gh pr list --base main --head "$RELEASE_BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr view "$PR_NUMBER" --json body --jq '.body' > build/pr-existing.md
+            node scripts/release-pr.js --merge-existing build/pr-existing.md
+            gh pr edit "$PR_NUMBER" --body-file build/pr-body.md
+          else
+            gh pr create --base main --head "$RELEASE_BRANCH" --title "$(cat build/pr-title.txt)" --body-file build/pr-body.md
+          fi

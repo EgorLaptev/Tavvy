@@ -9,6 +9,7 @@
 ## Git and release workflow
 
 - Do development on a `release/<next-version>` branch based on up-to-date `main`; keep each task in a separate commit. Reuse the active release branch instead of creating a branch per task.
+- Successful CI on a pushed release branch creates or updates its review PR; keep manually written PR text outside the generated markers. Merge using the local fast-forward process, not a GitHub merge commit.
 - When preparing a release, make version and changelog updates in a separate commit. Rebase the release branch onto the latest `main`, then merge with `--ff-only`; do not rewrite shared commits or force-push.
 - Push `main` before pushing the matching `vX.Y.Z` tag. The tag triggers GitHub Actions to validate, build and publish the unsigned GitHub Release; do not create a duplicate release manually. Verify the workflow and resulting release.
 - Run the Firefox smoke test before tagging. GitHub Actions does not run it or sign the package. See `docs/releases.md` for the detailed workflow and artifact metadata.

@@ -5,6 +5,7 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Create and update release pull requests after branch checks pass.
 - Publish GitHub releases automatically when a version tag is pushed.
 
 ## 0.2.10 — Clever Quokka — 2026-11-06
