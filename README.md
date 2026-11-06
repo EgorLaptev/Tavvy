@@ -35,7 +35,8 @@ npm run smoke:firefox   # Exercise an isolated headless Firefox profile
 npm run package:firefox # Build an unsigned extension ZIP
 ```
 
-`npm install` installs a Git pre-commit hook that checks staged whitespace,
+`npm install` installs a commit-msg hook enforcing Conventional Commits and a
+pre-commit hook that checks staged whitespace,
 runs the tests and validates the Firefox extension. The checks use the working
 tree, so keep it consistent with the changes being committed. To install the
 hook manually, run `npm run hooks:install`. Existing custom Git hook paths are
