@@ -13,7 +13,8 @@ const section = released || parts.find((part) => part.startsWith("## Unreleased"
 const notes = (section?.split(/\r?\n/).slice(1).join("\n").trim() || "No user-visible changes recorded yet.");
 const commits = execFileSync("git", ["log", "--format=- %s (%h)", "origin/main..HEAD"], { encoding: "utf8" }).trim();
 if (!commits) throw new Error("Release branch has no commits ahead of main");
-const generated = `${start}\n## Changes\n\n${notes}\n\n## Commits\n\n${commits}\n\n## Validation\n\n- CI runs tests and Firefox extension validation for the branch.\n- Run the isolated Firefox smoke test before the release.\n${end}`;
+const sizeReport = await readFile("build/ci-package/package-size.md", "utf8").catch(() => "");
+const generated = `${start}\n## Changes\n\n${notes}\n\n## Commits\n\n${commits}\n\n${sizeReport.trim()}\n\n## Validation\n\n- CI runs tests, Firefox extension validation and the isolated Firefox smoke test for the branch.\n${end}`;
 let body = generated;
 if (process.argv[2] === "--merge-existing") {
   const existing = await readFile(process.argv[3], "utf8");

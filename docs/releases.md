@@ -60,7 +60,7 @@ unsigned package to identify a Mozilla-signed one.
    publishes a GitHub Release with its changelog, package and `SHA256SUMS`.
 
 The tag must match all version fields and a dated changelog section. The
-workflow does not run the Firefox smoke test, sign packages or overwrite an
+workflow runs the Firefox smoke test, but does not sign packages or overwrite an
 existing GitHub Release. GitHub's generated ZIP may have a different hash
 from a local build; the release's checksum refers to the attached ZIP.
 
