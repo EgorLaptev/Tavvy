@@ -18,8 +18,8 @@
     "benchmark": "npm run build:firefox && node scripts/benchmark.js"
   },
   "devDependencies": {
-    "esbuild": "^0.25.0",
-    "jsdom": "^29.1.1",
+    "esbuild": "^0.28.2",
+    "jsdom": "^30.1.3",
     "prettier": "^3.6.0",
     "web-ext": "^10.8.0"
   }
