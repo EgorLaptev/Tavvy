@@ -8,6 +8,8 @@
 
 ## Git and release workflow
 
+- Use Conventional Commits for every new commit, for example `feat: add search`, `fix(settings): save theme`, `docs: update guide`, `chore: prepare release`. Supported types are `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore` and `revert`; optional scopes and `!` breaking-change markers are allowed. Do not rewrite existing shared history to rename commits.
+
 - Do development on a `release/<next-version>` branch based on up-to-date `main`; keep each task in a separate commit. Reuse the active release branch instead of creating a branch per task.
 - Successful CI on a pushed release branch creates or updates its review PR; keep manually written PR text outside the generated markers. Merge using the local fast-forward process, not a GitHub merge commit.
 - When preparing a release, make version and changelog updates in a separate commit. Rebase the release branch onto the latest `main`, then merge with `--ff-only`; do not rewrite shared commits or force-push.
@@ -27,4 +29,4 @@
 - `npm run lint:firefox` builds and validates the Firefox extension.
 - `npm run smoke:firefox` runs an isolated headless Firefox profile; use `FIREFOX_BINARY` if Firefox cannot be found. It does not test the user's Firefox profile or visual smoothness.
 - `npm run build:firefox` writes `build/firefox`; `npm run package:firefox` produces an unsigned ZIP. Builds do not update an installed extension.
-- The configured pre-commit hook runs staged whitespace checks, `npm test` and Firefox validation; CI runs equivalent checks. The release workflow publishes a GitHub Release on a version tag; neither workflow runs the Firefox smoke test.
+- The configured commit-msg hook validates Conventional Commit subjects; the pre-commit hook runs staged whitespace checks, `npm test` and Firefox validation; CI runs equivalent checks. The release workflow publishes a GitHub Release on a version tag; neither workflow runs the Firefox smoke test.
