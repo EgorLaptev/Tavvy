@@ -71,7 +71,7 @@ jobs:
           cat build/package-size.md >> "$GITHUB_STEP_SUMMARY"
       - name: Upload review package
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tavvy-ci-package
           path: |
@@ -94,7 +94,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Download size report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tavvy-ci-package
           path: build/ci-package
