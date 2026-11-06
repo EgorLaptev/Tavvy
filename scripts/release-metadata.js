@@ -23,9 +23,12 @@ if (artifacts.length !== 1) throw new Error("Expected exactly one release ZIP");
 const file = join("build/packages", artifacts[0]);
 const data = await readFile(file);
 const hash = createHash("sha256").update(data).digest("hex");
+const sourceFile = join("build", `tavvy-${version}-amo-source.zip`);
+const sourceData = await readFile(sourceFile);
+const sourceHash = createHash("sha256").update(sourceData).digest("hex");
 await Promise.all([
   writeFile("build/release-title.txt", `${version} — ${match[2]}\n`),
   writeFile("build/release-artifact.txt", `${file}\n`),
-  writeFile("build/SHA256SUMS", `${hash}  ${basename(file)}\n`),
-  writeFile("build/release-notes.md", `${body.join("\n").trim()}\n\n**Firefox package:** ${data.length.toLocaleString("en-US")} bytes; SHA-256: \`${hash}\`.\n\nThe ZIP is unsigned; Mozilla signing is required for normal installation.\n`),
+  writeFile("build/SHA256SUMS", `${hash}  ${basename(file)}\n${sourceHash}  ${basename(sourceFile)}\n`),
+  writeFile("build/release-notes.md", `${body.join("\n").trim()}\n\n**Firefox package:** ${data.length.toLocaleString("en-US")} bytes; SHA-256: \`${hash}\`.\n\nThe ZIP is unsigned; Mozilla signing is required for normal installation. The AMO source ZIP contains the source and build instructions for review.\n`),
 ]);

@@ -57,7 +57,9 @@ unsigned package to identify a Mozilla-signed one.
 5. Push `main`, create the matching `vX.Y.Z` tag on the merged release commit,
    and push the tag. GitHub Actions checks that the tag is reachable from
    `main`, reruns tests and Firefox validation, builds the unsigned ZIP, and
-   publishes a GitHub Release with its changelog, package and `SHA256SUMS`.
+   publishes a GitHub Release with its changelog, package, AMO source archive
+   and `SHA256SUMS` covering both ZIPs. The source archive contains the tagged
+   source, reviewer instructions and the release build environment.
 
 The tag must match all version fields and a dated changelog section. The
 workflow runs the Firefox smoke test, but does not sign packages or overwrite an

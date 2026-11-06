@@ -15,6 +15,7 @@ async function fixture() {
   await writeFile(join(dir, "package-lock.json"), JSON.stringify({ version: "1.2.3", packages: { "": { version: "1.2.3" } } }));
   await writeFile(join(dir, "CHANGELOG.md"), "## Unreleased\n\n## 1.2.3 — Test Name — 2026-11-06\n\n- Release change.\n\n## 1.2.2 — Older — 2026-11-05\n\n- Old change.\n");
   await writeFile(join(dir, "build", "packages", "tavvy-1.2.3.zip"), "test package");
+  await writeFile(join(dir, "build", "tavvy-1.2.3-amo-source.zip"), "test source");
   return dir;
 }
 function run(dir, tag) { return spawnSync(process.execPath, [script], { cwd: dir, env: { ...process.env, GITHUB_REF_NAME: tag }, encoding: "utf8" }); }
@@ -28,7 +29,14 @@ test("release metadata uses the matching changelog section and archive", async (
     assert.match(notes, /Release change/);
     assert.doesNotMatch(notes, /Old change/);
     assert.match(notes, /unsigned/);
-    assert.match(await readFile(join(dir, "build", "SHA256SUMS"), "utf8"), /^[a-f0-9]{64}  tavvy-1\.2\.3\.zip\n$/);
+    assert.match(await readFile(join(dir, "build", "SHA256SUMS"), "utf8"), /^[a-f0-9]{64}  tavvy-1\.2\.3\.zip\n[a-f0-9]{64}  tavvy-1\.2\.3-amo-source\.zip\n$/);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+test("release metadata requires a matching AMO source archive", async () => {
+  const dir = await fixture();
+  try {
+    await rm(join(dir, "build", "tavvy-1.2.3-amo-source.zip"));
+    assert.notEqual(run(dir, "v1.2.3").status, 0);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 test("release metadata rejects malformed or mismatched tags and missing notes", async () => {
