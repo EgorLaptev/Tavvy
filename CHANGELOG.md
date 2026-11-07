@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.12 — Brave Gecko — 2026-11-07
+
 - Preserve Firefox extension pages when importing and restoring backups.
 - Show the Tavvy icon in the settings page tab.
 

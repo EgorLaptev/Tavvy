@@ -152,7 +152,8 @@
     "wandering_otter": "Странствующая выдра",
     "bouncy_badger": "Прыгучий барсук",
     "clever_quokka": "Сообразительная квокка",
-    "sunny_meerkat": "Солнечный сурикат"
+    "sunny_meerkat": "Солнечный сурикат",
+    "brave_gecko": "Храбрый геккон"
   },
   "errors": {
     "background_process_is_unavailable": "Фоновый процесс недоступен",

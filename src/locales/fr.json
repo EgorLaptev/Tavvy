@@ -152,7 +152,8 @@
     "wandering_otter": "Loutre vagabonde",
     "bouncy_badger": "Blaireau bondissant",
     "clever_quokka": "Quokka malin",
-    "sunny_meerkat": "Sunny Meerkat"
+    "sunny_meerkat": "Sunny Meerkat",
+    "brave_gecko": "Brave Gecko"
   },
   "errors": {
     "background_process_is_unavailable": "Le processus en arrière-plan n'est pas disponible",
