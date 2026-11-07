@@ -10,7 +10,7 @@ browser.storage.local.get("tavvy:workspace:v1").then((data) => {
 const input = document.querySelector("input");
 try {
   const data = JSON.parse(decodeURIComponent(location.hash.slice(1)));
-  const browserPage = typeof data.url === "string" && /^about:[a-z0-9-]+(?:[?#][^\s]*)?$/i.test(data.url);
+  const browserPage = typeof data.url === "string" && /^(?:about:[a-z0-9-]+(?:[?#][^\s]*)?|moz-extension:\/\/[0-9a-f-]{36}\/(?:[^\s]*))$/i.test(data.url);
   if (!data.url?.startsWith("file:") && !browserPage) throw new Error();
   if (browserPage) {
     document.querySelector("h1").dataset.i18n = "local_file.browser_page";

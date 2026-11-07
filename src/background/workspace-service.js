@@ -434,7 +434,7 @@ export function createWorkspaceService(
     }
   }
   function isRestrictedPage(url) {
-    return /^about:[a-z0-9-]+(?:[?#][^\s]*)?$/i.test(url) && !/^about:(blank|newtab)$/i.test(url);
+    return /^moz-extension:\/\/[0-9a-f-]{36}\/(?:[^\s]*)$/i.test(url) || (/^about:[a-z0-9-]+(?:[?#][^\s]*)?$/i.test(url) && !/^about:(blank|newtab)$/i.test(url));
   }
   function placeholderUrl(url, title) {
     return api.runtime.getURL("local-file.html") + "#" + encodeURIComponent(JSON.stringify({ url, title }));
@@ -536,7 +536,7 @@ export function createWorkspaceService(
     if (type === "snapshot") return snapshot(windowId);
     if (type === "exportBackup") {
       const records = await scan();
-      const safe = /^(https?:\/\/|file:\/\/|about:blank$|about:newtab$|about:[a-z0-9-]+(?:[?#][^\s]*)?$)/i;
+      const safe = /^(https?:\/\/|file:\/\/|moz-extension:\/\/[0-9a-f-]{36}\/(?:[^\s]*)$|about:blank$|about:newtab$|about:[a-z0-9-]+(?:[?#][^\s]*)?$)/i;
       const ids = new Set(state.groups.map((g) => g.id));
       const serialize = (entry) => {
         let url = entry.url;

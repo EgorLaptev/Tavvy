@@ -41,7 +41,7 @@ export function parseTavvyBackup(data) {
       parent = map.get(parent).parentId;
     }
   }
-  const safe = /^(https?:\/\/|file:\/\/|about:blank$|about:newtab$|about:[a-z0-9-]+(?:[?#][^\s]*)?$)/i;
+  const safe = /^(https?:\/\/|file:\/\/|moz-extension:\/\/[0-9a-f-]{36}\/(?:[^\s]*)$|about:blank$|about:newtab$|about:[a-z0-9-]+(?:[?#][^\s]*)?$)/i;
   function entry(t) {
     if (!t || typeof t.url !== "string" || !safe.test(t.url) || !ids.has(t.groupId)) throw new Error("Повреждены данные вкладки");
     return { groupId: t.groupId, url: t.url, title: typeof t.title === "string" ? t.title.slice(0, 1000) : t.url, pinned: t.pinned === true, closedAt: Number.isFinite(t.closedAt) ? t.closedAt : Date.now() };

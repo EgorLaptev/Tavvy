@@ -429,6 +429,7 @@ test("STG import preserves empty groups, titles, colors and URLs, and is idempot
           { title: "Документ", url: "https://example.test/doc" },
           { title: "Файл", url: "file:///D:/notes.pdf" },
           { title: "Дополнения", url: "about:addons" },
+          { title: "Расширение", url: "moz-extension://12345678-1234-1234-1234-123456789abc/page.html#state" },
         ],
       },
     ],
@@ -439,11 +440,16 @@ test("STG import preserves empty groups, titles, colors and URLs, and is idempot
   assert.equal(snapshot.groups[1].title, "Пустая");
   assert.equal(snapshot.groups[1].color, "hsla(150, 100%, 50%, 1)");
   assert.equal(snapshot.importReport.localFiles, 1);
-  assert.equal(snapshot.importReport.browserPages, 1);
+  assert.equal(snapshot.importReport.browserPages, 2);
+  const extensionUrl = "moz-extension://12345678-1234-1234-1234-123456789abc/page.html#state";
+  const savedExtensionPage = (tab) => tab.url.includes("local-file.html#") && JSON.parse(decodeURIComponent(tab.url.split("#")[1])).url === extensionUrl;
+  assert.ok(f.records.some(savedExtensionPage));
   assert.ok(f.records.some((tab) => tab.url.includes("local-file.html#") && JSON.parse(decodeURIComponent(tab.url.split("#")[1])).url === "about:addons"));
   const exported = await service.dispatch({ type: "exportBackup" }, 1);
+  assert.ok(exported.tabs.some((tab) => tab.url === extensionUrl));
   assert.ok(exported.tabs.some((tab) => tab.url === "about:addons"));
   await service.dispatch({ type: "importBackup", backup: exported }, 1);
+  assert.equal(f.records.filter(savedExtensionPage).length, 2);
   assert.equal(f.records.filter((tab) => tab.url.includes("local-file.html#") && JSON.parse(decodeURIComponent(tab.url.split("#")[1])).url === "about:addons").length, 2);
   assert.ok(
     f.records.some((tab) =>
