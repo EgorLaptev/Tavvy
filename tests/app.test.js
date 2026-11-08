@@ -112,6 +112,15 @@ test("preview shows mock containers and switches without Firefox APIs", async ()
     const projects = doc.querySelector('[data-group-id="group-projects"]');
     assert.equal(projects.querySelector(":scope > .group-controls .group-toggle").getAttribute("aria-expanded"), "true");
     assert.equal(projects.querySelectorAll(":scope > .subgroups > .group").length, 2);
+    projects.querySelector(":scope > .group-controls").dispatchEvent(new window.MouseEvent("contextmenu", { bubbles: true }));
+    const groupMenu = doc.querySelector(".group-context-menu");
+    assert.equal(groupMenu.querySelector(".group-context-heading"), null);
+    groupMenu.querySelector(".group-context-move").click();
+    assert.ok(groupMenu.querySelector(".group-context-heading"));
+    assert.ok(!groupMenu.querySelector(".group-context-delete"));
+    groupMenu.querySelector(".group-context-back").click();
+    assert.ok(groupMenu.querySelector(".group-context-delete"));
+    window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     doc.querySelector(".spaces-trigger").click();
     const work = doc.querySelector('[data-space-id="container:firefox-container-1"]');
     assert.equal(work.textContent, "Work");
