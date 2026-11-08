@@ -645,9 +645,8 @@ export async function mountApplication(api) {
       event.preventDefault();
       event.stopPropagation();
       resetGroupMenu();
-      const addAction = (label, action, path = null, disabled = false, className = "") => {
+      const addAction = (label, action, disabled = false, className = "") => {
         const item = button(label, "group-context-item", element("span", "group-context-label", label), () => { closeGroupMenu(); action(); });
-        if (path) item.prepend(icon(path, "group-context-icon"));
         if (className) item.classList.add(className);
         item.setAttribute("role", "menuitem");
         item.disabled = disabled;
@@ -664,7 +663,7 @@ export async function mountApplication(api) {
           if (window.confirm(t("groups.move_container_confirm"))) run({ type: "moveGroupToSpace", groupId: group.id, spaceId: destination.id });
         });
       }
-      addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), "M4 4h8M6 4V2.5h4V4m-5 0 .5 9h5l.5-9M7 6v4.5M9 6v4.5", group.id === "inbox", "group-context-delete");
+      addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), group.id === "inbox", "group-context-delete");
       groupMenu.hidden = false;
       const bounds = groupMenu.getBoundingClientRect();
       groupMenu.style.left = `${Math.max(0, Math.min(event.clientX, window.innerWidth - bounds.width))}px`;

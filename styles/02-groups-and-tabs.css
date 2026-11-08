@@ -317,7 +317,6 @@ button.group-header {
 .group-context-menu .group-context-delete { color: #f16b70; }
 .light-theme .group-context-menu .group-context-delete { color: #bd2531; }
 
-.group-context-icon { flex: none; width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 .group-context-label { min-width: 0; overflow-wrap: anywhere; }
 .group-context-menu .group-context-delete:not(:disabled):hover, .group-context-menu .group-context-delete:not(:disabled):focus-visible { background: rgb(241 107 112 / 14%); }
 .light-theme .group-context-menu .group-context-delete:not(:disabled):hover, .light-theme .group-context-menu .group-context-delete:not(:disabled):focus-visible { background: rgb(189 37 49 / 9%); }
