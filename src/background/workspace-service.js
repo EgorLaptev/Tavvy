@@ -755,6 +755,7 @@ export function createWorkspaceService(
     } else if (
       type === "activateTab" ||
       type === "toggleTabMute" ||
+      type === "reloadTab" ||
       type === "unpinTab" ||
       type === "closeTab" ||
       type === "moveTab"
@@ -770,6 +771,7 @@ export function createWorkspaceService(
         else await activate(windowId, tab.groupId, tab.id);
       }
       if (type === "toggleTabMute" && (tab.audible || tab.muted)) await api.tabs.update(tab.id, { muted: !tab.muted });
+      if (type === "reloadTab") await api.tabs.reload(tab.id);
       if (type === "unpinTab") {
         if (tab.managedPinned) {
           await api.sessions.setTabValue(tab.id, GROUP_PINNED, false);

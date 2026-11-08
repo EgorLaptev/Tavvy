@@ -128,6 +128,49 @@ export async function mountApplication(api) {
   }
   document.addEventListener("pointerdown", outsideGroupMenu);
   document.addEventListener("keydown", groupMenuKey);
+  const addAction = (label, action, disabled = false, className = "", keepOpen = false, parent = groupMenu) => {
+    const item = button(label, "group-context-item", element("span", "group-context-label", label), () => { if (!keepOpen) closeGroupMenu(); action(); });
+    if (className) item.classList.add(className);
+    item.setAttribute("role", "menuitem");
+    item.disabled = disabled;
+    parent.append(item);
+    return item;
+  };
+  function showSubmenu(trigger, entries) {
+    const wasOpen = trigger.getAttribute("aria-expanded") === "true";
+    groupMenu.querySelectorAll('[aria-expanded="true"]').forEach((item) => item.setAttribute("aria-expanded", "false"));
+    if (wasOpen) { groupSubmenu.hidden = true; return; }
+    groupSubmenu.replaceChildren();
+    for (const entry of entries) {
+      const item = addAction(entry.label, entry.action, false, "", false, groupSubmenu);
+      if (entry.group) {
+        const marker = element("span", "marker group-context-marker");
+        const shape = groupMarker(entry.group.id);
+        marker.style.borderRadius = shape.borderRadius;
+        marker.style.rotate = `${shape.rotation}deg`;
+        marker.style.background = entry.group.color;
+        marker.style.setProperty("--marker-color", entry.group.color);
+        marker.dataset.label = markerLetters(entry.group.title);
+        marker.dataset.label2 = markerLetters(entry.group.title, 2);
+        marker.setAttribute("aria-hidden", "true");
+        item.prepend(marker);
+      }
+    }
+    groupSubmenu.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+    const menuBounds = groupMenu.getBoundingClientRect(), triggerBounds = trigger.getBoundingClientRect(), submenuBounds = groupSubmenu.getBoundingClientRect();
+    const left = menuBounds.right + submenuBounds.width <= window.innerWidth ? menuBounds.right : menuBounds.left - submenuBounds.width;
+    groupSubmenu.style.left = `${Math.max(0, left)}px`;
+    groupSubmenu.style.top = `${Math.max(0, Math.min(triggerBounds.top, window.innerHeight - submenuBounds.height))}px`;
+  }
+  function addSubmenu(label, entries, className) {
+    let trigger;
+    trigger = addAction(label, () => showSubmenu(trigger, entries), !entries.length, className, true);
+    trigger.setAttribute("aria-haspopup", "menu");
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.append(icon("m6 3 5 5-5 5", "group-context-arrow"));
+  }
+
   const search = document.querySelector(".search input");
   const palette = element("div", "group-color-palette");
   palette.hidden = true;
@@ -645,49 +688,7 @@ export async function mountApplication(api) {
       event.preventDefault();
       event.stopPropagation();
       resetGroupMenu();
-      const addAction = (label, action, disabled = false, className = "", keepOpen = false, parent = groupMenu) => {
-        const item = button(label, "group-context-item", element("span", "group-context-label", label), () => { if (!keepOpen) closeGroupMenu(); action(); });
-        if (className) item.classList.add(className);
-        item.setAttribute("role", "menuitem");
-        item.disabled = disabled;
-        parent.append(item);
-        return item;
-      };
       const destinations = snapshot.spaces.filter((space) => space.id !== snapshot.activeSpaceId && !space.unavailable);
-      function showSubmenu(trigger, entries) {
-        const wasOpen = trigger.getAttribute("aria-expanded") === "true";
-        groupMenu.querySelectorAll('[aria-expanded="true"]').forEach((item) => item.setAttribute("aria-expanded", "false"));
-        if (wasOpen) { groupSubmenu.hidden = true; return; }
-        groupSubmenu.replaceChildren();
-        for (const entry of entries) {
-          const item = addAction(entry.label, entry.action, false, "", false, groupSubmenu);
-          if (entry.group) {
-            const marker = element("span", "marker group-context-marker");
-            const shape = groupMarker(entry.group.id);
-            marker.style.borderRadius = shape.borderRadius;
-            marker.style.rotate = `${shape.rotation}deg`;
-            marker.style.background = entry.group.color;
-            marker.style.setProperty("--marker-color", entry.group.color);
-            marker.dataset.label = markerLetters(entry.group.title);
-            marker.dataset.label2 = markerLetters(entry.group.title, 2);
-            marker.setAttribute("aria-hidden", "true");
-            item.prepend(marker);
-          }
-        }
-        groupSubmenu.hidden = false;
-        trigger.setAttribute("aria-expanded", "true");
-        const menuBounds = groupMenu.getBoundingClientRect(), triggerBounds = trigger.getBoundingClientRect(), submenuBounds = groupSubmenu.getBoundingClientRect();
-        const left = menuBounds.right + submenuBounds.width <= window.innerWidth ? menuBounds.right : menuBounds.left - submenuBounds.width;
-        groupSubmenu.style.left = `${Math.max(0, left)}px`;
-        groupSubmenu.style.top = `${Math.max(0, Math.min(triggerBounds.top, window.innerHeight - submenuBounds.height))}px`;
-      }
-      function addSubmenu(label, entries, className) {
-        let trigger;
-        trigger = addAction(label, () => showSubmenu(trigger, entries), !entries.length, className, true);
-        trigger.setAttribute("aria-haspopup", "menu");
-        trigger.setAttribute("aria-expanded", "false");
-        trigger.append(icon("m6 3 5 5-5 5", "group-context-arrow"));
-      }
       function showActions() {
         groupMenu.replaceChildren();
         addAction(t("groups.rename_group"), renameGroup);
@@ -757,6 +758,29 @@ export async function mountApplication(api) {
     row.addEventListener("click", () =>
       run({ type: "activateTab", tabId: tabId }),
     );
+    row.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      resetGroupMenu();
+      const current = snapshot.tabs.find((item) => item.id === tabId);
+      if (!current) return;
+      addAction(t("tabs.actions.open"), () => run({ type: "activateTab", tabId }));
+      addAction(t("tabs.actions.reload"), () => run({ type: "reloadTab", tabId }));
+      addAction(t(current.muted ? "tabs.actions.unmute" : "tabs.actions.mute"), () => run({ type: "toggleTabMute", tabId }), !current.audible && !current.muted);
+      if (current.pinned || current.managedPinned) addAction(t("tabs.actions.unpin"), () => run({ type: "unpinTab", tabId }));
+      const destinations = snapshot.groups.filter((item) => item.id !== current.groupId).map((item) => ({
+        label: item.id === "inbox" && item.title === "Основная" ? t("groups.main") : item.title,
+        group: item,
+        action: () => run({ type: "moveTab", tabId, groupId: item.id, keepActiveGroup: true }),
+      }));
+      addSubmenu(t("groups.move_tab_to_group"), current.pinned && !snapshot.settings.groupPinnedTabs ? [] : destinations, "tab-context-move");
+      addAction(t("tabs.close_tab"), () => run({ type: "closeTab", tabId }), false, "group-context-delete");
+      groupMenu.hidden = false;
+      const bounds = groupMenu.getBoundingClientRect();
+      groupMenu.style.left = `${Math.max(0, Math.min(event.clientX, window.innerWidth - bounds.width))}px`;
+      groupMenu.style.top = `${Math.max(0, Math.min(event.clientY, window.innerHeight - bounds.height))}px`;
+      groupMenu.querySelector("button")?.focus();
+    });
     return { row, label, close, statuses, title: null, icon: tab.faviconUrl };
   }
   function renderLists() {

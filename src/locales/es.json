@@ -131,6 +131,8 @@
   },
   "tabs": {
     "actions": {
+      "open": "Abrir pestaña",
+      "reload": "Recargar pestaña",
       "unpin": "Desanclar pestaña",
       "mute": "Pestaña de silencio",
       "unmute": "Pestaña activar silencio"

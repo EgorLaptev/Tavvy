@@ -131,6 +131,8 @@
   },
   "tabs": {
     "actions": {
+      "open": "Tab öffnen",
+      "reload": "Tab neu laden",
       "unpin": "Tab lösen",
       "mute": "Registerkarte „Stumm“.",
       "unmute": "Registerkarte „Stummschaltung aufheben“."

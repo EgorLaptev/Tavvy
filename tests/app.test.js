@@ -184,6 +184,14 @@ test("built app mounts and connects settings, groups and navigation", async () =
     group.querySelector(".group-toggle").getAttribute("aria-expanded"),
     "true",
   );
+  group.querySelector(".tab-row").dispatchEvent(new window.MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+  assert.equal(menu.hidden, false);
+  assert.ok(menu.querySelector(".tab-context-move"));
+  assert.ok(menu.lastElementChild.classList.contains("group-context-delete"));
+  menu.querySelector(".tab-context-move").click();
+  assert.ok(!document.querySelector(".group-context-submenu").hidden);
+  window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
   group.querySelector(".tab-close").click();
   await new Promise((resolve) => setTimeout(resolve, 30));
   assert.equal(group.querySelector(".count").textContent, "0");

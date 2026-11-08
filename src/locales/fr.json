@@ -131,6 +131,8 @@
   },
   "tabs": {
     "actions": {
+      "open": "Ouvrir l’onglet",
+      "reload": "Actualiser l’onglet",
       "unpin": "Désépingler l'onglet",
       "mute": "Onglet Muet",
       "unmute": "Activer l'onglet"

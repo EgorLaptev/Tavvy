@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Add a tab actions menu for opening, reloading, muting, moving and closing tabs.
+
 - Show group markers and constrain the size of group action menus.
 
 - Move groups into another group or back to the top level from the actions menu.
