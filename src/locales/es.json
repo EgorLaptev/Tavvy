@@ -95,7 +95,7 @@
   },
   "groups": {
     "move_to_group": "Mover a un grupo",
-    "move_to_root": "Nivel superior",
+    "move_to_root": "Sacar del grupo",
     "clear_group": "Vaciar grupo",
     "reload_group": "Recargar grupo",
     "move_to_container": "Mover al contenedor",

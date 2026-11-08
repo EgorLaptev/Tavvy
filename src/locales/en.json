@@ -95,7 +95,7 @@
   },
   "groups": {
     "move_to_group": "Move to group",
-    "move_to_root": "Top level",
+    "move_to_root": "Ungroup",
     "clear_group": "Clear group",
     "reload_group": "Reload group",
     "move_to_container": "Move to container",

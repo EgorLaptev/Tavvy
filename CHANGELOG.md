@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Rename the top-level group action to Ungroup.
+
 - Add a back chevron to the top-level group destination.
 
 - Add a pin action to the tab actions menu and hide unavailable mute actions.

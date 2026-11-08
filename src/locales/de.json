@@ -95,7 +95,7 @@
   },
   "groups": {
     "move_to_group": "In Gruppe verschieben",
-    "move_to_root": "Oberste Ebene",
+    "move_to_root": "Aus Gruppe lösen",
     "clear_group": "Gruppe leeren",
     "reload_group": "Gruppe neu laden",
     "move_to_container": "In Container verschieben",
