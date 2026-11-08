@@ -5,30 +5,12 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
-- Fix moving groups with new tabs; containers can remain empty when their last group is moved or deleted.
+## 0.2.13 — Gentle Capybara — 2026-11-08
 
-- Show container icons in the group move menu.
-
-- Add a tab actions menu for opening, reloading, muting, moving and closing tabs.
-
-- Show group markers and constrain the size of group action menus.
-
-- Move groups into another group or back to the top level from the actions menu.
-
-- Show container destinations in a separate submenu next to the group actions.
-
-- Use text-only actions in the group actions menu.
-
-- Match the group actions menu background to the current theme.
-
-- Add icons and a red hover state to the group actions menu.
-
-- Make the group actions menu more compact.
-
-- Move group deletion to the end of the context menu and remove the rename button from group rows.
-
-- Add a group context menu for renaming, deleting, clearing, refreshing and moving groups to containers.
-
+- Add context menus for group and tab actions, including moving groups and tabs.
+- Show group markers and container icons in compact, theme-aware destination menus.
+- Move groups between Firefox containers, including groups with new tabs.
+- Allow containers to remain empty when their last group is moved or deleted.
 - Replace existing groups when restoring Tavvy or Simple Tab Groups backups.
 
 ## 0.2.12 — Brave Gecko — 2026-11-07

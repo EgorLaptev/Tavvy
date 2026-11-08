@@ -162,7 +162,8 @@
     "bouncy_badger": "Прыгучий барсук",
     "clever_quokka": "Сообразительная квокка",
     "sunny_meerkat": "Солнечный сурикат",
-    "brave_gecko": "Храбрый геккон"
+    "brave_gecko": "Храбрый геккон",
+    "gentle_capybara": "Ласковая капибара"
   },
   "errors": {
     "background_process_is_unavailable": "Фоновый процесс недоступен",

@@ -162,7 +162,8 @@
     "bouncy_badger": "Bouncy Badger",
     "clever_quokka": "Clever Quokka",
     "sunny_meerkat": "Sunny Meerkat",
-    "brave_gecko": "Brave Gecko"
+    "brave_gecko": "Brave Gecko",
+    "gentle_capybara": "Gentle Capybara"
   },
   "errors": {
     "background_process_is_unavailable": "Background process is unavailable",

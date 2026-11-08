@@ -162,7 +162,8 @@
     "bouncy_badger": "蹦跳的獾",
     "clever_quokka": "聪明的短尾矮袋鼠",
     "sunny_meerkat": "Sunny Meerkat",
-    "brave_gecko": "Brave Gecko"
+    "brave_gecko": "Brave Gecko",
+    "gentle_capybara": "温柔的水豚"
   },
   "errors": {
     "background_process_is_unavailable": "后台进程不可用",
