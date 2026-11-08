@@ -321,3 +321,13 @@ button.group-header {
 .group-context-label { min-width: 0; overflow-wrap: anywhere; }
 .group-context-menu .group-context-delete:not(:disabled):hover, .group-context-menu .group-context-delete:not(:disabled):focus-visible { background: rgb(241 107 112 / 14%); }
 .light-theme .group-context-menu .group-context-delete:not(:disabled):hover, .light-theme .group-context-menu .group-context-delete:not(:disabled):focus-visible { background: rgb(189 37 49 / 9%); }
+
+.group-context-menu:not([hidden]) { transform-origin: top left; animation: group-menu-in 140ms ease-out both; }
+.group-context-menu.is-closing { pointer-events: none; animation: group-menu-out 140ms ease-in both; }
+.group-context-item { transition: background-color 140ms ease, color 140ms ease; }
+@keyframes group-menu-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes group-menu-out { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-3px) scale(.98); } }
+@media (prefers-reduced-motion: reduce) {
+  .group-context-menu:not([hidden]), .group-context-menu.is-closing { animation: none; }
+  .group-context-item { transition: none; }
+}

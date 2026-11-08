@@ -109,7 +109,21 @@ export async function mountApplication(api) {
   groupMenu.hidden = true;
   groupMenu.setAttribute("role", "menu");
   document.querySelector(".popup").append(groupMenu);
-  function closeGroupMenu() { groupMenu.hidden = true; groupMenu.replaceChildren(); }
+  let groupMenuCloseTimer;
+  function resetGroupMenu() {
+    clearTimeout(groupMenuCloseTimer);
+    groupMenu.hidden = true;
+    groupMenu.classList.remove("is-closing");
+    groupMenu.replaceChildren();
+  }
+  function closeGroupMenu() {
+    if (groupMenu.hidden || groupMenu.classList.contains("is-closing")) return;
+    if (document.documentElement.classList.contains("animations-off") || matchMedia("(prefers-reduced-motion: reduce)").matches) resetGroupMenu();
+    else {
+      groupMenu.classList.add("is-closing");
+      groupMenuCloseTimer = setTimeout(resetGroupMenu, 140);
+    }
+  }
   function outsideGroupMenu(event) { if (!groupMenu.contains(event.target)) closeGroupMenu(); }
   function groupMenuKey(event) { if (event.key === "Escape" && !groupMenu.hidden) { event.preventDefault(); closeGroupMenu(); } }
   document.addEventListener("pointerdown", outsideGroupMenu);
@@ -630,7 +644,7 @@ export async function mountApplication(api) {
     controls.addEventListener("contextmenu", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      closeGroupMenu();
+      resetGroupMenu();
       const addAction = (label, action, path, disabled = false, className = "") => {
         const item = button(label, "group-context-item", icon(path, "group-context-icon"), () => { closeGroupMenu(); action(); });
         item.append(element("span", "group-context-label", label));
@@ -902,6 +916,7 @@ export async function mountApplication(api) {
       disposed = true;
       disposeScrollbar();
       clearTimeout(spacesCloseTimer);
+      clearTimeout(groupMenuCloseTimer);
       cancelAnimationFrame(spacesOpenFrame);
       document.removeEventListener("pointerdown", outsideSpaces);
       document.removeEventListener("focusin", outsideSpaces);
