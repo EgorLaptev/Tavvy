@@ -143,6 +143,7 @@ export async function mountApplication(api) {
     groupSubmenu.replaceChildren();
     for (const entry of entries) {
       const item = addAction(entry.label, entry.action, false, "", false, groupSubmenu);
+      if (entry.root) item.prepend(icon("m10 3-5 5 5 5", "group-context-root-icon"));
       if (entry.group) {
         const marker = element("span", "marker group-context-marker");
         const shape = groupMarker(entry.group.id);
@@ -712,7 +713,7 @@ export async function mountApplication(api) {
             group: item,
             action: () => run({ type: "moveGroup", groupId: group.id, parentId: item.id }),
           }));
-          if (current.parentId) entries.unshift({ label: t("groups.move_to_root"), action: () => run({ type: "moveGroup", groupId: group.id, parentId: null }) });
+          if (current.parentId) entries.unshift({ label: t("groups.move_to_root"), root: true, action: () => run({ type: "moveGroup", groupId: group.id, parentId: null }) });
           addSubmenu(t("groups.move_to_group"), entries, "group-context-move-group");
         }
         if (snapshot.settings.experimentalSpaces && group.id !== "inbox")

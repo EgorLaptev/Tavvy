@@ -133,6 +133,12 @@ test("preview shows mock containers and switches without Firefox APIs", async ()
     window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     assert.ok(submenu.hidden);
     window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    doc.querySelector('[data-group-id="group-orbit"] > .group-controls').dispatchEvent(new window.MouseEvent("contextmenu", { bubbles: true }));
+    groupMenu.querySelector(".group-context-move-group").click();
+    const rootAction = [...submenu.querySelectorAll('[role="menuitem"]')].find((item) => item.textContent === "Top level");
+    assert.ok(rootAction.querySelector("svg.group-context-root-icon"));
+    window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     doc.querySelector(".spaces-trigger").click();
     const work = doc.querySelector('[data-space-id="container:firefox-container-1"]');
     assert.equal(work.textContent, "Work");

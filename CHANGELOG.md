@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Add a back chevron to the top-level group destination.
+
 - Add a pin action to the tab actions menu and hide unavailable mute actions.
 
 ## 0.2.14 — Merry Mole — 2026-11-08

@@ -328,3 +328,5 @@ html[data-marker-style="none"] .group-context-marker { display: none; }
 html:is([data-marker-style="letters"], [data-marker-style="letters2"]) .group-context-marker { width: 25px; height: auto; background: transparent !important; rotate: none !important; border-radius: 0 !important; color: var(--marker-color); font-size: 9px; font-weight: 600; line-height: 1; text-align: center; }
 html[data-marker-style="letters"] .group-context-marker::after { content: attr(data-label); }
 html[data-marker-style="letters2"] .group-context-marker::after { content: attr(data-label2); font-size: 11px; }
+
+.group-context-root-icon { width: 10px; height: 10px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
