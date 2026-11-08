@@ -119,6 +119,7 @@ test("preview shows mock containers and switches without Firefox APIs", async ()
     groupMenu.querySelector(".group-context-move-group").click();
     assert.equal(submenu.hidden, false);
     assert.ok(submenu.textContent.includes("Ideas & inspiration"));
+    assert.ok([...submenu.querySelectorAll('[role="menuitem"]')].find((item) => item.textContent.includes("Ideas & inspiration")).querySelector(".group-context-marker"));
     assert.ok(!submenu.textContent.includes("Current projects"));
     assert.ok(!submenu.textContent.includes("Project Orbit"));
     window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));

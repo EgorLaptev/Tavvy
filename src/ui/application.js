@@ -659,7 +659,21 @@ export async function mountApplication(api) {
         groupMenu.querySelectorAll('[aria-expanded="true"]').forEach((item) => item.setAttribute("aria-expanded", "false"));
         if (wasOpen) { groupSubmenu.hidden = true; return; }
         groupSubmenu.replaceChildren();
-        for (const entry of entries) addAction(entry.label, entry.action, false, "", false, groupSubmenu);
+        for (const entry of entries) {
+          const item = addAction(entry.label, entry.action, false, "", false, groupSubmenu);
+          if (entry.group) {
+            const marker = element("span", "marker group-context-marker");
+            const shape = groupMarker(entry.group.id);
+            marker.style.borderRadius = shape.borderRadius;
+            marker.style.rotate = `${shape.rotation}deg`;
+            marker.style.background = entry.group.color;
+            marker.style.setProperty("--marker-color", entry.group.color);
+            marker.dataset.label = markerLetters(entry.group.title);
+            marker.dataset.label2 = markerLetters(entry.group.title, 2);
+            marker.setAttribute("aria-hidden", "true");
+            item.prepend(marker);
+          }
+        }
         groupSubmenu.hidden = false;
         trigger.setAttribute("aria-expanded", "true");
         const menuBounds = groupMenu.getBoundingClientRect(), triggerBounds = trigger.getBoundingClientRect(), submenuBounds = groupSubmenu.getBoundingClientRect();
@@ -688,6 +702,7 @@ export async function mountApplication(api) {
           };
           const entries = snapshot.groups.filter(validParent).map((item) => ({
             label: item.id === "inbox" && item.title === "Основная" ? t("groups.main") : item.title,
+            group: item,
             action: () => run({ type: "moveGroup", groupId: group.id, parentId: item.id }),
           }));
           if (current.parentId) entries.unshift({ label: t("groups.move_to_root"), action: () => run({ type: "moveGroup", groupId: group.id, parentId: null }) });
