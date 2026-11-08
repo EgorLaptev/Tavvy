@@ -327,9 +327,8 @@ button.group-header {
 .group-context-menu .group-context-item { transition: background-color 220ms ease, color 220ms ease; }
 @keyframes group-menu-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes group-menu-out { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-3px) scale(.98); } }
+.group { transition: background-color 220ms ease; }
 @media (prefers-reduced-motion: reduce) {
   .group-context-menu:not([hidden]), .group-context-menu.is-closing { animation: none; }
   .group-context-menu .group-context-item, .group-controls, .group { transition: none; }
 }
-
-.group { transition: background-color 220ms ease; }
