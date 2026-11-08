@@ -699,7 +699,7 @@ export async function mountApplication(api) {
       function showActions() {
         groupMenu.replaceChildren();
         addAction(t("groups.rename_group"), renameGroup);
-        addAction(t("groups.clear_group"), () => { if (window.confirm(t("groups.clear_confirm"))) run({ type: "clearGroup", groupId: group.id }); });
+        addAction(t("groups.clear_group"), () => { if (window.confirm(t("groups.clear_confirm"))) run({ type: "clearGroup", groupId: group.id }); }, false, "group-context-clear");
         addAction(t("groups.reload_group"), () => run({ type: "reloadGroup", groupId: group.id }));
         if (snapshot.settings.nestedGroups !== false && group.id !== "inbox") {
           const current = viewIndex.groups.get(group.id);

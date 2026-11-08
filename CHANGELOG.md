@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Correct the Clear action hover colors.
+
 - Limit group move destinations to groups at the same nesting level.
 
 - Rename the top-level group action to Ungroup.

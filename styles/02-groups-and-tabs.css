@@ -321,6 +321,11 @@ button.group-header {
 .group-context-menu .group-context-delete:not(:disabled):hover, .group-context-menu .group-context-delete:not(:disabled):focus-visible { background: rgb(241 107 112 / 14%); }
 .light-theme .group-context-menu .group-context-delete:not(:disabled):hover, .light-theme .group-context-menu .group-context-delete:not(:disabled):focus-visible { background: rgb(189 37 49 / 9%); }
 
+.group-context-menu .group-context-clear { color: #f1986b; }
+.light-theme .group-context-menu .group-context-clear { color: #bd6225; }
+.group-context-menu .group-context-clear:not(:disabled):hover, .group-context-menu .group-context-clear:not(:disabled):focus-visible { background: rgb(241 152 107 / 14%); }
+.light-theme .group-context-menu .group-context-clear:not(:disabled):hover, .light-theme .group-context-menu .group-context-clear:not(:disabled):focus-visible { background: rgb(189 98 37 / 9%); }
+
 .group-context-arrow { margin-left: auto; width: 12px; height: 12px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
 .group-context-menu .group-context-marker { flex: none; width: 10px; height: 10px; }
