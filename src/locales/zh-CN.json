@@ -190,7 +190,7 @@
     "this_backup_has_already_been_imported": "此备份已导入",
     "import_title": "导入",
     "import_tavvy": "导入 — Tavvy",
-    "import_page_description": "恢复之前，Tavvy 会保存备份。恢复成功后将关闭此窗口中受支持的标签页；其他窗口和扩展页面会保留。",
+    "import_page_description": "恢复之前，Tavvy 会保存备份。恢复成功后将关闭此窗口中受支持的标签页；其他窗口和扩展页面会保留。 现有分组将被替换。",
     "choose_json_file": "选择 JSON 文件",
     "close_existing_tabs": "恢复后关闭此窗口中当前的标签页",
     "choose_a_backup_file": "请选择备份文件。",

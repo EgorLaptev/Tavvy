@@ -190,7 +190,7 @@
     "this_backup_has_already_been_imported": "Dieses Backup wurde bereits importiert",
     "import_title": "Importieren",
     "import_tavvy": "Importieren – Tavvy",
-    "import_page_description": "Vor der Wiederherstellung sichert Tavvy den aktuellen Stand. Unterstützte Tabs in diesem Fenster werden danach geschlossen; andere Fenster und Erweiterungsseiten bleiben erhalten.",
+    "import_page_description": "Vor der Wiederherstellung sichert Tavvy den aktuellen Stand. Unterstützte Tabs in diesem Fenster werden danach geschlossen; andere Fenster und Erweiterungsseiten bleiben erhalten. Bestehende Gruppen werden ersetzt.",
     "choose_json_file": "Wählen Sie eine JSON-Datei",
     "close_existing_tabs": "Aktuelle Tabs dieses Fensters nach der Wiederherstellung schließen",
     "choose_a_backup_file": "Wählen Sie eine Sicherungsdatei.",

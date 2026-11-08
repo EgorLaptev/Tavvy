@@ -409,7 +409,7 @@ test("commands are serialized and tab operations reject another window", async (
   );
 });
 
-test("STG import preserves empty groups, titles, colors and URLs, and is idempotent", async () => {
+test("STG import replaces groups and preserves empty groups, titles, colors and URLs", async () => {
   const f = fixture(),
     service = f.service();
   const backup = {
@@ -435,8 +435,15 @@ test("STG import preserves empty groups, titles, colors and URLs, and is idempot
     ],
     pinnedTabs: [{ title: "Почта", url: "https://example.test/mail" }],
   };
+  await service.dispatch({ type: "createGroup", title: "Old group" }, 1);
   let snapshot = await service.dispatch({ type: "importStg", backup }, 1);
   assert.equal(snapshot.groups.length, 3);
+  assert.ok(!snapshot.groups.some((group) => group.title === "Old group"));
+  const count = f.records.length;
+  await service.dispatch({ type: "createGroup", title: "Added later" }, 1);
+  snapshot = await service.dispatch({ type: "importStg", backup }, 1);
+  assert.equal(f.records.length, count + 5);
+  assert.ok(!snapshot.groups.some((group) => group.title === "Added later"));
   assert.equal(snapshot.groups[1].title, "Пустая");
   assert.equal(snapshot.groups[1].color, "hsla(150, 100%, 50%, 1)");
   assert.equal(snapshot.importReport.localFiles, 1);
@@ -449,8 +456,8 @@ test("STG import preserves empty groups, titles, colors and URLs, and is idempot
   assert.ok(exported.tabs.some((tab) => tab.url === extensionUrl));
   assert.ok(exported.tabs.some((tab) => tab.url === "about:addons"));
   await service.dispatch({ type: "importBackup", backup: exported }, 1);
-  assert.equal(f.records.filter(savedExtensionPage).length, 2);
-  assert.equal(f.records.filter((tab) => tab.url.includes("local-file.html#") && JSON.parse(decodeURIComponent(tab.url.split("#")[1])).url === "about:addons").length, 2);
+  assert.equal(f.records.filter(savedExtensionPage).length, 4);
+  assert.equal(f.records.filter((tab) => tab.url.includes("local-file.html#") && JSON.parse(decodeURIComponent(tab.url.split("#")[1])).url === "about:addons").length, 4);
   assert.ok(
     f.records.some((tab) =>
       tab.url.startsWith("moz-extension://test/local-file.html#"),
@@ -461,10 +468,7 @@ test("STG import preserves empty groups, titles, colors and URLs, and is idempot
       (tab) => tab.url === "https://example.test/mail" && tab.pinned,
     ),
   );
-  const count = f.records.length;
-  snapshot = await service.dispatch({ type: "importStg", backup }, 1);
-  assert.equal(f.records.length, count);
-  assert.equal(snapshot.importReport.alreadyImported, true);
+  assert.equal((await service.dispatch({ type: "snapshot" }, 1)).groups.length, 3);
 });
 
 test("optional unloading affects only silent unpinned tabs in the previous group and window", async () => {

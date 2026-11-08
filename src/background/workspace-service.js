@@ -444,11 +444,13 @@ export function createWorkspaceService(
     const fingerprint = await stgFingerprint(plan);
     state.imports ??= {};
     let job = state.imports[fingerprint];
-    if (job?.complete) {
-      state.importReport = { ...job.report, alreadyImported: true };
-      return;
-    }
+    if (job?.complete) job = null;
+    const resuming = !!job;
     if (!job) {
+      state.groups = [state.groups.find((group) => group.id === "inbox") || { id: "inbox", title: "Основная", color: colors[0], parentId: null }];
+      state.spaces = [];
+      state.archive = [];
+      state.imports = {};
       job = { groupIds: {}, completed: [], complete: false };
       state.imports[fingerprint] = job;
       for (const source of plan.groups) {
@@ -473,7 +475,7 @@ export function createWorkspaceService(
     await Promise.all(
       (await api.tabs.query({ windowId })).map(async (tab) => {
         const marker = await api.sessions.getTabValue(tab.id, "tavvy:import");
-        if (typeof marker === "string") existingByMarker.set(marker, tab);
+        if (resuming && typeof marker === "string") existingByMarker.set(marker, tab);
       }),
     );
     for (const source of plan.groups) {
@@ -549,15 +551,13 @@ export function createWorkspaceService(
     }
     if (type === "importBackup") {
       const plan = parseTavvyBackup(command.backup);
-      if (state.spaces.length + (plan.spaces?.length || 0) > 100) throw new Error("Слишком много пространств");
-      if (state.groups.length + plan.groups.filter((item) => item.id !== "inbox").length > 1000) throw new Error("Слишком много групп");
       const spaceMapping = new Map([[DEFAULT_SPACE_ID, DEFAULT_SPACE_ID]]);
+      const restoredSpaces = [];
       if (plan.spaces?.length) {
         if (!browserApi.contextualIdentities || !await browserApi.permissions?.contains({ permissions: ["cookies"] }))
           throw new Error("Для восстановления пространств необходимо разрешение на контейнеры Firefox");
         const identities = await browserApi.contextualIdentities.query({});
-        const restoredSpaces = [];
-        const usedContainers = new Set(state.spaces.map((item) => item.cookieStoreId));
+        const usedContainers = new Set();
         for (const item of plan.spaces) {
           const matches = identities.filter((identity) => identity.name === item.name && !usedContainers.has(identity.cookieStoreId));
           if (matches.length !== 1) throw new Error("Для восстановления пространства нужен один существующий контейнер Firefox с тем же именем");
@@ -567,10 +567,13 @@ export function createWorkspaceService(
           restoredSpaces.push({ id: spaceId, name: item.name, cookieStoreId: identity.cookieStoreId, ...(item.icon ? { icon: item.icon } : {}) });
           spaceMapping.set(item.id, spaceId);
         }
-        state.spaces.push(...restoredSpaces);
       }
       const mapping = new Map(plan.groups.map((g) => [g.id, g.id === "inbox" ? "inbox" : id()]));
-      for (const g of plan.groups) if (g.id !== "inbox") state.groups.push({ id: mapping.get(g.id), title: g.title, color: g.color, parentId: g.parentId ? mapping.get(g.parentId) : null, ...(g.spaceId ? { spaceId: spaceMapping.get(g.spaceId) } : {}) });
+      state.spaces = restoredSpaces;
+      state.groups = plan.groups.map((g) => ({ id: mapping.get(g.id), title: g.title, color: g.color, parentId: g.parentId ? mapping.get(g.parentId) : null, ...(g.spaceId ? { spaceId: spaceMapping.get(g.spaceId) } : {}) }));
+      if (!state.groups.some((g) => g.id === "inbox")) state.groups.unshift({ id: "inbox", title: "Основная", color: colors[0], parentId: null });
+      state.archive = [];
+      state.imports = {};
       await save();
       const selected = await active(windowId);
       for (const entry of plan.tabs) {

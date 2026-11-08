@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Replace existing groups when restoring Tavvy or Simple Tab Groups backups.
+
 ## 0.2.12 — Brave Gecko — 2026-11-07
 
 - Preserve Firefox extension pages when importing and restoring backups.

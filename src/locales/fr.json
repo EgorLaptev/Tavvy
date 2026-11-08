@@ -190,7 +190,7 @@
     "this_backup_has_already_been_imported": "Cette sauvegarde a déjà été importée",
     "import_title": "Importer",
     "import_tavvy": "Importation — Tavvy",
-    "import_page_description": "Avant la restauration, Tavvy crée une sauvegarde. Les onglets pris en charge de cette fenêtre seront fermés après la restauration ; les autres fenêtres et pages d’extensions seront conservées.",
+    "import_page_description": "Avant la restauration, Tavvy crée une sauvegarde. Les onglets pris en charge de cette fenêtre seront fermés après la restauration ; les autres fenêtres et pages d’extensions seront conservées. Les groupes existants seront remplacés.",
     "choose_json_file": "Choisissez le fichier JSON",
     "close_existing_tabs": "Fermer les onglets actuels de cette fenêtre après la restauration",
     "choose_a_backup_file": "Choisissez un fichier de sauvegarde.",
