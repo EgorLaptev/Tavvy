@@ -94,6 +94,11 @@
     "error_message": "错误：{error}"
   },
   "groups": {
+    "clear_group": "清空分组",
+    "reload_group": "刷新分组",
+    "move_to_container": "移至容器",
+    "clear_confirm": "关闭此分组中的所有标签页？",
+    "move_container_confirm": "标签页将在所选容器中重新打开，页面状态和登录状态可能丢失。继续？",
     "rename_group": "重命名分组",
     "delete_group": "删除分组",
     "create_group": "创建分组",

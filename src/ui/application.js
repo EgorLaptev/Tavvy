@@ -105,6 +105,15 @@ export async function mountApplication(api) {
     refreshTimer,
     commandTail = Promise.resolve();
   const container = document.querySelector(".groups");
+  const groupMenu = element("div", "group-context-menu");
+  groupMenu.hidden = true;
+  groupMenu.setAttribute("role", "menu");
+  document.querySelector(".popup").append(groupMenu);
+  function closeGroupMenu() { groupMenu.hidden = true; groupMenu.replaceChildren(); }
+  function outsideGroupMenu(event) { if (!groupMenu.contains(event.target)) closeGroupMenu(); }
+  function groupMenuKey(event) { if (event.key === "Escape" && !groupMenu.hidden) { event.preventDefault(); closeGroupMenu(); } }
+  document.addEventListener("pointerdown", outsideGroupMenu);
+  document.addEventListener("keydown", groupMenuKey);
   const search = document.querySelector(".search input");
   const palette = element("div", "group-color-palette");
   palette.hidden = true;
@@ -619,6 +628,34 @@ export async function mountApplication(api) {
       field.focus();
       field.select();
     });
+    controls.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeGroupMenu();
+      const addAction = (label, action, disabled = false) => {
+        const item = button(label, "group-context-item", document.createTextNode(label), () => { closeGroupMenu(); action(); });
+        item.setAttribute("role", "menuitem");
+        item.disabled = disabled;
+        groupMenu.append(item);
+      };
+      addAction(t("groups.rename_group"), () => rename.click());
+      addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), group.id === "inbox");
+      addAction(t("groups.clear_group"), () => { if (window.confirm(t("groups.clear_confirm"))) run({ type: "clearGroup", groupId: group.id }); });
+      addAction(t("groups.reload_group"), () => run({ type: "reloadGroup", groupId: group.id }));
+      if (snapshot.settings.experimentalSpaces && group.id !== "inbox") {
+        const destinations = snapshot.spaces.filter((space) => space.id !== snapshot.activeSpaceId && !space.unavailable);
+        const label = element("div", "group-context-heading", t("groups.move_to_container"));
+        groupMenu.append(label);
+        for (const destination of destinations) addAction(destination.id === "default" ? t("spaces.default") : destination.name, () => {
+          if (window.confirm(t("groups.move_container_confirm"))) run({ type: "moveGroupToSpace", groupId: group.id, spaceId: destination.id });
+        });
+      }
+      groupMenu.hidden = false;
+      const bounds = groupMenu.getBoundingClientRect();
+      groupMenu.style.left = `${Math.max(0, Math.min(event.clientX, window.innerWidth - bounds.width))}px`;
+      groupMenu.style.top = `${Math.max(0, Math.min(event.clientY, window.innerHeight - bounds.height))}px`;
+      groupMenu.querySelector("button")?.focus();
+    });
     controls.append(header, colorInput, rename, add, toggle);
     const tabs = element("div", "tabs is-closed"),
       inner = element("div", "tabs-inner"),
@@ -869,6 +906,8 @@ export async function mountApplication(api) {
       document.removeEventListener("keydown", spacesKey);
       document.removeEventListener("pointerdown", outsidePalette);
       document.removeEventListener("keydown", paletteKey);
+      document.removeEventListener("pointerdown", outsideGroupMenu);
+      document.removeEventListener("keydown", groupMenuKey);
       disposeDragState();
       snapshot = null;
       viewIndex = null;

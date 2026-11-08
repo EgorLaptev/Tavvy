@@ -880,3 +880,38 @@ test("legacy archived entries remain in backups without collecting newly closed 
   const backup = await service.dispatch({ type: "exportBackup" }, 1);
   assert.deepEqual(backup.archive.map((entry) => entry.url), ["https://old.example"]);
 });
+
+
+test("group actions reload and clear only their own tabs", async () => {
+  const f = fixture();
+  const reloaded = [];
+  f.api.tabs.reload = async (id) => reloaded.push(id);
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "Work" }, 1);
+  const groupId = snap.groups.find((item) => item.title === "Work").id;
+  await service.dispatch({ type: "moveTab", tabId: 2, groupId }, 1);
+  await service.dispatch({ type: "reloadGroup", groupId }, 1);
+  assert.deepEqual(reloaded, [2]);
+  snap = await service.dispatch({ type: "clearGroup", groupId }, 1);
+  assert.ok(snap.groups.some((item) => item.id === groupId));
+  assert.ok(!f.records.some((item) => item.id === 2));
+  assert.ok(f.records.some((item) => item.id === 1));
+});
+
+test("moving a group reopens its tabs in the chosen container", async () => {
+  const f = fixture();
+  f.api.permissions = { contains: async () => true };
+  f.api.contextualIdentities = { query: async () => [{ name: "Work", cookieStoreId: "firefox-container-1" }] };
+  const service = f.service();
+  let snap = await service.dispatch({ type: "saveSettings", settings: { experimentalSpaces: true } }, 1);
+  snap = await service.dispatch({ type: "createGroup", title: "Project" }, 1);
+  const groupId = snap.groups.find((item) => item.title === "Project").id;
+  await service.dispatch({ type: "moveTab", tabId: 2, groupId }, 1);
+  snap = await service.dispatch({ type: "moveGroupToSpace", groupId, spaceId: "container:firefox-container-1" }, 1);
+  assert.ok(!snap.groups.some((item) => item.id === groupId));
+  assert.ok(!f.records.some((item) => item.id === 2));
+  assert.ok(f.records.some((item) => item.url === "https://mozilla.org" && item.cookieStoreId === "firefox-container-1"));
+  const destination = snap.spaces.find((item) => item.name === "Work");
+  snap = await service.dispatch({ type: "activateSpace", spaceId: destination.id }, 1);
+  assert.ok(snap.groups.some((item) => item.id === groupId));
+});

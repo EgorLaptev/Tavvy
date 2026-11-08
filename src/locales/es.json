@@ -94,6 +94,11 @@
     "error_message": "Error: {error}"
   },
   "groups": {
+    "clear_group": "Vaciar grupo",
+    "reload_group": "Recargar grupo",
+    "move_to_container": "Mover al contenedor",
+    "clear_confirm": "¿Cerrar todas las pestañas de este grupo?",
+    "move_container_confirm": "Las pestañas se abrirán de nuevo en el contenedor elegido. Se pueden perder el estado de las páginas y las sesiones. ¿Continuar?",
     "rename_group": "Cambiar nombre de grupo",
     "delete_group": "Eliminar grupo",
     "create_group": "Crear grupo",

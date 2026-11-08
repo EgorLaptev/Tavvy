@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Add a group context menu for renaming, deleting, clearing, refreshing and moving groups to containers.
+
 - Replace existing groups when restoring Tavvy or Simple Tab Groups backups.
 
 ## 0.2.12 — Brave Gecko — 2026-11-07

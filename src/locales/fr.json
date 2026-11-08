@@ -94,6 +94,11 @@
     "error_message": "Erreur : {error}"
   },
   "groups": {
+    "clear_group": "Vider le groupe",
+    "reload_group": "Actualiser le groupe",
+    "move_to_container": "Déplacer vers un conteneur",
+    "clear_confirm": "Fermer tous les onglets de ce groupe ?",
+    "move_container_confirm": "Les onglets seront rouverts dans le conteneur choisi. L’état des pages et les connexions peuvent être perdus. Continuer ?",
     "rename_group": "Renommer le groupe",
     "delete_group": "Supprimer le groupe",
     "create_group": "Créer un groupe",

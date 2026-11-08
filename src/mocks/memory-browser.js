@@ -148,6 +148,9 @@ export function createMemoryBrowser({
         for (const id of ids) records.get(id).hidden = true;
         return ids;
       },
+      async reload(id) {
+        if (!records.has(id)) throw new Error("Вкладка закрыта");
+      },
       async discard(id) {
         records.get(id).discarded = true;
       },

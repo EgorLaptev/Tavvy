@@ -94,6 +94,11 @@
     "error_message": "Error: {error}"
   },
   "groups": {
+    "clear_group": "Clear group",
+    "reload_group": "Reload group",
+    "move_to_container": "Move to container",
+    "clear_confirm": "Close all tabs in this group?",
+    "move_container_confirm": "Tabs will reopen in the selected container. Page state and sign-in may be lost. Continue?",
     "rename_group": "Rename group",
     "delete_group": "Delete group",
     "create_group": "Create group",

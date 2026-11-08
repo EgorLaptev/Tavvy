@@ -303,3 +303,13 @@ button.group-header {
 .group.drop-target > .group-controls {
   background: #181818;
 }
+
+.group-context-menu { position: fixed; z-index: 1000; min-width: 190px; max-height: 80vh; overflow-y: auto; padding: 5px; border: 1px solid #444; border-radius: 9px; background: #242528; box-shadow: 0 6px 24px #0006; }
+.group-context-menu[hidden] { display: none; }
+.group-context-item { display: block; width: 100%; border: 0; border-radius: 5px; padding: 7px 10px; background: transparent; color: #f3f3f3; text-align: left; cursor: pointer; }
+.group-context-item:hover, .group-context-item:focus-visible { background: #444; }
+.group-context-item:disabled { opacity: .45; cursor: default; }
+.group-context-heading { padding: 8px 10px 3px; color: #aaa; font-size: 11px; }
+.light-theme .group-context-menu { background: #fff; border-color: #ddd; }
+.light-theme .group-context-item { color: #222; }
+.light-theme .group-context-item:hover, .light-theme .group-context-item:focus-visible { background: #eee; }

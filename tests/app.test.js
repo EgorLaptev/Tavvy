@@ -142,7 +142,11 @@ test("built app mounts and connects settings, groups and navigation", async () =
   assert.equal(document.querySelector(".theme-open strong").textContent, "Theme");
   assert.equal(document.querySelectorAll(".group").length, 10);
   const group = document.querySelectorAll(".group")[1];
-  group.querySelector(".group-rename").click();
+  group.querySelector(".group-controls").dispatchEvent(new window.MouseEvent("contextmenu", { bubbles: true, clientX: 20, clientY: 20 }));
+  const menu = document.querySelector(".group-context-menu");
+  assert.equal(menu.hidden, false);
+  assert.equal(menu.querySelectorAll('[role="menuitem"]').length >= 4, true);
+  menu.querySelector('[role="menuitem"]').click();
   const renameInput = group.querySelector(".group-rename-input");
   renameInput.value = "Projects";
   renameInput.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));

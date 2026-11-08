@@ -94,6 +94,11 @@
     "error_message": "Fehler: {error}"
   },
   "groups": {
+    "clear_group": "Gruppe leeren",
+    "reload_group": "Gruppe neu laden",
+    "move_to_container": "In Container verschieben",
+    "clear_confirm": "Alle Tabs dieser Gruppe schließen?",
+    "move_container_confirm": "Tabs werden im gewählten Container neu geöffnet. Seitenzustand und Anmeldung können verloren gehen. Fortfahren?",
     "rename_group": "Gruppe umbenennen",
     "delete_group": "Gruppe löschen",
     "create_group": "Gruppe erstellen",
