@@ -11,8 +11,10 @@ so these values identify the exact archive listed, not every build of a version.
 - Release date: 2026-11-08
 - Release source: `v0.2.15`
 - Artifact: `tavvy_tabs_group-0.2.15.zip`
+- Published size: 117,324 bytes
+- Published SHA-256: `d725b539f7eadd7231b7746d6280b143d2ae99e339c7200ec51220f6b810d7df`
 - Checksums: https://github.com/EgorLaptev/Tavvy/releases/download/v0.2.15/SHA256SUMS
-- Verification: Release workflow will validate tests, Firefox extension and isolated Firefox smoke test.
+- Verification: [Release workflow](https://github.com/EgorLaptev/Tavvy/actions/runs/42495709886) passed tests, Firefox validation and isolated Firefox smoke test.
 - Signature: unsigned
 
 ## 0.2.14 — Merry Mole
@@ -79,7 +81,7 @@ the source used to build those local archives. Version 0.2.0 has no local tag.
 
 | Version | Release reference | Archive source | Size (bytes) | SHA-256 |
 | --- | --- | --- | ---: | --- |
-| 0.2.15 | `v0.2.15` | GitHub Release | pending | pending |
+| 0.2.15 | `v0.2.15` | GitHub Release | 117,324 | `d725b539f7eadd7231b7746d6280b143d2ae99e339c7200ec51220f6b810d7df` |
 | 0.2.14 | `v0.2.14` | GitHub Release | 116,688 | `1166ca115e0f85afcb7a3ad95e421330f1509217429d76301f664d139fe5bf76` |
 | 0.2.13 | `v0.2.13` | GitHub Release | 116,496 | `a9958079886aae880ed8526cf43edc34a2bf86796ac743b3cc4bcfa4357ba491` |
 | 0.2.12 | `v0.2.12` | GitHub Release | 112,032 | `08d870730e8a65a6fd8aabfea99909b7bf5c2a264af6b03a707e9b977e637f90` |
