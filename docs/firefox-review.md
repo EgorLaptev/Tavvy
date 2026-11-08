@@ -32,7 +32,7 @@ websites visited by the user. Icon requests serve the tab manager's display
 only and do not send the tab list to the developer. Please confirm this
 classification during review.
 
-Groups can be assigned independently to existing or newly created Firefox containers from their
+Groups can be assigned independently to existing Firefox containers from their
 context menu, while all groups remain visible in one tree. Tavvy requests the
 optional `cookies` permission when container access is needed and uses it to
 create tabs in containers; it does not access cookie values. Reassigning a group

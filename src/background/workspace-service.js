@@ -2,7 +2,7 @@ import { createTabIndex } from "../platform/tab-index.js";
 import { parseStgBackup, stgFingerprint } from "../domain/stg-import.js";
 import { normalizeSettings } from "../domain/settings.js";
 import { parseTavvyBackup } from "../domain/tavvy-backup.js";
-import { DEFAULT_SPACE_ID, groupSpaceId, groupsInSpace, SPACE_ICONS, spaceIcon } from "../domain/spaces.js";
+import { DEFAULT_SPACE_ID, groupSpaceId, groupsInSpace, spaceIcon } from "../domain/spaces.js";
 const KEY = "tavvy:workspace:v1";
 const TAG = "tavvy:group";
 const ACTIVE = "tavvy:active-group";
@@ -598,35 +598,8 @@ export function createWorkspaceService(
       await importStg(command.backup, windowId);
       return snapshot(windowId);
     }
-    if (type === "createContainer") {
-      const name = typeof command.name === "string" ? command.name.trim() : "";
-      if (!name || name.length > 100) throw new Error("Введите название пространства");
-      group(command.groupId);
-      if (!browserApi.contextualIdentities?.create || !await browserApi.permissions?.contains({ permissions: ["cookies"] }))
-        throw new Error("Для пространства необходимо разрешение на контейнеры Firefox");
-      if (state.spaces.length >= 100) throw new Error("Слишком много пространств");
-      const targetTabs = (await scan()).filter((tab) => tab.groupId === command.groupId && (!tab.pinned || state.settings?.groupPinnedTabs));
-      if (targetTabs.some((tab) => !/^(https?:|about:(blank|newtab)$)/i.test(tab.url))) throw new Error("Некоторые вкладки нельзя перенести в контейнер");
-      const identity = await browserApi.contextualIdentities.create({ name, color: "blue", icon: "fingerprint" });
-      try { return await execute({ type: "moveGroupToSpace", groupId: command.groupId, spaceId: `container:${identity.cookieStoreId}` }, windowId); }
-      catch { throw new Error("Контейнер создан, но группу не удалось переместить. Проверьте вкладки и попробуйте снова."); }
-    } else if (type === "createSpace" || type === "recoverSpace") {
-      throw new Error("Создание контейнеров Firefox в Tavvy недоступно");
-    } else if (type === "setSpaceIcon") {
-      if (command.spaceId === DEFAULT_SPACE_ID || !SPACE_ICONS.includes(command.icon)) throw new Error("Недопустимая иконка пространства");
-      const selected = command.spaceId?.startsWith("container:")
-        ? { cookieStoreId: command.spaceId.slice("container:".length) }
-        : space(command.spaceId);
-      if (!browserApi.contextualIdentities || !await browserApi.permissions?.contains({ permissions: ["cookies"] }))
-        throw new Error("Для пространства необходимо разрешение на контейнеры Firefox");
-      try {
-        await browserApi.contextualIdentities.update(selected.cookieStoreId, { icon: command.icon });
-      } catch (error) {
-        // The space can outlive a container removed in Firefox. Keep the visual
-        // choice without silently creating a new, unrelated cookie store.
-        if (!/^Invalid contextual identity:/i.test(String(error?.message || error))) throw error;
-      }
-      if (!command.spaceId.startsWith("container:")) selected.icon = command.icon;
+    if (type === "createContainer" || type === "createSpace" || type === "recoverSpace" || type === "setSpaceIcon") {
+      throw new Error("Управление контейнерами Firefox в Tavvy недоступно");
     } else if (type === "rebindSpace") {
       if (command.spaceId === DEFAULT_SPACE_ID) throw new Error("Контейнер пространства недоступен");
       const selected = space(command.spaceId);

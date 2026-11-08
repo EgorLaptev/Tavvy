@@ -168,7 +168,6 @@
     "merry_mole": "Topo alegre"
   },
   "errors": {
-    "container_created_move_failed": "Se creó el contenedor, pero no se pudo mover el grupo. Comprueba tus pestañas y vuelve a intentarlo.",
     "background_process_is_unavailable": "El proceso en segundo plano no está disponible",
     "private_windows_are_not_supported_yet": "Las ventanas privadas aún no son compatibles",
     "could_not_get_status": "No se pudo obtener el estado",

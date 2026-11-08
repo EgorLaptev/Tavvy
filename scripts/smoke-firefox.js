@@ -185,11 +185,9 @@ await build({
  check(Boolean(ui.querySelector('[data-group-id="inbox"]')),'groups in other containers remain visible');
  check(spaceLabel.nextElementSibling.classList.contains('group-toggle'),'container icon precedes tab counter');
  spaceLabel.click();
- const editIcon=ui.querySelector('.group-container-edit');check(Boolean(editIcon),'container picker offers icon choices');editIcon.click();
- const briefcase=ui.querySelector('.group-container-icon-choice[title="briefcase"]');
- check(Boolean(briefcase),'space icon submenu opens');briefcase.click();
- for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.spaces.find(item=>item.id===smokeSpace)?.icon==='briefcase')break;await new Promise(resolve=>setTimeout(resolve,50));}
- check((await browser.contextualIdentities.get(realSpaceTab.cookieStoreId)).icon==='briefcase','space icon updates Firefox container');
+ check(Boolean(ui.querySelector('.group-context-item.is-current')),'container picker highlights current container');
+ check(!ui.querySelector('.group-container-edit'),'container icon editing is unavailable');
+ spaceLabel.click();
  await browser.cookies.set({url:'http://127.0.0.1:${port}/',name:'tavvy-space-isolation',value:'work',storeId:realSpaceTab.cookieStoreId});
  check((await browser.cookies.get({url:'http://127.0.0.1:${port}/',name:'tavvy-space-isolation',storeId:realSpaceTab.cookieStoreId}))?.value==='work','space cookie is stored in its container');
  check(!(await browser.cookies.get({url:'http://127.0.0.1:${port}/',name:'tavvy-space-isolation',storeId:'firefox-default'})),'space cookie is isolated from default');

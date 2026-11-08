@@ -168,7 +168,6 @@
     "merry_mole": "Merry Mole"
   },
   "errors": {
-    "container_created_move_failed": "The container was created, but the group could not be moved. Check your tabs and try again.",
     "background_process_is_unavailable": "Background process is unavailable",
     "private_windows_are_not_supported_yet": "Private windows are not supported yet",
     "could_not_get_status": "Could not get status",

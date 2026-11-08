@@ -168,7 +168,6 @@
     "merry_mole": "Fröhlicher Maulwurf"
   },
   "errors": {
-    "container_created_move_failed": "Der Container wurde erstellt, aber die Gruppe konnte nicht verschoben werden. Prüfe deine Tabs und versuche es erneut.",
     "background_process_is_unavailable": "Der Hintergrundprozess ist nicht verfügbar",
     "private_windows_are_not_supported_yet": "Private Fenster werden noch nicht unterstützt",
     "could_not_get_status": "Status konnte nicht abgerufen werden",

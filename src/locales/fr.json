@@ -168,7 +168,6 @@
     "merry_mole": "Taupe joyeuse"
   },
   "errors": {
-    "container_created_move_failed": "Le conteneur a été créé, mais le groupe n’a pas pu être déplacé. Vérifiez vos onglets et réessayez.",
     "background_process_is_unavailable": "Le processus en arrière-plan n'est pas disponible",
     "private_windows_are_not_supported_yet": "Les fenêtres privées ne sont pas encore prises en charge",
     "could_not_get_status": "Impossible d'obtenir le statut",

@@ -84,7 +84,7 @@ no container; a subgroup initially inherits its parent’s container. Existing g
 IDs, tab associations and the legacy spaces setting remain in storage.
 
 The optional `cookies` permission is requested from the group action when
-needed. Tavvy can create Firefox containers and change their icons; it does not
+needed. Containers and their icons are managed in Firefox; Tavvy does not
 read or write cookie values. Reassigning one group reopens only its own
 non-global-pinned tabs in the target container; descendant groups retain their
 assignments and hierarchy. The popup asks for confirmation because page state

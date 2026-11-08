@@ -255,7 +255,7 @@ test("group container assignment keeps every group visible", async () => {
     doc.querySelector(".group-context-move").click();
     await pause(20);
     const work = [...doc.querySelectorAll('.group-context-submenu [role="menuitem"]')].find((item) => item.textContent === "Work");
-    assert.ok(work.parentElement.querySelector(".spaces-icon-container"));
+    assert.ok(work.querySelector(".spaces-icon-container"));
     work.click();
     doc.querySelector(".group-container-submit").click();
     await pause(180);
@@ -269,11 +269,9 @@ test("group container assignment keeps every group visible", async () => {
     icon.click();
     assert.equal(doc.querySelector(".group-context-submenu").hidden, false);
     assert.ok([...doc.querySelectorAll('.group-context-submenu [role="menuitem"]')].some((item) => item.textContent === "None"));
-    doc.querySelector(".group-container-edit").click();
-    assert.equal(doc.querySelectorAll(".group-container-icon-choice").length, 13);
-    doc.querySelector('.group-container-icon-choice[title="tree"]').click();
-    await pause(100);
-    assert.match(icon.querySelector(".spaces-icon").style.maskImage, /tree/);
+    assert.equal(doc.querySelector(".group-context-item.is-current").textContent, "Work");
+    assert.equal(doc.querySelector(".group-container-edit"), null);
+    assert.equal(doc.querySelector(".group-container-form"), null);
     assert.equal(doc.querySelector('[data-group-id="inbox"] .group-space-label').hidden, true);
     const snapshot = await f.service.dispatch({ type: "snapshot" }, 1);
     assert.equal(snapshot.groups.length, 2);

@@ -1,4 +1,4 @@
-import { SPACE_ICONS, spaceIcon } from "../domain/spaces.js";
+import { spaceIcon } from "../domain/spaces.js";
 import { buildViewIndex, windowRange } from "../ui/view-index.js";
 import { animatePanelChange } from "../ui/panel-layout.js";
 import { mountSettings } from "../features/settings/settings.js";
@@ -164,13 +164,7 @@ export async function mountApplication(api) {
         const marker = element("span", "spaces-icon spaces-icon-container");
         marker.style.maskImage = `url("${spaceIconUrl(spaceIcon(entry.space.icon))}")`;
         marker.setAttribute("aria-hidden", "true");
-        if (entry.editSpace) {
-          const row = element("div", "group-container-row");
-          const edit = button(`${t("spaces.choose_icon")}: ${entry.space.name}`, "group-container-edit", marker, () => showContainerIcons(entry.space, trigger, entry.groupId));
-          edit.setAttribute("role", "menuitem");
-          item.before(row);
-          row.append(edit, item);
-        } else item.prepend(marker);
+        item.prepend(marker);
       }
     }
     groupSubmenu.hidden = false;
@@ -195,50 +189,6 @@ export async function mountApplication(api) {
     const back = addAction(t("common.back"), () => showContainerPicker(groupId, trigger, true), false, "group-container-back", true, groupSubmenu);
     back.prepend(icon("m10 3-5 5 5 5", "group-context-root-icon"));
   }
-  function showContainerIcons(space, trigger, groupId) {
-    groupSubmenu.replaceChildren();
-    submenuBack(trigger, groupId);
-    const grid = element("div", "group-container-icon-grid");
-    for (const name of SPACE_ICONS) {
-      const glyph = element("span", "spaces-icon spaces-icon-container");
-      glyph.style.maskImage = `url("${spaceIconUrl(name)}")`;
-      const choice = button(`${t("spaces.choose_icon")}: ${name}`, "group-container-icon-choice", glyph, () => {
-        closeGroupMenu();
-        run({ type: "setSpaceIcon", spaceId: space.id, icon: name });
-      });
-      choice.title = name;
-      choice.setAttribute("aria-pressed", String(name === spaceIcon(space.icon)));
-      grid.append(choice);
-    }
-    groupSubmenu.append(grid);
-    positionSubmenu(trigger);
-    groupSubmenu.querySelector("button")?.focus();
-  }
-  function showCreateContainer(groupId, trigger) {
-    groupSubmenu.replaceChildren();
-    submenuBack(trigger, groupId);
-    const form = element("form", "group-container-form");
-    const input = element("input", "group-container-name");
-    input.type = "text";
-    input.maxLength = 100;
-    input.required = true;
-    input.placeholder = t("spaces.name");
-    input.setAttribute("aria-label", t("spaces.name"));
-    const warning = element("p", "group-container-warning", t("groups.move_container_confirm"));
-    const create = button(t("spaces.create"), "group-context-item group-container-submit", document.createTextNode(t("spaces.create")), () => {});
-    create.type = "submit";
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const name = input.value.trim();
-      if (!name) { input.focus(); return; }
-      closeGroupMenu();
-      run({ type: "createContainer", groupId, name });
-    });
-    form.append(input, warning, create);
-    groupSubmenu.append(form);
-    positionSubmenu(trigger);
-    input.focus();
-  }
   function showMoveConfirmation(groupId, destination, trigger) {
     groupSubmenu.replaceChildren();
     submenuBack(trigger, groupId);
@@ -262,8 +212,6 @@ export async function mountApplication(api) {
     const entries = snapshot.spaces.filter((space) => !space.unavailable).map((destination) => ({
       label: destination.id === "default" ? t("spaces.default") : destination.name,
       space: destination,
-      editSpace: destination.id !== "default",
-      groupId,
       current: destination.id === currentSpace,
       keepOpen: destination.id !== currentSpace,
       action: () => { if (destination.id !== currentSpace) showMoveConfirmation(groupId, destination, trigger); },
@@ -274,7 +222,6 @@ export async function mountApplication(api) {
       for (const available of snapshot.spaces.filter((space) => space.firefoxContainer))
         entries.push({ label: `${t("spaces.reconnect_action")}: ${available.name}`, space: available, action: () => run({ type: "rebindSpace", spaceId: assigned.id, cookieStoreId: available.id.slice("container:".length) }) });
     }
-    entries.push({ label: t("spaces.new"), keepOpen: true, action: () => showCreateContainer(groupId, trigger) });
     if (returning) { groupSubmenu.hidden = true; submenuTrigger?.setAttribute("aria-expanded", "false"); submenuTrigger = null; }
     showSubmenu(trigger, entries);
   }

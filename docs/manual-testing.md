@@ -48,8 +48,7 @@ for truncation and overflow checks.
 - With disposable test tabs and containers, change the container of a group
   with subgroups. Confirm that its tabs reopen in the chosen container while
   subgroups keep their own assignments and remain nested.
-- Create a container from the group picker, change its icon and check the result in
-  Firefox. With a disposable container, remove a linked identity and reconnect
+- Change a container icon in Firefox and verify it appears in Tavvy. With a disposable container, remove a linked identity and reconnect
   it using the affected group’s menu. Check that groups and tabs remain.
 - Export a version 2 backup in the test profile. Restore it only when an
   unassigned container with the same name exists; missing or duplicate matches

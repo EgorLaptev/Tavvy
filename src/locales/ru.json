@@ -168,7 +168,6 @@
     "merry_mole": "Весёлый крот"
   },
   "errors": {
-    "container_created_move_failed": "Контейнер создан, но группу не удалось переместить. Проверьте вкладки и попробуйте снова.",
     "background_process_is_unavailable": "Фоновый процесс недоступен",
     "private_windows_are_not_supported_yet": "Приватные окна пока не поддерживаются",
     "could_not_get_status": "Ошибка состояния",
