@@ -123,7 +123,7 @@ export async function mountApplication(api) {
   function groupMenuKey(event) {
     if (event.key !== "Escape" || groupMenu.hidden) return;
     event.preventDefault();
-    if (!groupSubmenu.hidden) { groupSubmenu.hidden = true; groupMenu.querySelector(".group-context-move")?.setAttribute("aria-expanded", "false"); groupMenu.querySelector(".group-context-move")?.focus(); }
+    if (!groupSubmenu.hidden) { groupSubmenu.hidden = true; const trigger = groupMenu.querySelector('[aria-expanded="true"]'); trigger?.setAttribute("aria-expanded", "false"); trigger?.focus(); }
     else closeGroupMenu();
   }
   document.addEventListener("pointerdown", outsideGroupMenu);
@@ -654,31 +654,47 @@ export async function mountApplication(api) {
         return item;
       };
       const destinations = snapshot.spaces.filter((space) => space.id !== snapshot.activeSpaceId && !space.unavailable);
-      function showDestinations() {
-        if (!groupSubmenu.hidden) { groupSubmenu.hidden = true; groupMenu.querySelector(".group-context-move").setAttribute("aria-expanded", "false"); return; }
+      function showSubmenu(trigger, entries) {
+        const wasOpen = trigger.getAttribute("aria-expanded") === "true";
+        groupMenu.querySelectorAll('[aria-expanded="true"]').forEach((item) => item.setAttribute("aria-expanded", "false"));
+        if (wasOpen) { groupSubmenu.hidden = true; return; }
         groupSubmenu.replaceChildren();
-        for (const destination of destinations) addAction(destination.id === "default" ? t("spaces.default") : destination.name, () => {
-          if (window.confirm(t("groups.move_container_confirm"))) run({ type: "moveGroupToSpace", groupId: group.id, spaceId: destination.id });
-        }, false, "", false, groupSubmenu);
+        for (const entry of entries) addAction(entry.label, entry.action, false, "", false, groupSubmenu);
         groupSubmenu.hidden = false;
-        const trigger = groupMenu.querySelector(".group-context-move");
         trigger.setAttribute("aria-expanded", "true");
         const menuBounds = groupMenu.getBoundingClientRect(), triggerBounds = trigger.getBoundingClientRect(), submenuBounds = groupSubmenu.getBoundingClientRect();
         const left = menuBounds.right + submenuBounds.width <= window.innerWidth ? menuBounds.right : menuBounds.left - submenuBounds.width;
         groupSubmenu.style.left = `${Math.max(0, left)}px`;
         groupSubmenu.style.top = `${Math.max(0, Math.min(triggerBounds.top, window.innerHeight - submenuBounds.height))}px`;
       }
+      function addSubmenu(label, entries, className) {
+        let trigger;
+        trigger = addAction(label, () => showSubmenu(trigger, entries), !entries.length, className, true);
+        trigger.setAttribute("aria-haspopup", "menu");
+        trigger.setAttribute("aria-expanded", "false");
+        trigger.append(icon("m6 3 5 5-5 5", "group-context-arrow"));
+      }
       function showActions() {
         groupMenu.replaceChildren();
         addAction(t("groups.rename_group"), renameGroup);
         addAction(t("groups.clear_group"), () => { if (window.confirm(t("groups.clear_confirm"))) run({ type: "clearGroup", groupId: group.id }); });
         addAction(t("groups.reload_group"), () => run({ type: "reloadGroup", groupId: group.id }));
-        if (snapshot.settings.experimentalSpaces && group.id !== "inbox") {
-          const move = addAction(t("groups.move_to_container"), showDestinations, destinations.length === 0, "group-context-move", true);
-          move.setAttribute("aria-haspopup", "menu");
-          move.setAttribute("aria-expanded", "false");
-          move.append(icon("m6 3 5 5-5 5", "group-context-arrow"));
+        if (snapshot.settings.nestedGroups !== false && group.id !== "inbox") {
+          const current = viewIndex.groups.get(group.id);
+          const validParent = (candidate) => {
+            let item = candidate;
+            while (item) { if (item.id === group.id) return false; item = item.parentId ? viewIndex.groups.get(item.parentId) : null; }
+            return candidate.id !== current.parentId;
+          };
+          const entries = snapshot.groups.filter(validParent).map((item) => ({
+            label: item.id === "inbox" && item.title === "Основная" ? t("groups.main") : item.title,
+            action: () => run({ type: "moveGroup", groupId: group.id, parentId: item.id }),
+          }));
+          if (current.parentId) entries.unshift({ label: t("groups.move_to_root"), action: () => run({ type: "moveGroup", groupId: group.id, parentId: null }) });
+          addSubmenu(t("groups.move_to_group"), entries, "group-context-move-group");
         }
+        if (snapshot.settings.experimentalSpaces && group.id !== "inbox")
+          addSubmenu(t("groups.move_to_container"), destinations.map((destination) => ({ label: destination.id === "default" ? t("spaces.default") : destination.name, action: () => { if (window.confirm(t("groups.move_container_confirm"))) run({ type: "moveGroupToSpace", groupId: group.id, spaceId: destination.id }); } })), "group-context-move");
         addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), group.id === "inbox", "group-context-delete");
       }
       showActions();

@@ -94,6 +94,8 @@
     "error_message": "Error: {error}"
   },
   "groups": {
+    "move_to_group": "Move to group",
+    "move_to_root": "Top level",
     "clear_group": "Clear group",
     "reload_group": "Reload group",
     "move_to_container": "Move to container",

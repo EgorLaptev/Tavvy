@@ -94,6 +94,8 @@
     "error_message": "Ошибка: {error}"
   },
   "groups": {
+    "move_to_group": "Переместить в группу",
+    "move_to_root": "На верхний уровень",
     "clear_group": "Очистить группу",
     "reload_group": "Обновить группу",
     "move_to_container": "Переместить в контейнер",

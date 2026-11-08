@@ -94,6 +94,8 @@
     "error_message": "错误：{error}"
   },
   "groups": {
+    "move_to_group": "移至分组",
+    "move_to_root": "顶层",
     "clear_group": "清空分组",
     "reload_group": "刷新分组",
     "move_to_container": "移至容器",

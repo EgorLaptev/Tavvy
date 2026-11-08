@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Move groups into another group or back to the top level from the actions menu.
+
 - Show container destinations in a separate submenu next to the group actions.
 
 - Use text-only actions in the group actions menu.
