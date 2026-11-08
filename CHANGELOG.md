@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Keep only the delete icon in the group actions menu.
+
 - Match the group actions menu background to the current theme.
 
 - Smooth background changes on group rows and action menu items.
