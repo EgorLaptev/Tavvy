@@ -100,7 +100,7 @@
     "reload_group": "Gruppe neu laden",
     "move_to_container": "In Container verschieben",
     "clear_confirm": "Alle Tabs dieser Gruppe schließen?",
-    "move_container_confirm": "Tabs werden im gewählten Container neu geöffnet. Seitenzustand und Anmeldung können verloren gehen. Fortfahren?",
+    "move_container_confirm": "Browserseiten und andere nicht unterstützte Tabs werden geschlossen. Andere Tabs werden im gewählten Container neu geöffnet; Seitenzustand und Anmeldung können verloren gehen. Fortfahren?",
     "rename_group": "Gruppe umbenennen",
     "delete_group": "Gruppe löschen",
     "create_group": "Gruppe erstellen",
@@ -168,6 +168,12 @@
     "merry_mole": "Fröhlicher Maulwurf"
   },
   "errors": {
+    "tab_is_closed": "Der Tab ist geschlossen",
+    "invalid_activation_parameters": "Ungültige Aktivierungsparameter",
+    "complete_initial_setup": "Schließe zuerst die Einrichtung von Tavvy ab",
+    "container_management_unavailable": "Firefox-Container können in Tavvy nicht verwaltet werden",
+    "container_already_exists": "Der Container existiert bereits",
+    "main_space_cannot_be_deleted": "Der Hauptbereich kann nicht gelöscht werden",
     "background_process_is_unavailable": "Der Hintergrundprozess ist nicht verfügbar",
     "private_windows_are_not_supported_yet": "Private Fenster werden noch nicht unterstützt",
     "could_not_get_status": "Status konnte nicht abgerufen werden",

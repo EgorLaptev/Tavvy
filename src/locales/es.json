@@ -100,7 +100,7 @@
     "reload_group": "Recargar grupo",
     "move_to_container": "Mover al contenedor",
     "clear_confirm": "¿Cerrar todas las pestañas de este grupo?",
-    "move_container_confirm": "Las pestañas se abrirán de nuevo en el contenedor elegido. Se pueden perder el estado de las páginas y las sesiones. ¿Continuar?",
+    "move_container_confirm": "Las páginas del navegador y otras pestañas incompatibles se cerrarán. Las demás se abrirán en el contenedor elegido; se pueden perder su estado y las sesiones. ¿Continuar?",
     "rename_group": "Cambiar nombre de grupo",
     "delete_group": "Eliminar grupo",
     "create_group": "Crear grupo",
@@ -168,6 +168,12 @@
     "merry_mole": "Topo alegre"
   },
   "errors": {
+    "tab_is_closed": "La pestaña está cerrada",
+    "invalid_activation_parameters": "Parámetros de activación no válidos",
+    "complete_initial_setup": "Completa primero la configuración de Tavvy",
+    "container_management_unavailable": "No se pueden administrar los contenedores de Firefox en Tavvy",
+    "container_already_exists": "El contenedor ya existe",
+    "main_space_cannot_be_deleted": "No se puede eliminar el espacio principal",
     "background_process_is_unavailable": "El proceso en segundo plano no está disponible",
     "private_windows_are_not_supported_yet": "Las ventanas privadas aún no son compatibles",
     "could_not_get_status": "No se pudo obtener el estado",

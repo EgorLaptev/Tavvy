@@ -1027,3 +1027,34 @@ test("failed container reassignment preserves the original group and tabs", asyn
   assert.equal(snap.groups.find((item) => item.id === groupId).spaceId, undefined);
   assert.deepEqual(f.records.filter((item) => item.windowId === 1).map((item) => item.id).sort(), before);
 });
+
+test("moving a group drops unsupported tabs and retains transferable tabs", async () => {
+  const f = fixture();
+  const identity = { name: "Work", cookieStoreId: "firefox-container-1" };
+  f.api.permissions = { contains: async () => true };
+  f.api.contextualIdentities = { query: async () => [identity], get: async () => identity };
+  f.records.find((tab) => tab.id === 2).url = "about:addons";
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "Project" }, 1);
+  const groupId = snap.groups.find((group) => group.title === "Project").id;
+  await service.dispatch({ type: "moveTab", tabId: 2, groupId }, 1);
+  await service.dispatch({ type: "createTab", groupId }, 1);
+  snap = await service.dispatch({ type: "moveGroupToSpace", groupId, spaceId: "container:firefox-container-1" }, 1);
+  assert.equal(f.records.some((tab) => tab.id === 2), false);
+  assert.ok(f.records.some((tab) => tab.url === "about:newtab" && tab.cookieStoreId === "firefox-container-1"));
+  assert.equal(snap.groups.find((group) => group.id === groupId).spaceId, snap.spaces.find((space) => space.name === "Work").id);
+});
+
+test("moving a group with only an active unsupported tab opens a replacement", async () => {
+  const f = fixture();
+  const identity = { name: "Work", cookieStoreId: "firefox-container-1" };
+  f.api.permissions = { contains: async () => true };
+  f.api.contextualIdentities = { query: async () => [identity], get: async () => identity };
+  const service = f.service();
+  await service.dispatch({ type: "snapshot" }, 1);
+  f.records.find((tab) => tab.id === 1).url = "about:addons";
+  f.records.find((tab) => tab.id === 2).url = "about:config";
+  const snap = await service.dispatch({ type: "moveGroupToSpace", groupId: "inbox", spaceId: "container:firefox-container-1" }, 1);
+  assert.ok(!f.records.some((tab) => tab.id === 1 || tab.id === 2));
+  assert.ok(snap.tabs.some((tab) => tab.groupId === "inbox" && tab.active && tab.cookieStoreId === "firefox-container-1"));
+});

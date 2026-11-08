@@ -100,7 +100,7 @@
     "reload_group": "Actualiser le groupe",
     "move_to_container": "Déplacer vers un conteneur",
     "clear_confirm": "Fermer tous les onglets de ce groupe ?",
-    "move_container_confirm": "Les onglets seront rouverts dans le conteneur choisi. L’état des pages et les connexions peuvent être perdus. Continuer ?",
+    "move_container_confirm": "Les pages du navigateur et autres onglets non pris en charge seront fermés. Les autres seront rouverts dans le conteneur choisi ; leur état et les connexions peuvent être perdus. Continuer ?",
     "rename_group": "Renommer le groupe",
     "delete_group": "Supprimer le groupe",
     "create_group": "Créer un groupe",
@@ -168,6 +168,12 @@
     "merry_mole": "Taupe joyeuse"
   },
   "errors": {
+    "tab_is_closed": "L’onglet est fermé",
+    "invalid_activation_parameters": "Paramètres d’activation non valides",
+    "complete_initial_setup": "Terminez d’abord la configuration de Tavvy",
+    "container_management_unavailable": "La gestion des conteneurs Firefox est indisponible dans Tavvy",
+    "container_already_exists": "Le conteneur existe déjà",
+    "main_space_cannot_be_deleted": "L’espace principal ne peut pas être supprimé",
     "background_process_is_unavailable": "Le processus en arrière-plan n'est pas disponible",
     "private_windows_are_not_supported_yet": "Les fenêtres privées ne sont pas encore prises en charge",
     "could_not_get_status": "Impossible d'obtenir le statut",

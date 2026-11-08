@@ -13,6 +13,15 @@ test("release names remain in English", () => {
   assert.equal(versionLabel("unknown"), "unknown");
 });
 
+test("background container errors have English translations", async () => {
+  const ru = JSON.parse(await readFile("src/locales/ru.json", "utf8"));
+  const en = JSON.parse(await readFile("src/locales/en.json", "utf8"));
+  for (const key of ["invalid_activation_parameters", "complete_initial_setup", "container_management_unavailable", "container_already_exists", "main_space_cannot_be_deleted"]) {
+    assert.match(ru.errors[key], /[А-Яа-яЁё]/);
+    assert.doesNotMatch(en.errors[key], /[А-Яа-яЁё]/);
+  }
+});
+
 test("locale keys use snake_case and all translations preserve placeholders", async () => {
   const flatten = (object, prefix = "") => Object.fromEntries(Object.entries(object).flatMap(([key, value]) => {
     assert.match(key, /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/);

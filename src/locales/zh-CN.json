@@ -100,7 +100,7 @@
     "reload_group": "刷新分组",
     "move_to_container": "移至容器",
     "clear_confirm": "关闭此分组中的所有标签页？",
-    "move_container_confirm": "标签页将在所选容器中重新打开，页面状态和登录状态可能丢失。继续？",
+    "move_container_confirm": "浏览器页面和其他不受支持的标签页将被关闭。其余标签页将在所选容器中重新打开，页面状态和登录状态可能丢失。继续？",
     "rename_group": "重命名分组",
     "delete_group": "删除分组",
     "create_group": "创建分组",
@@ -168,6 +168,12 @@
     "merry_mole": "快乐的鼹鼠"
   },
   "errors": {
+    "tab_is_closed": "标签页已关闭",
+    "invalid_activation_parameters": "激活参数无效",
+    "complete_initial_setup": "请先完成 Tavvy 的初始设置",
+    "container_management_unavailable": "无法在 Tavvy 中管理 Firefox 容器",
+    "container_already_exists": "容器已存在",
+    "main_space_cannot_be_deleted": "无法删除主空间",
     "background_process_is_unavailable": "后台进程不可用",
     "private_windows_are_not_supported_yet": "暂不支持隐私浏览窗口",
     "could_not_get_status": "无法获取状态",

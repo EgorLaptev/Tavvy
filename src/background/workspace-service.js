@@ -696,7 +696,7 @@ export function createWorkspaceService(
       const movedIds = new Set([moving.id]);
       const records = await scan();
       const targets = records.filter((tab) => movedIds.has(tab.groupId) && (!tab.pinned || state.settings?.groupPinnedTabs));
-      if (targets.some((tab) => !/^(https?:|about:(blank|newtab)$)/i.test(tab.url))) throw new Error("Некоторые вкладки нельзя перенести в контейнер");
+      const transferable = targets.filter((tab) => /^(https?:|about:(blank|newtab)$)/i.test(tab.url));
       let fallback = groupsInSpace(state.groups, sourceSpace).find((item) => !movedIds.has(item.id));
       fallback ||= group("inbox");
       if (!destination && identity) {
@@ -705,14 +705,23 @@ export function createWorkspaceService(
       }
       const created = [];
       try {
-        for (const tab of targets) {
+        for (const tab of transferable) {
           const copy = await api.tabs.create({ windowId: tab.windowId, active: false, pinned: !!(tab.pinned || tab.managedPinned), ...(tab.url === "about:newtab" ? {} : { url: tab.url }), ...(identity ? { cookieStoreId: identity.cookieStoreId } : { cookieStoreId: "firefox-default" }) });
           created.push({ copy, original: tab });
           await api.sessions.setTabValue(copy.id, TAG, tab.groupId);
         }
         for (const { copy, original } of created) if (original.active) await api.tabs.update(copy.id, { active: true });
+        for (const tab of targets.filter((item) => item.active && !transferable.includes(item))) {
+          let replacement = created.find((item) => item.original.windowId === tab.windowId)?.copy;
+          if (!replacement) {
+            replacement = await api.tabs.create({ windowId: tab.windowId, active: false, ...(identity ? { cookieStoreId: identity.cookieStoreId } : { cookieStoreId: "firefox-default" }) });
+            created.push({ copy: replacement, original: tab });
+            await api.sessions.setTabValue(replacement.id, TAG, tab.groupId);
+          }
+          await api.tabs.update(replacement.id, { active: true });
+        }
       } catch (error) {
-        for (const { original } of created) if (original.active) await api.tabs.update(original.id, { active: true }).catch(() => {});
+        for (const original of targets) if (original.active) await api.tabs.update(original.id, { active: true }).catch(() => {});
         for (const { copy } of created) await api.tabs.remove(copy.id).catch(() => {});
         throw error;
       }

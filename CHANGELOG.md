@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Close unsupported browser tabs when moving a group to another container and translate background errors.
+
 - Show all groups in one tree and assign Firefox containers per group.
 - Use existing Firefox containers and highlight the current container in the group picker.
 

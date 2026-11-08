@@ -100,7 +100,7 @@
     "reload_group": "Обновить группу",
     "move_to_container": "Переместить в контейнер",
     "clear_confirm": "Закрыть все вкладки этой группы?",
-    "move_container_confirm": "Вкладки откроются заново в выбранном контейнере. Состояние страниц и авторизация могут быть потеряны. Продолжить?",
+    "move_container_confirm": "Служебные и другие неподдерживаемые вкладки будут закрыты. Остальные вкладки откроются в выбранном контейнере; состояние страниц и авторизация могут быть потеряны. Продолжить?",
     "rename_group": "Переименовать группу",
     "delete_group": "Удалить группу",
     "create_group": "Создать группу",
@@ -168,6 +168,12 @@
     "merry_mole": "Весёлый крот"
   },
   "errors": {
+    "tab_is_closed": "Вкладка закрыта",
+    "invalid_activation_parameters": "Некорректные параметры активации",
+    "complete_initial_setup": "Сначала завершите начальную настройку Tavvy",
+    "container_management_unavailable": "Управление контейнерами Firefox в Tavvy недоступно",
+    "container_already_exists": "Контейнер пространства уже существует",
+    "main_space_cannot_be_deleted": "Основное пространство удалить нельзя",
     "background_process_is_unavailable": "Фоновый процесс недоступен",
     "private_windows_are_not_supported_yet": "Приватные окна пока не поддерживаются",
     "could_not_get_status": "Ошибка состояния",

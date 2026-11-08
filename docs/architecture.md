@@ -88,8 +88,7 @@ needed. Containers and their icons are managed in Firefox; Tavvy does not
 read or write cookie values. Reassigning one group reopens only its own
 non-global-pinned tabs in the target container; descendant groups retain their
 assignments and hierarchy. The popup asks for confirmation because page state
-and sign-ins can be lost. Firefox pages that cannot be safely reopened are
-rejected before changes are made. Missing container links can be reconnected
+and sign-ins can be lost. Browser pages that cannot be reopened are closed after transferable tabs have been recreated. Missing container links can be reconnected
 from the affected group’s menu.
 
 Version 2 backups omit browser-specific container IDs and site data. Restore

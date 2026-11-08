@@ -100,7 +100,7 @@
     "reload_group": "Reload group",
     "move_to_container": "Move to container",
     "clear_confirm": "Close all tabs in this group?",
-    "move_container_confirm": "Tabs will reopen in the selected container. Page state and sign-in may be lost. Continue?",
+    "move_container_confirm": "Browser and other unsupported tabs will be closed. Tabs will reopen in the selected container; page state and sign-in may be lost. Continue?",
     "rename_group": "Rename group",
     "delete_group": "Delete group",
     "create_group": "Create group",
@@ -168,6 +168,12 @@
     "merry_mole": "Merry Mole"
   },
   "errors": {
+    "tab_is_closed": "Tab is closed",
+    "invalid_activation_parameters": "Invalid activation parameters",
+    "complete_initial_setup": "Complete Tavvy setup first",
+    "container_management_unavailable": "Managing Firefox containers in Tavvy is unavailable",
+    "container_already_exists": "The container already exists",
+    "main_space_cannot_be_deleted": "The main space cannot be deleted",
     "background_process_is_unavailable": "Background process is unavailable",
     "private_windows_are_not_supported_yet": "Private windows are not supported yet",
     "could_not_get_status": "Could not get status",
