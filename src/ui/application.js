@@ -647,7 +647,7 @@ export async function mountApplication(api) {
       resetGroupMenu();
       const addAction = (label, action, path = null, disabled = false, className = "") => {
         const item = button(label, "group-context-item", element("span", "group-context-label", label), () => { closeGroupMenu(); action(); });
-        if (path) item.append(icon(path, "group-context-icon"));
+        if (path) item.prepend(icon(path, "group-context-icon"));
         if (className) item.classList.add(className);
         item.setAttribute("role", "menuitem");
         item.disabled = disabled;
