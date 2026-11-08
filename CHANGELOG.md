@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Limit group move destinations to groups at the same nesting level.
+
 - Rename the top-level group action to Ungroup.
 
 - Add a back chevron to the top-level group destination.

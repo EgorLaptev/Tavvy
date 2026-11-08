@@ -703,7 +703,19 @@ export async function mountApplication(api) {
         addAction(t("groups.reload_group"), () => run({ type: "reloadGroup", groupId: group.id }));
         if (snapshot.settings.nestedGroups !== false && group.id !== "inbox") {
           const current = viewIndex.groups.get(group.id);
+          const level = (item) => {
+            let depth = 0;
+            const seen = new Set();
+            while (item?.parentId && !seen.has(item.id)) {
+              seen.add(item.id);
+              item = viewIndex.groups.get(item.parentId);
+              depth++;
+            }
+            return depth;
+          };
+          const currentLevel = level(current);
           const validParent = (candidate) => {
+            if (level(candidate) !== currentLevel) return false;
             let item = candidate;
             while (item) { if (item.id === group.id) return false; item = item.parentId ? viewIndex.groups.get(item.parentId) : null; }
             return candidate.id !== current.parentId;

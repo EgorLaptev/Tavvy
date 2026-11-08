@@ -137,6 +137,9 @@ test("preview shows mock containers and switches without Firefox APIs", async ()
     groupMenu.querySelector(".group-context-move-group").click();
     const rootAction = [...submenu.querySelectorAll('[role="menuitem"]')].find((item) => item.textContent === "Ungroup");
     assert.ok(rootAction.querySelector("svg.group-context-root-icon"));
+    assert.ok(submenu.textContent.includes("Studio Garden"));
+    assert.ok(!submenu.textContent.includes("Current projects"));
+    assert.ok(!submenu.textContent.includes("Ideas & inspiration"));
     window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     doc.querySelector(".spaces-trigger").click();
