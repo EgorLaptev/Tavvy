@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tavvy — Tabs Group",
-  "version": "0.2.14",
+  "version": "0.2.15",
   "description": "Tab groups and workspaces for Firefox",
   "incognito": "not_allowed",
   "content_security_policy": {

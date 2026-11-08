@@ -5,12 +5,14 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.15 — Jolly Jerboa — 2026-11-08
+
 - Close unsupported browser tabs when moving a group to another container and translate background errors.
 
 - Show all groups in one tree and assign Firefox containers per group.
 - Use existing Firefox containers and highlight the current container in the group picker.
 
-- Correct the Clear action hover colors.
+- Correct the Clear action hover colors and move it before Delete.
 
 - Limit group move destinations to groups at the same nesting level.
 
