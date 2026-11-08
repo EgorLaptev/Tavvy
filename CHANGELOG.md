@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Reduce preview download size by minifying JavaScript and CSS.
+
 - Require matching release documentation before publishing a release tag.
 
 ## 0.2.13 — Gentle Capybara — 2026-11-08

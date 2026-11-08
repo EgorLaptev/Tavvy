@@ -5,6 +5,8 @@ await build({
   outfile: "dist/app.js",
   format: "iife",
   sourcemap: true,
+  minify: true,
+  legalComments: "eof",
 });
 await build({
   entryPoints: ["styles/preview.css"],
@@ -13,4 +15,6 @@ await build({
   bundle: true,
   outfile: "dist/app.css",
   sourcemap: true,
+  minify: true,
+  legalComments: "eof",
 });
