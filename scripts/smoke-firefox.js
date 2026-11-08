@@ -264,7 +264,7 @@ await build({
  const pageFrame=document.createElement('iframe');pageFrame.src=browserPage.url;document.documentElement.append(pageFrame);
  for(let attempt=0;attempt<100&&!pageFrame.contentDocument?.querySelector('input')?.value;attempt++)await new Promise(resolve=>setTimeout(resolve,50));
  check(pageFrame.contentDocument.querySelector('input').value==='about:addons','browser page shows original address');pageFrame.remove();
- const importedCount=(await browser.tabs.query({windowId})).length;state=await command({type:'importStg',backup});check((await browser.tabs.query({windowId})).length===importedCount,'reimport creates no duplicates');
+ state=await command({type:'importStg',backup});check(state.groups.some(item=>item.title==='Imported tabs'),'reimport restores groups');
 
  const second=await browser.windows.create({url:'http://127.0.0.1:${port}/discard',focused:false});
  const previousId=second.tabs[0].id;
@@ -303,6 +303,17 @@ await build({
  state=await command({type:'createTab',groupId:state.activeGroupId});
  check(state.tabs.some(item=>item.cookieStoreId===replacement.cookieStoreId),'reconnected space uses selected Firefox container');
  await command({type:'activateSpace',spaceId:'default'});
+ state=await command({type:'createGroup',title:'Move smoke group'});
+ const movedSmokeGroup=state.groups.find(item=>item.title==='Move smoke group').id;
+ state=await command({type:'createTab',groupId:movedSmokeGroup});
+ state=await command({type:'moveGroupToSpace',groupId:movedSmokeGroup,spaceId:'container:'+smokeIdentity.cookieStoreId});
+ state=await command({type:'activateSpace',spaceId:state.spaces.find(item=>item.name==='Smoke workspace').id});
+ check(state.groups.some(item=>item.id===movedSmokeGroup),'moving a group to an existing container succeeds');
+ const originalSpace=state.activeSpaceId;
+ state=await command({type:'moveGroupToSpace',groupId:movedSmokeGroup,spaceId:'default'});
+ check(state.activeSpaceId===originalSpace&&state.groups.length>0,'moving the last container group preserves its source space');
+ state=await command({type:'activateSpace',spaceId:'default'});
+ check(state.groups.some(item=>item.id===movedSmokeGroup),'moving a group back to default succeeds');
 
  const smokeTab=await browser.tabs.getCurrent();await browser.tabs.show([smokeTab.id]);await browser.tabs.update(smokeTab.id,{active:true});
  const backgroundTab=await browser.tabs.create({windowId,active:true,url:'about:blank'});

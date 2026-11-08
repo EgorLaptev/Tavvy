@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Fix moving groups with new tabs or the last group in a container.
+
 - Show container icons in the group move menu.
 
 - Add a tab actions menu for opening, reloading, muting, moving and closing tabs.

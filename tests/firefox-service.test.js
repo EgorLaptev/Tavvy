@@ -915,3 +915,27 @@ test("moving a group reopens its tabs in the chosen container", async () => {
   snap = await service.dispatch({ type: "activateSpace", spaceId: destination.id }, 1);
   assert.ok(snap.groups.some((item) => item.id === groupId));
 });
+
+
+test("moving the last group from a container preserves the source space and new tabs", async () => {
+  const f = fixture();
+  const identities = [{ name: "Work", cookieStoreId: "firefox-container-1" }];
+  f.api.permissions = { contains: async () => true };
+  f.api.contextualIdentities = { query: async () => identities, get: async (store) => identities.find((item) => item.cookieStoreId === store) };
+  const create = f.api.tabs.create;
+  f.api.tabs.create = async (options) => {
+    if (options.url === "about:newtab") throw new Error("Illegal URL: about:newtab");
+    return create(options);
+  };
+  const service = f.service();
+  await service.dispatch({ type: "saveSettings", settings: { experimentalSpaces: true } }, 1);
+  let snap = await service.dispatch({ type: "activateSpace", spaceId: "container:firefox-container-1" }, 1);
+  const sourceId = snap.activeSpaceId, movingId = snap.activeGroupId;
+  assert.ok(snap.tabs.some((item) => item.groupId === movingId && item.url === "about:newtab"));
+  snap = await service.dispatch({ type: "moveGroupToSpace", groupId: movingId, spaceId: "default" }, 1);
+  assert.equal(snap.activeSpaceId, sourceId);
+  assert.ok(snap.groups.length > 0 && !snap.groups.some((item) => item.id === movingId));
+  snap = await service.dispatch({ type: "activateSpace", spaceId: "default" }, 1);
+  assert.ok(snap.groups.some((item) => item.id === movingId));
+  assert.ok(snap.tabs.some((item) => item.groupId === movingId && item.url === "about:newtab"));
+});

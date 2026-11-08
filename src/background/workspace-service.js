@@ -711,7 +711,7 @@ export function createWorkspaceService(
       const targets = records.filter((tab) => movedIds.has(tab.groupId) && (!tab.pinned || state.settings?.groupPinnedTabs));
       if (targets.some((tab) => !/^(https?:|about:(blank|newtab)$)/i.test(tab.url))) throw new Error("Некоторые вкладки нельзя перенести в контейнер");
       let fallback = groupsInSpace(state.groups, sourceSpace).find((item) => !movedIds.has(item.id));
-      if (!fallback) throw new Error("Нельзя переместить последнюю группу пространства");
+      if (!fallback && state.groups.length >= 1000) throw new Error("Слишком много групп");
       if (!destination && identity) {
         if (state.spaces.length >= 100) throw new Error("Слишком много пространств");
         destination = { id: id(), name: identity.name, icon: spaceIcon(identity.icon), cookieStoreId: identity.cookieStoreId };
@@ -719,11 +719,16 @@ export function createWorkspaceService(
       const created = [];
       try {
         for (const tab of targets) {
-          const copy = await api.tabs.create({ windowId: tab.windowId, active: false, pinned: !!(tab.pinned || tab.managedPinned), url: tab.url, ...(identity ? { cookieStoreId: identity.cookieStoreId } : { cookieStoreId: "firefox-default" }) });
+          const copy = await api.tabs.create({ windowId: tab.windowId, active: false, pinned: !!(tab.pinned || tab.managedPinned), ...(tab.url === "about:newtab" ? {} : { url: tab.url }), ...(identity ? { cookieStoreId: identity.cookieStoreId } : { cookieStoreId: "firefox-default" }) });
           created.push(copy);
           await api.sessions.setTabValue(copy.id, TAG, tab.groupId);
         }
       } catch (error) { for (const tab of created) await api.tabs.remove(tab.id).catch(() => {}); throw error; }
+      if (!fallback) {
+        const source = space(sourceSpace);
+        fallback = { id: id(), title: source.name || "Основная", color: colors[0], parentId: null, ...(sourceSpace === DEFAULT_SPACE_ID ? {} : { spaceId: sourceSpace }) };
+        state.groups.push(fallback);
+      }
       for (const affectedWindow of new Set([...records.map((tab) => tab.windowId), windowId]))
         if (movedIds.has(await active(affectedWindow)) || targets.some((tab) => tab.windowId === affectedWindow && tab.active)) await activate(affectedWindow, fallback.id);
       for (const tab of records.filter((item) => movedIds.has(item.groupId) && item.pinned && !state.settings?.groupPinnedTabs))
