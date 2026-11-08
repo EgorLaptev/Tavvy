@@ -331,3 +331,5 @@ button.group-header {
   .group-context-menu:not([hidden]), .group-context-menu.is-closing { animation: none; }
   .group-context-menu .group-context-item, .group-controls, .group { transition: none; }
 }
+
+.group-context-arrow { margin-left: auto; width: 12px; height: 12px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }

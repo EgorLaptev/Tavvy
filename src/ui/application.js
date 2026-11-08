@@ -106,26 +106,38 @@ export async function mountApplication(api) {
     commandTail = Promise.resolve();
   const container = document.querySelector(".groups");
   const groupMenu = element("div", "group-context-menu");
+  const groupSubmenu = element("div", "group-context-menu group-context-submenu");
   groupMenu.hidden = true;
+  groupSubmenu.hidden = true;
   groupMenu.setAttribute("role", "menu");
-  document.querySelector(".popup").append(groupMenu);
+  groupSubmenu.setAttribute("role", "menu");
+  document.querySelector(".popup").append(groupMenu, groupSubmenu);
   let groupMenuCloseTimer;
   function resetGroupMenu() {
     clearTimeout(groupMenuCloseTimer);
     groupMenu.hidden = true;
     groupMenu.classList.remove("is-closing");
     groupMenu.replaceChildren();
+    groupSubmenu.hidden = true;
+    groupSubmenu.classList.remove("is-closing");
+    groupSubmenu.replaceChildren();
   }
   function closeGroupMenu() {
     if (groupMenu.hidden || groupMenu.classList.contains("is-closing")) return;
     if (document.documentElement.classList.contains("animations-off") || matchMedia("(prefers-reduced-motion: reduce)").matches) resetGroupMenu();
     else {
       groupMenu.classList.add("is-closing");
+      if (!groupSubmenu.hidden) groupSubmenu.classList.add("is-closing");
       groupMenuCloseTimer = setTimeout(resetGroupMenu, 140);
     }
   }
-  function outsideGroupMenu(event) { if (!groupMenu.contains(event.target)) closeGroupMenu(); }
-  function groupMenuKey(event) { if (event.key === "Escape" && !groupMenu.hidden) { event.preventDefault(); closeGroupMenu(); } }
+  function outsideGroupMenu(event) { if (!groupMenu.contains(event.target) && !groupSubmenu.contains(event.target)) closeGroupMenu(); }
+  function groupMenuKey(event) {
+    if (event.key !== "Escape" || groupMenu.hidden) return;
+    event.preventDefault();
+    if (!groupSubmenu.hidden) { groupSubmenu.hidden = true; groupMenu.querySelector(".group-context-move")?.setAttribute("aria-expanded", "false"); groupMenu.querySelector(".group-context-move")?.focus(); }
+    else closeGroupMenu();
+  }
   document.addEventListener("pointerdown", outsideGroupMenu);
   document.addEventListener("keydown", groupMenuKey);
   const search = document.querySelector(".search input");
@@ -645,30 +657,40 @@ export async function mountApplication(api) {
       event.preventDefault();
       event.stopPropagation();
       resetGroupMenu();
-      const addAction = (label, action, disabled = false, className = "", keepOpen = false) => {
+      const addAction = (label, action, disabled = false, className = "", keepOpen = false, parent = groupMenu) => {
         const item = button(label, "group-context-item", element("span", "group-context-label", label), () => { if (!keepOpen) closeGroupMenu(); action(); });
         if (className) item.classList.add(className);
         item.setAttribute("role", "menuitem");
         item.disabled = disabled;
-        groupMenu.append(item);
+        parent.append(item);
+        return item;
       };
       const destinations = snapshot.spaces.filter((space) => space.id !== snapshot.activeSpaceId && !space.unavailable);
       function showDestinations() {
-        groupMenu.replaceChildren();
-        addAction("← " + t("common.back"), showActions, false, "group-context-back", true);
-        groupMenu.append(element("div", "group-context-heading", t("groups.move_to_container")));
+        if (!groupSubmenu.hidden) { groupSubmenu.hidden = true; groupMenu.querySelector(".group-context-move").setAttribute("aria-expanded", "false"); return; }
+        groupSubmenu.replaceChildren();
         for (const destination of destinations) addAction(destination.id === "default" ? t("spaces.default") : destination.name, () => {
           if (window.confirm(t("groups.move_container_confirm"))) run({ type: "moveGroupToSpace", groupId: group.id, spaceId: destination.id });
-        });
-        groupMenu.querySelector("button")?.focus();
+        }, false, "", false, groupSubmenu);
+        groupSubmenu.hidden = false;
+        const trigger = groupMenu.querySelector(".group-context-move");
+        trigger.setAttribute("aria-expanded", "true");
+        const menuBounds = groupMenu.getBoundingClientRect(), triggerBounds = trigger.getBoundingClientRect(), submenuBounds = groupSubmenu.getBoundingClientRect();
+        const left = menuBounds.right + submenuBounds.width <= window.innerWidth ? menuBounds.right : menuBounds.left - submenuBounds.width;
+        groupSubmenu.style.left = `${Math.max(0, left)}px`;
+        groupSubmenu.style.top = `${Math.max(0, Math.min(triggerBounds.top, window.innerHeight - submenuBounds.height))}px`;
       }
       function showActions() {
         groupMenu.replaceChildren();
         addAction(t("groups.rename_group"), renameGroup);
         addAction(t("groups.clear_group"), () => { if (window.confirm(t("groups.clear_confirm"))) run({ type: "clearGroup", groupId: group.id }); });
         addAction(t("groups.reload_group"), () => run({ type: "reloadGroup", groupId: group.id }));
-        if (snapshot.settings.experimentalSpaces && group.id !== "inbox")
-          addAction(t("groups.move_to_container") + " ›", showDestinations, destinations.length === 0, "group-context-move", true);
+        if (snapshot.settings.experimentalSpaces && group.id !== "inbox") {
+          const move = addAction(t("groups.move_to_container"), showDestinations, destinations.length === 0, "group-context-move", true);
+          move.setAttribute("aria-haspopup", "menu");
+          move.setAttribute("aria-expanded", "false");
+          move.append(icon("m6 3 5 5-5 5", "group-context-arrow"));
+        }
         addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), group.id === "inbox", "group-context-delete");
       }
       showActions();
