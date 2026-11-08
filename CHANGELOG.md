@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Match the group actions menu background to the current theme.
+
 - Smooth background changes on group rows and action menu items.
 
 - Animate the group actions menu and its hover states when animations are enabled.
