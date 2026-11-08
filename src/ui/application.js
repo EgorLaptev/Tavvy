@@ -631,25 +631,27 @@ export async function mountApplication(api) {
       event.preventDefault();
       event.stopPropagation();
       closeGroupMenu();
-      const addAction = (label, action, disabled = false, className = "") => {
-        const item = button(label, "group-context-item", document.createTextNode(label), () => { closeGroupMenu(); action(); });
+      const addAction = (label, action, path, disabled = false, className = "") => {
+        const item = button(label, "group-context-item", icon(path, "group-context-icon"), () => { closeGroupMenu(); action(); });
+        item.append(element("span", "group-context-label", label));
         if (className) item.classList.add(className);
         item.setAttribute("role", "menuitem");
         item.disabled = disabled;
         groupMenu.append(item);
       };
-      addAction(t("groups.rename_group"), renameGroup);
-      addAction(t("groups.clear_group"), () => { if (window.confirm(t("groups.clear_confirm"))) run({ type: "clearGroup", groupId: group.id }); });
-      addAction(t("groups.reload_group"), () => run({ type: "reloadGroup", groupId: group.id }));
+      addAction(t("groups.rename_group"), renameGroup, "M3 11.5V13h1.5l7.7-7.7-1.5-1.5L3 11.5Zm6.9-6.9 1.5 1.5");
+      addAction(t("groups.clear_group"), () => { if (window.confirm(t("groups.clear_confirm"))) run({ type: "clearGroup", groupId: group.id }); }, "M4 4h8M5 4l.5 8h5L11 4M6.5 2h3M7 6v4m2-4v4");
+      addAction(t("groups.reload_group"), () => run({ type: "reloadGroup", groupId: group.id }), "M12.5 6A5 5 0 1 0 13 9M12.5 2.5V6H9");
       if (snapshot.settings.experimentalSpaces && group.id !== "inbox") {
         const destinations = snapshot.spaces.filter((space) => space.id !== snapshot.activeSpaceId && !space.unavailable);
         const label = element("div", "group-context-heading", t("groups.move_to_container"));
+        label.prepend(icon("M2.5 4.5h5l1 1.5h5v6h-11v-8ZM6 9h5m-2-2 2 2-2 2", "group-context-icon"));
         groupMenu.append(label);
         for (const destination of destinations) addAction(destination.id === "default" ? t("spaces.default") : destination.name, () => {
           if (window.confirm(t("groups.move_container_confirm"))) run({ type: "moveGroupToSpace", groupId: group.id, spaceId: destination.id });
-        });
+        }, "M5 8h6M8.5 5.5 11 8l-2.5 2.5");
       }
-      addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), group.id === "inbox", "group-context-delete");
+      addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), "M4 4h8M6 4V2.5h4V4m-5 0 .5 9h5l.5-9M7 6v4.5M9 6v4.5", group.id === "inbox", "group-context-delete");
       groupMenu.hidden = false;
       const bounds = groupMenu.getBoundingClientRect();
       groupMenu.style.left = `${Math.max(0, Math.min(event.clientX, window.innerWidth - bounds.width))}px`;

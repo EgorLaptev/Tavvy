@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Add icons and a red hover state to the group actions menu.
+
 - Make the group actions menu more compact.
 
 - Move group deletion to the end of the context menu and remove the rename button from group rows.
