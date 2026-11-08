@@ -5,7 +5,7 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
-## 2.1.14 — Merry Mole — 2026-11-08
+## 0.2.14 — Merry Mole — 2026-11-08
 
 - Reduce preview download size by minifying JavaScript and CSS.
 

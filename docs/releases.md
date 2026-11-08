@@ -6,12 +6,12 @@ Release notes are in [CHANGELOG.md](../CHANGELOG.md). ZIPs produced by
 and therefore its size and hash. A later rebuild can also have a different hash,
 so these values identify the exact archive listed, not every build of a version.
 
-## 2.1.14 — Merry Mole
+## 0.2.14 — Merry Mole
 
 - Release date: 2026-11-08
-- Release source: `v2.1.14`
-- Artifact: `tavvy_tabs_group-2.1.14.zip`
-- Checksums: https://github.com/EgorLaptev/Tavvy/releases/download/v2.1.14/SHA256SUMS
+- Release source: `v0.2.14`
+- Artifact: `tavvy_tabs_group-0.2.14.zip`
+- Checksums: https://github.com/EgorLaptev/Tavvy/releases/download/v0.2.14/SHA256SUMS
 - Verification: npm test, Firefox validation and isolated Firefox smoke test passed.
 - Signature: unsigned
 
@@ -68,7 +68,7 @@ the source used to build those local archives. Version 0.2.0 has no local tag.
 
 | Version | Release reference | Archive source | Size (bytes) | SHA-256 |
 | --- | --- | --- | ---: | --- |
-| 2.1.14 | `v2.1.14` | GitHub Release | pending | pending |
+| 0.2.14 | `v0.2.14` | GitHub Release | pending | pending |
 | 0.2.13 | `v0.2.13` | GitHub Release | 116,496 | `a9958079886aae880ed8526cf43edc34a2bf86796ac743b3cc4bcfa4357ba491` |
 | 0.2.12 | `v0.2.12` | GitHub Release | 112,032 | `08d870730e8a65a6fd8aabfea99909b7bf5c2a264af6b03a707e9b977e637f90` |
 | 0.2.11 | `v0.2.11` | GitHub Release | 111,750 | `a833099ed1a1b52dd20fdb7ac7dde664c2328d5d853645b1475b7ae43a55e743` |
