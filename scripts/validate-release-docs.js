@@ -21,6 +21,12 @@ export function validateReleaseDocs(version, changelog, releases) {
   ];
   if (!required.every((line) => lines.includes(line)) || !lines.some((line) => line.startsWith("- Verification: ") && line.length > 16))
     throw new Error(`docs/releases.md has incomplete or mismatched metadata for ${version}`);
+  const table = releases.split(/\r?\n(?=## )/).find((part) => part.startsWith("## Release packages\n") || part.startsWith("## Release packages\r\n"));
+  const row = table?.split(/\r?\n/).find((line) => line.startsWith(`| ${version} | \`v${version}\` |`));
+  const cells = row?.split("|").slice(1, -1).map((cell) => cell.trim());
+  if (!cells || cells.length !== 5 || cells[2] !== "GitHub Release" ||
+      !((cells[3] === "pending" && cells[4] === "pending") || (/^\d[\d,]*$/.test(cells[3]) && /^`[a-f0-9]{64}`$/.test(cells[4]))))
+    throw new Error(`docs/releases.md is missing a valid ${version} package table row`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {

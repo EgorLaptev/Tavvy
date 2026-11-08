@@ -66,7 +66,7 @@ The Git hooks check Conventional Commit subjects, staged whitespace, tests, and 
 
 - [Architecture](docs/architecture.md) and [manual testing](docs/manual-testing.md)
 - [Firefox review and build instructions](docs/firefox-review.md)
-- [Release workflow and package metadata](docs/releases.md)
+- [Release package metadata](docs/releases.md)
 - [Changelog](CHANGELOG.md) and [releases](https://github.com/EgorLaptev/Tavvy/releases)
 - [Issues](https://github.com/EgorLaptev/Tavvy/issues)
 
