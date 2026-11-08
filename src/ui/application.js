@@ -155,6 +155,12 @@ export async function mountApplication(api) {
         marker.setAttribute("aria-hidden", "true");
         item.prepend(marker);
       }
+      if (entry.space && entry.space.id !== "default") {
+        const marker = element("span", "spaces-icon spaces-icon-container");
+        marker.style.maskImage = `url("${spaceIconUrl(spaceIcon(entry.space.icon))}")`;
+        marker.setAttribute("aria-hidden", "true");
+        item.prepend(marker);
+      }
     }
     groupSubmenu.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
@@ -710,7 +716,7 @@ export async function mountApplication(api) {
           addSubmenu(t("groups.move_to_group"), entries, "group-context-move-group");
         }
         if (snapshot.settings.experimentalSpaces && group.id !== "inbox")
-          addSubmenu(t("groups.move_to_container"), destinations.map((destination) => ({ label: destination.id === "default" ? t("spaces.default") : destination.name, action: () => { if (window.confirm(t("groups.move_container_confirm"))) run({ type: "moveGroupToSpace", groupId: group.id, spaceId: destination.id }); } })), "group-context-move");
+          addSubmenu(t("groups.move_to_container"), destinations.map((destination) => ({ label: destination.id === "default" ? t("spaces.default") : destination.name, space: destination, action: () => { if (window.confirm(t("groups.move_container_confirm"))) run({ type: "moveGroupToSpace", groupId: group.id, spaceId: destination.id }); } })), "group-context-move");
         addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), group.id === "inbox", "group-context-delete");
       }
       showActions();

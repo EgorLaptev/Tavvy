@@ -128,6 +128,7 @@ test("preview shows mock containers and switches without Firefox APIs", async ()
     move.click();
     assert.equal(submenu.hidden, false);
     assert.ok(submenu.querySelector('[role="menuitem"]'));
+    assert.match(submenu.querySelector(".spaces-icon-container").style.maskImage, /data:image/);
     assert.ok(groupMenu.querySelector(".group-context-delete"));
     window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     assert.ok(submenu.hidden);
