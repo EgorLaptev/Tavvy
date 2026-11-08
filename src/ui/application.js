@@ -589,7 +589,6 @@ export async function mountApplication(api) {
       function showActions() {
         groupMenu.replaceChildren();
         addAction(t("groups.rename_group"), renameGroup);
-        addAction(t("groups.clear_group"), () => { if (window.confirm(t("groups.clear_confirm"))) run({ type: "clearGroup", groupId: group.id }); }, false, "group-context-clear");
         addAction(t("groups.reload_group"), () => run({ type: "reloadGroup", groupId: group.id }));
         if (snapshot.settings.nestedGroups !== false && group.id !== "inbox") {
           const current = viewIndex.groups.get(group.id);
@@ -623,6 +622,7 @@ export async function mountApplication(api) {
         move.setAttribute("aria-haspopup", "menu");
         move.setAttribute("aria-expanded", "false");
         move.append(icon("m6 3 5 5-5 5", "group-context-arrow"));
+        addAction(t("groups.clear_group"), () => { if (window.confirm(t("groups.clear_confirm"))) run({ type: "clearGroup", groupId: group.id }); }, false, 'group-context-clear');
         addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), group.id === "inbox", "group-context-delete");
       }
       showActions();
