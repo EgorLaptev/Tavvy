@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Require matching release documentation before publishing a release tag.
+
 ## 0.2.13 — Gentle Capybara — 2026-11-08
 
 - Add context menus for group and tab actions, including moving groups and tabs.

@@ -1,10 +1,43 @@
 # Release build metadata
 
-This file records metadata for specific locally built Firefox extension ZIPs.
+This file records metadata for release builds and their published Firefox extension ZIPs.
 Release notes are in [CHANGELOG.md](../CHANGELOG.md). ZIPs produced by
 `npm run package:firefox` are unsigned; Mozilla signing changes the package
 and therefore its size and hash. A later rebuild can also have a different hash,
 so these values identify the exact archive listed, not every build of a version.
+
+## 0.2.13 — Gentle Capybara
+
+- Release date: 2026-11-08
+- Release source: `v0.2.13`
+- Artifact: `tavvy_tabs_group-0.2.13.zip`
+- Published size: 116,496 bytes
+- Published SHA-256: `a9958079886aae880ed8526cf43edc34a2bf86796ac743b3cc4bcfa4357ba491`
+- Checksums: https://github.com/EgorLaptev/Tavvy/releases/download/v0.2.13/SHA256SUMS
+- Verification: [Release workflow](https://github.com/EgorLaptev/Tavvy/actions/runs/42472580938) passed tests, Firefox validation and isolated Firefox smoke test.
+- Signature: unsigned
+
+## 0.2.12 — Brave Gecko
+
+- Release date: 2026-11-07
+- Release source: `v0.2.12`
+- Artifact: `tavvy_tabs_group-0.2.12.zip`
+- Published size: 112,032 bytes
+- Published SHA-256: `08d870730e8a65a6fd8aabfea99909b7bf5c2a264af6b03a707e9b977e637f90`
+- Checksums: https://github.com/EgorLaptev/Tavvy/releases/download/v0.2.12/SHA256SUMS
+- Verification: [Release workflow](https://github.com/EgorLaptev/Tavvy/actions/runs/42385102763) passed.
+- Signature: unsigned
+
+## 0.2.11 — Sunny Meerkat
+
+- Release date: 2026-11-06
+- Release source: `v0.2.11`
+- Artifact: `tavvy_tabs_group-0.2.11.zip`
+- Published size: 111,750 bytes
+- Published SHA-256: `a833099ed1a1b52dd20fdb7ac7dde664c2328d5d853645b1475b7ae43a55e743`
+- Checksums: https://github.com/EgorLaptev/Tavvy/releases/download/v0.2.11/SHA256SUMS
+- Verification: [Release workflow](https://github.com/EgorLaptev/Tavvy/actions/runs/42196311705) passed.
+- Signature: unsigned
 
 ## 0.2.10 — Clever Quokka
 
@@ -36,10 +69,31 @@ been verified. Version 0.2.0 has no local Git tag.
 | 0.2.1 | `5a05883` | 58,169 | `f12b3d5cd006aa24b2d0c0e628aa4e08760d182d27c0f03379c3fd5c24fe6c21` |
 | 0.2.0 | — | 31,026 | `50e2e1db796c1d6135ada4b5783dce358e842f342d2f5045bac53a465dc431f0` |
 
-For future releases, record the size and SHA-256 of the final archive after
-building it. On PowerShell, use `Get-Item` for its byte length and
-`Get-FileHash -Algorithm SHA256` for its hash. Never reuse the hash of an
-unsigned package to identify a Mozilla-signed one.
+Before pushing a release tag, add its section with the version, name, date,
+source tag, expected artifact name, checksum URL, verification and unsigned
+status. The checksum URL is populated by the release workflow after publishing;
+do not guess the hash or size of an archive that has not yet been built. Record
+the published artifact size and SHA-256 later if desired. Never reuse the hash
+of an unsigned package to identify a Mozilla-signed one.
+
+## Preparing a release entry
+
+Add an entry to this file in the release preparation commit, using the same
+version, name and date as `CHANGELOG.md`. For example:
+
+```markdown
+## 1.2.3 — Playful Name
+
+- Release date: 2026-11-08
+- Release source: `v1.2.3`
+- Artifact: `tavvy_tabs_group-1.2.3.zip`
+- Checksums: https://github.com/EgorLaptev/Tavvy/releases/download/v1.2.3/SHA256SUMS
+- Verification: npm test, Firefox validation and isolated Firefox smoke test passed.
+- Signature: unsigned
+```
+
+The checksum link becomes available after the release is published. Record only
+checks actually completed; the release workflow repeats them before publication.
 
 ## Release workflow
 
@@ -50,7 +104,9 @@ unsigned package to identify a Mozilla-signed one.
    or updates a PR to `main` with the changelog and commit list. Manual text
    outside the generated markers is preserved.
 3. Prepare the release in its own commit: synchronize versions, add the
-   playful version name and its translations, and date the changelog section.
+   playful version name and its translations, date the changelog section, and
+   add the matching release metadata section in `docs/releases.md`. The
+   pre-push hook and release workflow validate both documents.
 4. Run the relevant tests, Firefox validation and the isolated Firefox smoke
    test. Rebase the branch onto the latest `main`, then merge it into `main`
    with `--ff-only`. Do not force-push or rewrite shared commits.
