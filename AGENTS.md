@@ -48,6 +48,7 @@ Creating PRs with `GITHUB_TOKEN` requires the repository setting **Allow GitHub 
 
 ## Checks
 
+- `npm run build` produces minified preview JavaScript and CSS in `dist/` with source maps; preserve minification and source maps when changing the preview build. `npm run dev` remains an unminified development build.
 - `npm test` builds the preview and Firefox extension and runs Node/jsdom tests.
 - `npm run lint:firefox` builds and validates the Firefox extension.
 - `npm run smoke:firefox` runs an isolated headless Firefox profile; use `FIREFOX_BINARY` if Firefox cannot be found. It does not test the user's Firefox profile or visual smoothness.
