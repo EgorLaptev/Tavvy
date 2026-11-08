@@ -163,7 +163,8 @@
     "clever_quokka": "Quokka ingenioso",
     "sunny_meerkat": "Sunny Meerkat",
     "brave_gecko": "Brave Gecko",
-    "gentle_capybara": "Capibara apacible"
+    "gentle_capybara": "Capibara apacible",
+    "merry_mole": "Topo alegre"
   },
   "errors": {
     "background_process_is_unavailable": "El proceso en segundo plano no está disponible",

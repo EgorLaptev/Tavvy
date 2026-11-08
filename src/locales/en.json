@@ -163,7 +163,8 @@
     "clever_quokka": "Clever Quokka",
     "sunny_meerkat": "Sunny Meerkat",
     "brave_gecko": "Brave Gecko",
-    "gentle_capybara": "Gentle Capybara"
+    "gentle_capybara": "Gentle Capybara",
+    "merry_mole": "Merry Mole"
   },
   "errors": {
     "background_process_is_unavailable": "Background process is unavailable",

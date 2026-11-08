@@ -13,6 +13,7 @@ export const VERSION_NAMES = Object.freeze({
   "0.2.11": "Sunny Meerkat",
   "0.2.12": "Brave Gecko",
   "0.2.13": "Gentle Capybara",
+  "2.1.14": "Merry Mole",
 });
 
 export function versionLabel(version) {

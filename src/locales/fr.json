@@ -163,7 +163,8 @@
     "clever_quokka": "Quokka malin",
     "sunny_meerkat": "Sunny Meerkat",
     "brave_gecko": "Brave Gecko",
-    "gentle_capybara": "Capybara paisible"
+    "gentle_capybara": "Capybara paisible",
+    "merry_mole": "Taupe joyeuse"
   },
   "errors": {
     "background_process_is_unavailable": "Le processus en arrière-plan n'est pas disponible",

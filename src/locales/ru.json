@@ -163,7 +163,8 @@
     "clever_quokka": "Сообразительная квокка",
     "sunny_meerkat": "Солнечный сурикат",
     "brave_gecko": "Храбрый геккон",
-    "gentle_capybara": "Ласковая капибара"
+    "gentle_capybara": "Ласковая капибара",
+    "merry_mole": "Весёлый крот"
   },
   "errors": {
     "background_process_is_unavailable": "Фоновый процесс недоступен",
