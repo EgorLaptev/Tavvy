@@ -275,7 +275,7 @@ test("experimental spaces can be enabled, created and switched in the popup", as
     await pause(150);
     assert.equal(doc.querySelector(".spaces-current").textContent, "Work");
     assert.ok(doc.querySelector(".spaces-trigger .spaces-icon-container"));
-    assert.equal(doc.querySelectorAll(".groups > .group").length, 1);
+    assert.equal(doc.querySelectorAll(".groups > .group").length, 0);
     trigger.click();
     assert.equal(doc.querySelector('[data-space-id="default"]').getAttribute("role"), "menuitemradio");
     doc.querySelector('[data-space-id="default"]').click();

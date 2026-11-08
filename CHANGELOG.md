@@ -5,7 +5,7 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
-- Fix moving groups with new tabs or the last group in a container.
+- Fix moving groups with new tabs; containers can remain empty when their last group is moved or deleted.
 
 - Show container icons in the group move menu.
 

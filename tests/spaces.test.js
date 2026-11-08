@@ -22,5 +22,5 @@ test("workspace backups preserve grouping and reject cross-space parents", async
   assert.throws(() => parseTavvyBackup({ ...backup, spaces: [] }));
   assert.throws(() => parseTavvyBackup({ ...backup, version: 1 }));
   assert.throws(() => parseTavvyBackup({ ...backup, spaces: undefined }));
-  assert.throws(() => parseTavvyBackup({ ...backup, groups: [backup.groups[0]] }));
+  assert.deepEqual(parseTavvyBackup({ ...backup, groups: [backup.groups[0]] }).spaces, backup.spaces);
 });

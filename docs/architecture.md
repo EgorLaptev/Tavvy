@@ -80,7 +80,7 @@ an API argument for testing without Firefox.
 Spaces are disabled by default; groups without a `spaceId` belong to Default.
 When enabled, the switcher queries Firefox contextual identities, displaying
 existing containers using their Firefox names and icons. Selecting a previously
-unlinked container creates only a local space record and initial group. Existing
+unlinked container creates only a local space record; groups can be added later. Existing
 Tavvy space IDs and group relationships are preserved. Containers missing in
 Firefox remain available as records so their groups and tabs are not discarded.
 Selecting one offers unassigned Firefox containers; explicit selection updates

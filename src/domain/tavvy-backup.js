@@ -28,9 +28,6 @@ export function parseTavvyBackup(data) {
     if (!spaceIds.has(spaceId) || (g.id === "inbox" && spaceId !== DEFAULT_SPACE_ID)) throw new Error("Повреждены данные пространств");
     return { id: g.id, title: g.title.slice(0, 120), color: g.color, parentId: g.parentId ?? null, ...(spaceId === DEFAULT_SPACE_ID ? {} : { spaceId }) };
   });
-  for (const space of spaces) {
-    if (!groups.some((group) => group.spaceId === space.id)) throw new Error("Повреждены данные пространств");
-  }
   const map = new Map(groups.map((g) => [g.id, g]));
   for (const g of groups) {
     const seen = new Set([g.id]);

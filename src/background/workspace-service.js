@@ -6,6 +6,7 @@ import { DEFAULT_SPACE_ID, groupSpaceId, groupsInSpace, SPACE_ICONS, spaceIcon }
 const KEY = "tavvy:workspace:v1";
 const TAG = "tavvy:group";
 const ACTIVE = "tavvy:active-group";
+const EMPTY_SPACE = "tavvy:empty-space";
 const GROUP_PINNED = "tavvy:group-pinned";
 const colors = ["#398dff", "#a855f7", "#00c98a", "#ff7800", "#ff168a"];
 export function createWorkspaceService(
@@ -140,6 +141,10 @@ export function createWorkspaceService(
   async function active(windowId) {
     const value = await api.sessions.getWindowValue(windowId, ACTIVE);
     return state.groups.some((g) => g.id === value) ? value : "inbox";
+  }
+  async function emptySpace(windowId) {
+    const value = await api.sessions.getWindowValue(windowId, EMPTY_SPACE);
+    return state.settings?.experimentalSpaces && state.spaces.some((item) => item.id === value) && !groupsInSpace(state.groups, value).length ? value : null;
   }
   function visibleGroups(groupId) {
     if (state.settings?.nestedGroups === false) return new Set([groupId]);
@@ -304,7 +309,8 @@ export function createWorkspaceService(
       sortedWindows.set(windowId, sorted);
     }
     const activeGroupId = await active(windowId);
-    const activeSpaceId = groupSpaceId(group(activeGroupId));
+    const selectedEmptySpace = await emptySpace(windowId);
+    const activeSpaceId = selectedEmptySpace || groupSpaceId(group(activeGroupId));
     const groups = groupsInSpace(state.groups, activeSpaceId);
     const groupIds = new Set(groups.map((item) => item.id));
     const tabs = sorted.ids.map((id) => recordsById.get(id)).filter((tab) => tab && groupIds.has(tab.groupId));
@@ -315,7 +321,7 @@ export function createWorkspaceService(
       revision,
       groups,
       tabs,
-      activeGroupId,
+      activeGroupId: selectedEmptySpace ? null : activeGroupId,
       activeSpaceId,
       spaces: [{ id: DEFAULT_SPACE_ID, name: "" }, ...state.spaces.map(({ id, name, icon, cookieStoreId }) => {
         const identity = identities.find((item) => item.cookieStoreId === cookieStoreId);
@@ -380,6 +386,7 @@ export function createWorkspaceService(
   }
   async function activate(windowId, groupId, preferred) {
     group(groupId);
+    await api.sessions.setWindowValue(windowId, EMPTY_SPACE, null);
     const previousGroupId = await active(windowId);
     const tabs = (await scan()).filter(
       (tab) =>
@@ -630,8 +637,8 @@ export function createWorkspaceService(
       const available = groupsInSpace(state.groups, selected.id);
       const previous = await api.sessions.getWindowValue(windowId, "tavvy:space-group:" + selected.id);
       const groupId = available.find((item) => item.id === previous)?.id || available[0]?.id;
-      if (!groupId) throw new Error("В пространстве нет групп");
-      await activate(windowId, groupId);
+      if (groupId) await activate(windowId, groupId);
+      else await api.sessions.setWindowValue(windowId, EMPTY_SPACE, selected.id);
     } else if (type === "deleteSpace") {
       if (command.spaceId === DEFAULT_SPACE_ID) throw new Error("Основное пространство удалить нельзя");
       space(command.spaceId);
@@ -647,10 +654,9 @@ export function createWorkspaceService(
         if (!identity) throw new Error("Контейнер пространства недоступен");
         let existing = state.spaces.find((item) => item.cookieStoreId === cookieStoreId);
         if (!existing) {
-          if (state.spaces.length >= 100 || state.groups.length >= 1000) throw new Error("Слишком много пространств");
+          if (state.spaces.length >= 100) throw new Error("Слишком много пространств");
           existing = { id: id(), name: identity.name, icon: spaceIcon(identity.icon), cookieStoreId };
           state.spaces.push(existing);
-          state.groups.push({ id: id(), title: identity.name, color: colors[0], parentId: null, spaceId: existing.id });
           await save();
         }
         spaceId = existing.id;
@@ -661,22 +667,25 @@ export function createWorkspaceService(
       const previous = await api.sessions.getWindowValue(windowId, "tavvy:space-group:" + spaceId);
       const available = groupsInSpace(state.groups, spaceId);
       const target = available.find((item) => item.id === previous) || available[0];
-      if (!target) throw new Error("В пространстве нет групп");
-      await activate(windowId, target.id);
+      if (target) await activate(windowId, target.id);
+      else await api.sessions.setWindowValue(windowId, EMPTY_SPACE, spaceId);
     } else if (type === "createGroup") {
       const title = String(command.title ?? "")
         .trim()
         .slice(0, 100);
       if (!title) throw new Error("Введите название группы");
-      const currentSpaceId = groupSpaceId(group(await active(windowId)));
+      const previouslyEmpty = await emptySpace(windowId);
+      const currentSpaceId = previouslyEmpty || groupSpaceId(group(await active(windowId)));
       if (command.parentId && groupSpaceId(group(command.parentId)) !== currentSpaceId) throw new Error("Нельзя переместить группу в другое пространство");
+      const newId = id();
       state.groups.push({
-        id: id(),
+        id: newId,
         title,
         color: colors[state.groups.length % colors.length],
         parentId: command.parentId || null,
         ...(currentSpaceId === DEFAULT_SPACE_ID ? {} : { spaceId: currentSpaceId }),
       });
+      if (previouslyEmpty) await activate(windowId, newId);
     } else if (type === "clearGroup" || type === "reloadGroup") {
       group(command.groupId);
       const targets = (await scan()).filter((tab) => tab.groupId === command.groupId && (!tab.pinned || state.settings?.groupPinnedTabs));
@@ -711,7 +720,8 @@ export function createWorkspaceService(
       const targets = records.filter((tab) => movedIds.has(tab.groupId) && (!tab.pinned || state.settings?.groupPinnedTabs));
       if (targets.some((tab) => !/^(https?:|about:(blank|newtab)$)/i.test(tab.url))) throw new Error("Некоторые вкладки нельзя перенести в контейнер");
       let fallback = groupsInSpace(state.groups, sourceSpace).find((item) => !movedIds.has(item.id));
-      if (!fallback && state.groups.length >= 1000) throw new Error("Слишком много групп");
+      const sourceWillBeEmpty = !fallback;
+      fallback ||= group("inbox");
       if (!destination && identity) {
         if (state.spaces.length >= 100) throw new Error("Слишком много пространств");
         destination = { id: id(), name: identity.name, icon: spaceIcon(identity.icon), cookieStoreId: identity.cookieStoreId };
@@ -724,13 +734,12 @@ export function createWorkspaceService(
           await api.sessions.setTabValue(copy.id, TAG, tab.groupId);
         }
       } catch (error) { for (const tab of created) await api.tabs.remove(tab.id).catch(() => {}); throw error; }
-      if (!fallback) {
-        const source = space(sourceSpace);
-        fallback = { id: id(), title: source.name || "Основная", color: colors[0], parentId: null, ...(sourceSpace === DEFAULT_SPACE_ID ? {} : { spaceId: sourceSpace }) };
-        state.groups.push(fallback);
-      }
+      const emptiedWindows = [];
       for (const affectedWindow of new Set([...records.map((tab) => tab.windowId), windowId]))
-        if (movedIds.has(await active(affectedWindow)) || targets.some((tab) => tab.windowId === affectedWindow && tab.active)) await activate(affectedWindow, fallback.id);
+        if (movedIds.has(await active(affectedWindow)) || targets.some((tab) => tab.windowId === affectedWindow && tab.active)) {
+          if (sourceWillBeEmpty && movedIds.has(await active(affectedWindow))) emptiedWindows.push(affectedWindow);
+          await activate(affectedWindow, fallback.id);
+        }
       for (const tab of records.filter((item) => movedIds.has(item.groupId) && item.pinned && !state.settings?.groupPinnedTabs))
         await api.sessions.setTabValue(tab.id, TAG, fallback.id);
       if (destination && !state.spaces.includes(destination)) state.spaces.push(destination);
@@ -738,6 +747,7 @@ export function createWorkspaceService(
       for (const item of state.groups) if (movedIds.has(item.id)) { if (destination) item.spaceId = destination.id; else delete item.spaceId; }
       for (const tab of targets) { await api.tabs.remove(tab.id); forgetKnown(tab.id); }
       for (const affectedWindow of new Set(targets.map((tab) => tab.windowId))) await visibility(affectedWindow, await active(affectedWindow));
+      for (const affectedWindow of emptiedWindows) await api.sessions.setWindowValue(affectedWindow, EMPTY_SPACE, sourceSpace);
     } else if (type === "renameGroup") {
       if (typeof command.title !== "string" || command.title.length > 100 || !command.title.trim())
         throw new Error("Введите название группы");
@@ -830,8 +840,9 @@ export function createWorkspaceService(
         throw new Error("Основная группа нужна для несортированных вкладок");
       const deleting = group(command.groupId);
       const candidates = groupsInSpace(state.groups, groupSpaceId(deleting)).filter((item) => item.id !== deleting.id);
-      const replacement = candidates.find((item) => item.id === "inbox") || candidates[0];
-      if (!replacement) throw new Error("Последнюю группу пространства удалить нельзя");
+      const sourceSpaceId = groupSpaceId(deleting);
+      const sourceWillBeEmpty = candidates.length === 0;
+      const replacement = candidates.find((item) => item.id === "inbox") || candidates[0] || group("inbox");
       const currentTabs = await scan();
       const windowGroups = new Map();
       for (const tab of currentTabs)
@@ -865,6 +876,7 @@ export function createWorkspaceService(
       for (const [affectedWindowId, activeId] of windowGroups) {
         if (activeId === deleting.id) await activate(affectedWindowId, replacement.id);
         else await visibility(affectedWindowId, activeId);
+        if (sourceWillBeEmpty && activeId === deleting.id) await api.sessions.setWindowValue(affectedWindowId, EMPTY_SPACE, sourceSpaceId);
       }
     } else if (type === "saveSettings") {
       const next = normalizeSettings(command.settings);
@@ -890,6 +902,7 @@ export function createWorkspaceService(
       await save();
       if (previousSettings.experimentalSpaces && !next.experimentalSpaces) {
         for (const affectedWindowId of new Set((await scan()).map((tab) => tab.windowId))) {
+          await api.sessions.setWindowValue(affectedWindowId, EMPTY_SPACE, null);
           const currentGroup = await active(affectedWindowId);
           if (groupSpaceId(group(currentGroup)) === DEFAULT_SPACE_ID) continue;
           const previous = await api.sessions.getWindowValue(affectedWindowId, "tavvy:space-group:" + DEFAULT_SPACE_ID);

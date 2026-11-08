@@ -187,6 +187,8 @@ await build({
  const existingOption=ui.querySelector('[data-space-id="container:'+smokeIdentity.cookieStoreId+'"]');check(Boolean(existingOption),'existing Firefox container is listed');check(!ui.querySelector('.spaces-add'),'space creation is unavailable');existingOption.click();
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.activeSpaceId!=='default')break;await new Promise(resolve=>setTimeout(resolve,50));}
  check(state.activeSpaceId!=='default'&&state.spaces.some(item=>item.name==='Smoke workspace'),'existing Firefox container is selected');
+ check(state.groups.length===0,'new container starts without groups');
+ state=await command({type:'createGroup',title:'Smoke workspace'});
  const spaceTab=state.tabs.find(tab=>tab.active);const realSpaceTab=await browser.tabs.get(spaceTab.id);
  check(realSpaceTab.cookieStoreId?.startsWith('firefox-container-'),'space tab uses Firefox container');
  for(let attempt=0;attempt<100&&ui.querySelector('.spaces-current').textContent!=='Smoke workspace';attempt++)await new Promise(resolve=>setTimeout(resolve,50));
@@ -311,7 +313,7 @@ await build({
  check(state.groups.some(item=>item.id===movedSmokeGroup),'moving a group to an existing container succeeds');
  const originalSpace=state.activeSpaceId;
  state=await command({type:'moveGroupToSpace',groupId:movedSmokeGroup,spaceId:'default'});
- check(state.activeSpaceId===originalSpace&&state.groups.length>0,'moving the last container group preserves its source space');
+ check(state.activeSpaceId===originalSpace&&state.groups.length===0,'moving the last container group leaves its source space empty');
  state=await command({type:'activateSpace',spaceId:'default'});
  check(state.groups.some(item=>item.id===movedSmokeGroup),'moving a group back to default succeeds');
 

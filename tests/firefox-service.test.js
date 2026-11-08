@@ -56,8 +56,8 @@ function fixture() {
     sessions: {
       getTabValue: async (id, key) => tags.get(`${id}:${key}`),
       setTabValue: async (id, key, value) => tags.set(`${id}:${key}`, value),
-      getWindowValue: async (id) => windows.get(id),
-      setWindowValue: async (id, key, value) => windows.set(id, value),
+      getWindowValue: async (id, key) => windows.get(`${id}:${key}`),
+      setWindowValue: async (id, key, value) => windows.set(`${id}:${key}`, value),
     },
     tabs: {
       query: async () => structuredClone(records),
@@ -540,7 +540,8 @@ async function attachTestSpace(f, service, name = "Work") {
   f.api.contextualIdentities.query = async () => [identity];
   const current = await service.dispatch({ type: "snapshot" }, 1);
   await service.dispatch({ type: "saveSettings", settings: { ...current.settings, experimentalSpaces: true } }, 1);
-  return service.dispatch({ type: "activateSpace", spaceId: `container:${identity.cookieStoreId}` }, 1);
+  await service.dispatch({ type: "activateSpace", spaceId: `container:${identity.cookieStoreId}` }, 1);
+  return service.dispatch({ type: "createGroup", title: name }, 1);
 }
 
 test("experimental spaces open new tabs in their container and preserve existing groups", async () => {
@@ -669,8 +670,9 @@ test("a missing container can be reconnected to an existing unassigned Firefox c
   let snap = await service.dispatch({ type: "snapshot" }, 1);
   snap = await service.dispatch({ type: "saveSettings", settings: { ...snap.settings, experimentalSpaces: true } }, 1);
   snap = await service.dispatch({ type: "activateSpace", spaceId: "container:firefox-container-7" }, 1);
-  const spaceId = snap.activeSpaceId, groupId = snap.activeGroupId;
-  await service.dispatch({ type: "createGroup", title: "Project" }, 1);
+  const spaceId = snap.activeSpaceId;
+  snap = await service.dispatch({ type: "createGroup", title: "Project" }, 1);
+  const groupId = snap.activeGroupId;
   await service.dispatch({ type: "activateSpace", spaceId: "default" }, 1);
   identities.shift();
   snap = await service.dispatch({ type: "snapshot" }, 1);
@@ -930,12 +932,43 @@ test("moving the last group from a container preserves the source space and new 
   const service = f.service();
   await service.dispatch({ type: "saveSettings", settings: { experimentalSpaces: true } }, 1);
   let snap = await service.dispatch({ type: "activateSpace", spaceId: "container:firefox-container-1" }, 1);
-  const sourceId = snap.activeSpaceId, movingId = snap.activeGroupId;
+  const sourceId = snap.activeSpaceId;
+  assert.equal(snap.groups.length, 0);
+  snap = await service.dispatch({ type: "createGroup", title: "Work" }, 1);
+  const movingId = snap.activeGroupId;
   assert.ok(snap.tabs.some((item) => item.groupId === movingId && item.url === "about:newtab"));
   snap = await service.dispatch({ type: "moveGroupToSpace", groupId: movingId, spaceId: "default" }, 1);
   assert.equal(snap.activeSpaceId, sourceId);
-  assert.ok(snap.groups.length > 0 && !snap.groups.some((item) => item.id === movingId));
+  assert.equal(snap.groups.length, 0);
   snap = await service.dispatch({ type: "activateSpace", spaceId: "default" }, 1);
   assert.ok(snap.groups.some((item) => item.id === movingId));
   assert.ok(snap.tabs.some((item) => item.groupId === movingId && item.url === "about:newtab"));
+});
+
+
+test("empty containers remain selectable after deleting their last group and in backups", async () => {
+  const f = fixture();
+  const identity = { name: "Work", cookieStoreId: "firefox-container-1" };
+  f.api.permissions = { contains: async () => true };
+  f.api.contextualIdentities = { query: async () => [identity], get: async () => identity };
+  let service = f.service();
+  await service.dispatch({ type: "saveSettings", settings: { experimentalSpaces: true } }, 1);
+  let snap = await service.dispatch({ type: "activateSpace", spaceId: "container:firefox-container-1" }, 1);
+  const spaceId = snap.activeSpaceId;
+  assert.deepEqual(snap.groups, []);
+  snap = await service.dispatch({ type: "createGroup", title: "Only group" }, 1);
+  snap = await service.dispatch({ type: "deleteGroup", groupId: snap.activeGroupId }, 1);
+  assert.equal(snap.activeSpaceId, spaceId);
+  assert.deepEqual(snap.groups, []);
+  service = f.service();
+  snap = await service.dispatch({ type: "snapshot" }, 1);
+  assert.equal(snap.activeSpaceId, spaceId);
+  assert.deepEqual(snap.groups, []);
+  const backup = await service.dispatch({ type: "exportBackup" }, 1);
+  assert.ok(backup.spaces.some((item) => item.id === spaceId));
+  assert.ok(!backup.groups.some((item) => item.spaceId === spaceId));
+  await service.dispatch({ type: "activateSpace", spaceId: "default" }, 1);
+  snap = await service.dispatch({ type: "activateSpace", spaceId }, 1);
+  assert.equal(snap.activeSpaceId, spaceId);
+  assert.deepEqual(snap.groups, []);
 });
