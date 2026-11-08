@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Show audio, screen sharing and microphone indicators on groups and their ancestors; close tabs through their actions menu.
+
 ## 0.2.15 — Jolly Jerboa — 2026-11-08
 
 - Close unsupported browser tabs when moving a group to another container and translate background errors.

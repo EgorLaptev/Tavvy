@@ -214,7 +214,9 @@ test("built app mounts and connects settings, groups and navigation", async () =
   assert.ok(!document.querySelector(".group-context-submenu").hidden);
   window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
   window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-  group.querySelector(".tab-close").click();
+  assert.equal(group.querySelector(".tab-close"), null);
+  group.querySelector(".tab-row").dispatchEvent(new window.MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+  menu.querySelector(".group-context-delete").click();
   await new Promise((resolve) => setTimeout(resolve, 30));
   assert.equal(group.querySelector(".count").textContent, "0");
   assert.equal(

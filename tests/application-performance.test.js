@@ -621,6 +621,27 @@ test("tab status indicators update when Firefox reports changed states", async (
   } finally { f.close(); }
 });
 
+test("group status indicators include deeply nested tabs and update when activity ends", async () => {
+  const f = await page(10, 2);
+  try {
+    const send = (command) => f.api.runtime.sendMessage({ channel: "tavvy-command", windowId: 1, command });
+    await send({ type: "moveGroup", groupId: "g1", parentId: "inbox" });
+    let { snapshot } = await send({ type: "createGroup", title: "Deep", parentId: "g1" });
+    const deep = snapshot.groups.find((group) => group.title === "Deep").id;
+    ({ snapshot } = await send({ type: "createTab", groupId: deep }));
+    const tab = snapshot.tabs.find((item) => item.groupId === deep && item.active);
+    f.service.invalidate({ type: "updated", tabId: tab.id, changes: { audible: true, mutedInfo: { muted: false }, sharingState: { screen: "Screen", microphone: true } } });
+    await send({ type: "renameGroup", groupId: deep, title: "Deep" });
+    await pause(180);
+    const statuses = (id) => [...f.document.querySelectorAll(`[data-group-id="${id}"] > .group-controls .group-statuses .tab-status-icon`)].map((item) => item.dataset.status);
+    for (const id of ["inbox", "g1", deep]) assert.deepEqual(statuses(id), ["audible", "screen", "microphone"], id);
+    f.service.invalidate({ type: "updated", tabId: tab.id, changes: { audible: false, sharingState: { screen: false, microphone: false } } });
+    await send({ type: "renameGroup", groupId: deep, title: "Deep" });
+    await pause(180);
+    for (const id of ["inbox", "g1", deep]) assert.deepEqual(statuses(id), []);
+  } finally { f.close(); }
+});
+
 test("closing a nested group keeps its ancestors open and closes descendants", async () => {
   const f = await page(10);
   try {

@@ -9,6 +9,23 @@ export function buildViewIndex(snapshot) {
     if (!byGroup.has(tab.groupId)) byGroup.set(tab.groupId, []);
     byGroup.get(tab.groupId).push(tab);
   }
+  // Propagate status bits from leaves to roots once, including collapsed groups.
+  const groupStatus = new Map(snapshot.groups.map((group) => [group.id, 0]));
+  const children = new Map(snapshot.groups.map((group) => [group.id, 0]));
+  for (const group of snapshot.groups)
+    if (children.has(group.parentId)) children.set(group.parentId, children.get(group.parentId) + 1);
+  for (const tab of snapshot.tabs) {
+    const bits = (tab.audible && !tab.muted ? 1 : 0) | (tab.sharingState?.screen ? 2 : 0) | (tab.sharingState?.microphone ? 4 : 0);
+    if (bits && groupStatus.has(tab.groupId)) groupStatus.set(tab.groupId, groupStatus.get(tab.groupId) | bits);
+  }
+  const pending = snapshot.groups.filter((group) => !children.get(group.id)).map((group) => group.id);
+  for (let i = 0; i < pending.length; i++) {
+    const id = pending[i], parent = groups.get(id)?.parentId;
+    if (!children.has(parent)) continue;
+    groupStatus.set(parent, groupStatus.get(parent) | groupStatus.get(id));
+    children.set(parent, children.get(parent) - 1);
+    if (!children.get(parent)) pending.push(parent);
+  }
   const groupTitles = new Map(
     snapshot.groups.map((group) => [group.id, group.title.toLocaleLowerCase()]),
   );
@@ -16,6 +33,7 @@ export function buildViewIndex(snapshot) {
     groups,
     tabs,
     byGroup,
+    groupStatus,
     search(query) {
       const matchedGroups = new Set(),
         matchedTabs = new Set();

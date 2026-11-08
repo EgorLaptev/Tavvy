@@ -104,25 +104,8 @@ button.tab-status-icon:hover { color: #ddd; }
 .tabs .tabs-inner > .tab-row { gap: 0; }
 .tab-row .tab-favicon { margin-right: 10px; }
 .tab-statuses:not(:empty) { margin-left: 10px; }
-:is(.tab-row, .spaces-option-row) .tab-close {
-  width: 0;
-  padding: 0;
-  margin: 0;
-  opacity: 0;
-  transform: translateX(4px);
-  pointer-events: none;
-  transition: width .2s ease, margin .2s ease, opacity .15s ease, transform .2s ease, color .15s ease;
-}
-:is(.tab-row, .spaces-option-row):hover .tab-close,
-:is(.tab-row, .spaces-option-row) .tab-close:focus-visible {
-  width: 16px;
-  margin-left: 10px;
-  margin-right: 10px;
-  opacity: 1;
-  transform: translateX(0);
-  pointer-events: auto;
-}
-.extension-mode .tab-close svg,
+.tab-row .tab-statuses:not(:empty) { margin-right: 10px; }
+.group-statuses:not(:empty) { margin: 0 6px; }
 .extension-mode .restore-button svg {
   fill: none;
   stroke: currentColor;

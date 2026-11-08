@@ -85,6 +85,21 @@ function renderTabStatus(container, tab, run) {
     return indicator;
   }));
 }
+function renderGroupStatus(container, bits) {
+  const signature = `${bits}:${getLanguage()}`;
+  if (container.dataset.status === signature) return;
+  container.dataset.status = signature;
+  const states = [["audible", 1], ["screen", 2], ["microphone", 4]];
+  container.replaceChildren(...states.filter(([, bit]) => bits & bit).map(([name]) => {
+    const indicator = element("span", "tab-status-icon");
+    indicator.dataset.status = name;
+    indicator.title = t(name === "audible" ? "tabs.status.audible" : `tabs.status.${name}`);
+    indicator.setAttribute("role", "img");
+    indicator.setAttribute("aria-label", indicator.title);
+    indicator.append(icon(tabStatusIcons.find(([key]) => key === name)[1]));
+    return indicator;
+  }));
+}
 export async function mountApplication(api) {
   if (api.isDemo) document.documentElement.classList.add("preview-mode");
   document.documentElement.classList.add("extension-mode");
@@ -632,7 +647,8 @@ export async function mountApplication(api) {
       groupMenu.style.top = `${Math.max(0, Math.min(event.clientY, window.innerHeight - bounds.height))}px`;
       groupMenu.querySelector("button")?.focus();
     });
-    controls.append(header, colorInput, add, spaceLabel, toggle);
+    const statuses = element("span", "tab-statuses group-statuses");
+    controls.append(header, colorInput, add, statuses, spaceLabel, toggle);
     const tabs = element("div", "tabs is-closed"),
       inner = element("div", "tabs-inner"),
       children = element("div", "subgroups");
@@ -643,6 +659,7 @@ export async function mountApplication(api) {
       title,
       spaceLabel,
       spaceGlyph,
+      statuses,
       header,
       count,
       marker,
@@ -657,18 +674,9 @@ export async function mountApplication(api) {
     const tabId = tab.id;
     const row = element("div", "tab-row");
     row.dataset.tabId = tab.id;
-    const label = element("span", "tab-title"),
-      close = button(
-        t("tabs.close_tab"),
-        "tab-close",
-        icon("M4 4l8 8M12 4l-8 8"),
-        (event) => {
-          event.stopPropagation();
-          run({ type: "closeTab", tabId: tabId });
-        },
-      );
+    const label = element("span", "tab-title");
     const statuses = element("span", "tab-statuses");
-    row.append(favicon(tab), label, statuses, close);
+    row.append(favicon(tab), label, statuses);
     row.addEventListener("click", () =>
       run({ type: "activateTab", tabId: tabId }),
     );
@@ -697,7 +705,7 @@ export async function mountApplication(api) {
       groupMenu.style.top = `${Math.max(0, Math.min(event.clientY, window.innerHeight - bounds.height))}px`;
       groupMenu.querySelector("button")?.focus();
     });
-    return { row, label, close, statuses, title: null, icon: tab.faviconUrl };
+    return { row, label, statuses, title: null, icon: tab.faviconUrl };
   }
   function renderLists() {
     if (disposed || !filterResult) return;
@@ -740,7 +748,6 @@ export async function mountApplication(api) {
         }
         if (item.title !== tab.title) {
           item.label.textContent = tab.url === "about:newtab" && tab.title === "Новая вкладка" ? t("tabs.new_tab") : tab.title;
-          item.close.setAttribute("aria-label", t("tabs.close_tab") + " " + tab.title);
           item.title = tab.title;
         }
         if (item.icon !== tab.faviconUrl) {
@@ -863,6 +870,7 @@ export async function mountApplication(api) {
       view.spaceLabel.setAttribute("aria-label", view.spaceLabel.title);
       const groupTitle = group.id === "inbox" && group.title === "Основная" ? t("groups.main") : group.title;
       view.header.setAttribute("aria-label", group.spaceId ? `${groupTitle} — ${view.spaceLabel.title}` : groupTitle);
+      renderGroupStatus(view.statuses, viewIndex.groupStatus.get(group.id) || 0);
       const count = String(viewIndex.byGroup.get(group.id)?.length || 0);
       if (view.count.textContent !== count) view.count.textContent = count;
       view.node.classList.toggle("active", group.id === snapshot.activeGroupId);
