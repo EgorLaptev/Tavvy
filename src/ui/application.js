@@ -112,25 +112,13 @@ export async function mountApplication(api) {
   groupMenu.setAttribute("role", "menu");
   groupSubmenu.setAttribute("role", "menu");
   document.querySelector(".popup").append(groupMenu, groupSubmenu);
-  let groupMenuCloseTimer;
   function resetGroupMenu() {
-    clearTimeout(groupMenuCloseTimer);
     groupMenu.hidden = true;
-    groupMenu.classList.remove("is-closing");
     groupMenu.replaceChildren();
     groupSubmenu.hidden = true;
-    groupSubmenu.classList.remove("is-closing");
     groupSubmenu.replaceChildren();
   }
-  function closeGroupMenu() {
-    if (groupMenu.hidden || groupMenu.classList.contains("is-closing")) return;
-    if (document.documentElement.classList.contains("animations-off") || matchMedia("(prefers-reduced-motion: reduce)").matches) resetGroupMenu();
-    else {
-      groupMenu.classList.add("is-closing");
-      if (!groupSubmenu.hidden) groupSubmenu.classList.add("is-closing");
-      groupMenuCloseTimer = setTimeout(resetGroupMenu, 140);
-    }
-  }
+  function closeGroupMenu() { resetGroupMenu(); }
   function outsideGroupMenu(event) { if (!groupMenu.contains(event.target) && !groupSubmenu.contains(event.target)) closeGroupMenu(); }
   function groupMenuKey(event) {
     if (event.key !== "Escape" || groupMenu.hidden) return;
@@ -944,8 +932,7 @@ export async function mountApplication(api) {
       disposed = true;
       disposeScrollbar();
       clearTimeout(spacesCloseTimer);
-      clearTimeout(groupMenuCloseTimer);
-      cancelAnimationFrame(spacesOpenFrame);
+        cancelAnimationFrame(spacesOpenFrame);
       document.removeEventListener("pointerdown", outsideSpaces);
       document.removeEventListener("focusin", outsideSpaces);
       document.removeEventListener("keydown", spacesKey);

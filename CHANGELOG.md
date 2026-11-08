@@ -11,10 +11,6 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 - Match the group actions menu background to the current theme.
 
-- Smooth background changes on group rows and action menu items.
-
-- Animate the group actions menu and its hover states when animations are enabled.
-
 - Add icons and a red hover state to the group actions menu.
 
 - Make the group actions menu more compact.
