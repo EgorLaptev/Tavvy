@@ -771,6 +771,7 @@ export function createWorkspaceService(
       type === "activateTab" ||
       type === "toggleTabMute" ||
       type === "reloadTab" ||
+      type === "pinTab" ||
       type === "unpinTab" ||
       type === "closeTab" ||
       type === "moveTab"
@@ -787,6 +788,14 @@ export function createWorkspaceService(
       }
       if (type === "toggleTabMute" && (tab.audible || tab.muted)) await api.tabs.update(tab.id, { muted: !tab.muted });
       if (type === "reloadTab") await api.tabs.reload(tab.id);
+      if (type === "pinTab" && !tab.pinned && !tab.managedPinned) {
+        if (state.settings?.groupPinnedTabs && !visibleGroups(await active(windowId)).has(tab.groupId)) {
+          await api.sessions.setTabValue(tab.id, GROUP_PINNED, true);
+        } else {
+          if (tab.hidden) await api.tabs.show([tab.id]);
+          await api.tabs.update(tab.id, { pinned: true });
+        }
+      }
       if (type === "unpinTab") {
         if (tab.managedPinned) {
           await api.sessions.setTabValue(tab.id, GROUP_PINNED, false);

@@ -772,8 +772,9 @@ export async function mountApplication(api) {
       if (!current) return;
       addAction(t("tabs.actions.open"), () => run({ type: "activateTab", tabId }));
       addAction(t("tabs.actions.reload"), () => run({ type: "reloadTab", tabId }));
-      addAction(t(current.muted ? "tabs.actions.unmute" : "tabs.actions.mute"), () => run({ type: "toggleTabMute", tabId }), !current.audible && !current.muted);
+      if (current.audible || current.muted) addAction(t(current.muted ? "tabs.actions.unmute" : "tabs.actions.mute"), () => run({ type: "toggleTabMute", tabId }));
       if (current.pinned || current.managedPinned) addAction(t("tabs.actions.unpin"), () => run({ type: "unpinTab", tabId }));
+      else addAction(t("tabs.actions.pin"), () => run({ type: "pinTab", tabId }));
       const destinations = snapshot.groups.filter((item) => item.id !== current.groupId).map((item) => ({
         label: item.id === "inbox" && item.title === "Основная" ? t("groups.main") : item.title,
         group: item,

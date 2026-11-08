@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Add a pin action to the tab actions menu and hide unavailable mute actions.
+
 ## 0.2.14 — Merry Mole — 2026-11-08
 
 - Reduce preview download size by minifying JavaScript and CSS.

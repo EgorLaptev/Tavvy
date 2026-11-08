@@ -972,3 +972,27 @@ test("empty containers remain selectable after deleting their last group and in 
   assert.equal(snap.activeSpaceId, spaceId);
   assert.deepEqual(snap.groups, []);
 });
+
+
+test("pinning a tab respects grouped and global pinned-tab behavior", async () => {
+  for (const grouped of [false, true]) {
+    const f = fixture(), service = f.service();
+    let snap = await service.dispatch({ type: "saveSettings", settings: { groupPinnedTabs: grouped } }, 1);
+    snap = await service.dispatch({ type: "createGroup", title: "Work" }, 1);
+    const work = snap.groups.find((item) => item.title === "Work").id;
+    await service.dispatch({ type: "moveTab", tabId: 2, groupId: work }, 1);
+    assert.equal(f.records.find((item) => item.id === 2).hidden, true);
+    snap = await service.dispatch({ type: "pinTab", tabId: 2 }, 1);
+    const tab = snap.tabs.find((item) => item.id === 2);
+    if (grouped) {
+      assert.equal(tab.managedPinned, true);
+      assert.equal(f.records.find((item) => item.id === 2).hidden, true);
+      snap = await service.dispatch({ type: "activateGroup", groupId: work }, 1);
+      assert.equal(snap.tabs.find((item) => item.id === 2).pinned, true);
+    } else {
+      assert.equal(tab.pinned, true);
+      assert.equal(f.records.find((item) => item.id === 2).hidden, false);
+    }
+    await assert.rejects(service.dispatch({ type: "pinTab", tabId: 4 }, 1), /другом окне/);
+  }
+});

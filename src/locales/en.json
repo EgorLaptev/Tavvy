@@ -133,6 +133,7 @@
     "actions": {
       "open": "Open tab",
       "reload": "Reload tab",
+      "pin": "Pin tab",
       "unpin": "Unpin tab",
       "mute": "Mute tab",
       "unmute": "Unmute tab"
