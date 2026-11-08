@@ -112,18 +112,21 @@ export async function mountApplication(api) {
   groupMenu.setAttribute("role", "menu");
   groupSubmenu.setAttribute("role", "menu");
   document.querySelector(".popup").append(groupMenu, groupSubmenu);
+  let submenuTrigger = null;
   function resetGroupMenu() {
+    submenuTrigger?.setAttribute("aria-expanded", "false");
+    submenuTrigger = null;
     groupMenu.hidden = true;
     groupMenu.replaceChildren();
     groupSubmenu.hidden = true;
     groupSubmenu.replaceChildren();
   }
   function closeGroupMenu() { resetGroupMenu(); }
-  function outsideGroupMenu(event) { if (!groupMenu.contains(event.target) && !groupSubmenu.contains(event.target)) closeGroupMenu(); }
+  function outsideGroupMenu(event) { if (!groupMenu.contains(event.target) && !groupSubmenu.contains(event.target) && !submenuTrigger?.contains(event.target)) closeGroupMenu(); }
   function groupMenuKey(event) {
-    if (event.key !== "Escape" || groupMenu.hidden) return;
+    if (event.key !== "Escape" || (groupMenu.hidden && groupSubmenu.hidden)) return;
     event.preventDefault();
-    if (!groupSubmenu.hidden) { groupSubmenu.hidden = true; const trigger = groupMenu.querySelector('[aria-expanded="true"]'); trigger?.setAttribute("aria-expanded", "false"); trigger?.focus(); }
+    if (!groupSubmenu.hidden) { groupSubmenu.hidden = true; submenuTrigger?.setAttribute("aria-expanded", "false"); submenuTrigger?.focus(); submenuTrigger = null; }
     else closeGroupMenu();
   }
   document.addEventListener("pointerdown", outsideGroupMenu);
@@ -137,12 +140,13 @@ export async function mountApplication(api) {
     return item;
   };
   function showSubmenu(trigger, entries) {
-    const wasOpen = trigger.getAttribute("aria-expanded") === "true";
+    const wasOpen = submenuTrigger === trigger && !groupSubmenu.hidden;
+    submenuTrigger?.setAttribute("aria-expanded", "false");
     groupMenu.querySelectorAll('[aria-expanded="true"]').forEach((item) => item.setAttribute("aria-expanded", "false"));
-    if (wasOpen) { groupSubmenu.hidden = true; return; }
+    if (wasOpen) { groupSubmenu.hidden = true; submenuTrigger = null; return; }
     groupSubmenu.replaceChildren();
     for (const entry of entries) {
-      const item = addAction(entry.label, entry.action, false, "", false, groupSubmenu);
+      const item = addAction(entry.label, entry.action, !!entry.disabled, entry.current ? "is-current" : "", !!entry.keepOpen, groupSubmenu);
       if (entry.root) item.prepend(icon("m10 3-5 5 5 5", "group-context-root-icon"));
       if (entry.group) {
         const marker = element("span", "marker group-context-marker");
@@ -160,12 +164,22 @@ export async function mountApplication(api) {
         const marker = element("span", "spaces-icon spaces-icon-container");
         marker.style.maskImage = `url("${spaceIconUrl(spaceIcon(entry.space.icon))}")`;
         marker.setAttribute("aria-hidden", "true");
-        item.prepend(marker);
+        if (entry.editSpace) {
+          const row = element("div", "group-container-row");
+          const edit = button(`${t("spaces.choose_icon")}: ${entry.space.name}`, "group-container-edit", marker, () => showContainerIcons(entry.space, trigger, entry.groupId));
+          edit.setAttribute("role", "menuitem");
+          item.before(row);
+          row.append(edit, item);
+        } else item.prepend(marker);
       }
     }
     groupSubmenu.hidden = false;
+    submenuTrigger = trigger;
     trigger.setAttribute("aria-expanded", "true");
-    const menuBounds = groupMenu.getBoundingClientRect(), triggerBounds = trigger.getBoundingClientRect(), submenuBounds = groupSubmenu.getBoundingClientRect();
+    positionSubmenu(trigger);
+  }
+  function positionSubmenu(trigger) {
+    const menuBounds = (groupMenu.contains(trigger) ? groupMenu : trigger).getBoundingClientRect(), triggerBounds = trigger.getBoundingClientRect(), submenuBounds = groupSubmenu.getBoundingClientRect();
     const left = menuBounds.right + submenuBounds.width <= window.innerWidth ? menuBounds.right : menuBounds.left - submenuBounds.width;
     groupSubmenu.style.left = `${Math.max(0, left)}px`;
     groupSubmenu.style.top = `${Math.max(0, Math.min(triggerBounds.top, window.innerHeight - submenuBounds.height))}px`;
@@ -176,6 +190,93 @@ export async function mountApplication(api) {
     trigger.setAttribute("aria-haspopup", "menu");
     trigger.setAttribute("aria-expanded", "false");
     trigger.append(icon("m6 3 5 5-5 5", "group-context-arrow"));
+  }
+  function submenuBack(trigger, groupId) {
+    const back = addAction(t("common.back"), () => showContainerPicker(groupId, trigger, true), false, "group-container-back", true, groupSubmenu);
+    back.prepend(icon("m10 3-5 5 5 5", "group-context-root-icon"));
+  }
+  function showContainerIcons(space, trigger, groupId) {
+    groupSubmenu.replaceChildren();
+    submenuBack(trigger, groupId);
+    const grid = element("div", "group-container-icon-grid");
+    for (const name of SPACE_ICONS) {
+      const glyph = element("span", "spaces-icon spaces-icon-container");
+      glyph.style.maskImage = `url("${spaceIconUrl(name)}")`;
+      const choice = button(`${t("spaces.choose_icon")}: ${name}`, "group-container-icon-choice", glyph, () => {
+        closeGroupMenu();
+        run({ type: "setSpaceIcon", spaceId: space.id, icon: name });
+      });
+      choice.title = name;
+      choice.setAttribute("aria-pressed", String(name === spaceIcon(space.icon)));
+      grid.append(choice);
+    }
+    groupSubmenu.append(grid);
+    positionSubmenu(trigger);
+    groupSubmenu.querySelector("button")?.focus();
+  }
+  function showCreateContainer(groupId, trigger) {
+    groupSubmenu.replaceChildren();
+    submenuBack(trigger, groupId);
+    const form = element("form", "group-container-form");
+    const input = element("input", "group-container-name");
+    input.type = "text";
+    input.maxLength = 100;
+    input.required = true;
+    input.placeholder = t("spaces.name");
+    input.setAttribute("aria-label", t("spaces.name"));
+    const warning = element("p", "group-container-warning", t("groups.move_container_confirm"));
+    const create = button(t("spaces.create"), "group-context-item group-container-submit", document.createTextNode(t("spaces.create")), () => {});
+    create.type = "submit";
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const name = input.value.trim();
+      if (!name) { input.focus(); return; }
+      closeGroupMenu();
+      run({ type: "createContainer", groupId, name });
+    });
+    form.append(input, warning, create);
+    groupSubmenu.append(form);
+    positionSubmenu(trigger);
+    input.focus();
+  }
+  function showMoveConfirmation(groupId, destination, trigger) {
+    groupSubmenu.replaceChildren();
+    submenuBack(trigger, groupId);
+    groupSubmenu.append(element("p", "group-container-warning", t("groups.move_container_confirm")));
+    addAction(t("spaces.confirm_move"), () => run({ type: "moveGroupToSpace", groupId, spaceId: destination.id }), false, "group-container-submit", false, groupSubmenu);
+    positionSubmenu(trigger);
+  }
+  async function showContainerPicker(groupId, trigger, returning = false) {
+    if (!snapshot.spacePermission) {
+      let granted = false;
+      try { granted = !!await api.permissions?.request({ permissions: ["cookies"] }); } catch {}
+      if (!granted) { closeGroupMenu(); status.textContent = t("spaces.permission"); return; }
+      await run({ type: "snapshot" });
+      if (disposed) return;
+      if (!snapshot.spacePermission) { closeGroupMenu(); status.textContent = t("spaces.permission"); return; }
+    }
+    if (!trigger.isConnected) return;
+    const group = viewIndex.groups.get(groupId);
+    if (!group) return;
+    const currentSpace = group.spaceId || "default";
+    const entries = snapshot.spaces.filter((space) => !space.unavailable).map((destination) => ({
+      label: destination.id === "default" ? t("spaces.default") : destination.name,
+      space: destination,
+      editSpace: destination.id !== "default",
+      groupId,
+      current: destination.id === currentSpace,
+      keepOpen: destination.id !== currentSpace,
+      action: () => { if (destination.id !== currentSpace) showMoveConfirmation(groupId, destination, trigger); },
+    }));
+    const assigned = snapshot.spaces.find((space) => space.id === currentSpace && space.unavailable);
+    if (assigned) {
+      entries.push({ label: `${assigned.name} — ${t("spaces.container_unavailable")}`, disabled: true, action: () => {} });
+      for (const available of snapshot.spaces.filter((space) => space.firefoxContainer))
+        entries.push({ label: `${t("spaces.reconnect_action")}: ${available.name}`, space: available, action: () => run({ type: "rebindSpace", spaceId: assigned.id, cookieStoreId: available.id.slice("container:".length) }) });
+    }
+    entries.push({ label: t("spaces.new"), keepOpen: true, action: () => showCreateContainer(groupId, trigger) });
+    if (returning) { groupSubmenu.hidden = true; submenuTrigger?.setAttribute("aria-expanded", "false"); submenuTrigger = null; }
+    showSubmenu(trigger, entries);
   }
 
   const search = document.querySelector(".search input");
@@ -315,7 +416,6 @@ export async function mountApplication(api) {
   mountSettings({
     ...navigation,
     appVersion: api.runtime.getManifest?.().version ?? api.appVersion,
-    requestSpacesPermission: () => api.permissions?.request({ permissions: ["cookies"] }),
     onLanguageChange: () => {
       create.textContent = t("groups.new_group_action");
       create.setAttribute("aria-label", t("groups.create_group"));
@@ -364,171 +464,6 @@ export async function mountApplication(api) {
     },
   });
   const spaceIconUrl = (name) => api.spaceIconUrl?.(name) || `resource://usercontext-content/${name}.svg`;
-  const spacesBar = document.querySelector(".spaces-bar");
-  const spacesTrigger = spacesBar.querySelector(".spaces-trigger");
-  const spacesCurrent = spacesBar.querySelector(".spaces-current");
-  const spacesIcon = spacesTrigger.querySelector(".spaces-icon");
-  const spacesMenu = spacesBar.querySelector(".spaces-menu");
-  const spacesOptions = spacesMenu.querySelector(".spaces-options");
-  let spacesCloseTimer, spacesOpenFrame, spacesSignature, rebindSpaceId = null;
-  function setSpacesMenu(open, restoreFocus = false) {
-    clearTimeout(spacesCloseTimer);
-    cancelAnimationFrame(spacesOpenFrame);
-    spacesTrigger.setAttribute("aria-expanded", String(open));
-    spacesMenu.setAttribute("aria-hidden", String(!open));
-    spacesMenu.inert = !open;
-    if (open) {
-      spacesMenu.hidden = false;
-      renderSpaces();
-      run({ type: "snapshot" });
-      spacesOpenFrame = requestAnimationFrame(() => spacesMenu.classList.add("is-open"));
-    } else {
-      rebindSpaceId = null;
-      spacesSignature = undefined;
-      if (paletteAnchor && spacesBar.contains(paletteAnchor)) closePalette();
-      spacesMenu.classList.remove("is-open");
-      if (document.documentElement.classList.contains("animations-off") || matchMedia("(prefers-reduced-motion: reduce)").matches)
-        spacesMenu.hidden = true;
-      else spacesCloseTimer = setTimeout(() => { spacesMenu.hidden = true; }, 140);
-      if (restoreFocus) spacesTrigger.focus();
-    }
-  }
-  spacesTrigger.addEventListener("click", () => setSpacesMenu(spacesTrigger.getAttribute("aria-expanded") !== "true"));
-  function outsideSpaces(event) {
-    if (spacesTrigger.getAttribute("aria-expanded") === "true" && !spacesBar.contains(event.target) && !palette.contains(event.target)) setSpacesMenu(false);
-  }
-  function spacesKey(event) {
-    if (spacesTrigger.getAttribute("aria-expanded") !== "true") return;
-    if (event.key === "Escape") { event.preventDefault(); setSpacesMenu(false, true); return; }
-    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
-    const items = [...spacesMenu.querySelectorAll('button:not([hidden])')].filter((item) => !item.closest("[hidden]"));
-    if (!items.length) return;
-    const current = items.indexOf(document.activeElement);
-    const next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 :
-      event.key === "ArrowDown" ? (current + 1) % items.length : (current <= 0 ? items.length - 1 : current - 1);
-    event.preventDefault();
-    items[next].focus();
-  }
-  document.addEventListener("pointerdown", outsideSpaces);
-  document.addEventListener("focusin", outsideSpaces);
-  document.addEventListener("keydown", spacesKey);
-  function renderSpaces() {
-    const spaces = snapshot.spaces || [{ id: "default", name: "" }];
-    const selectedId = snapshot.activeSpaceId || "default";
-    const selected = spaces.find((item) => item.id === selectedId) || spaces[0];
-    spacesBar.hidden = !snapshot.settings.experimentalSpaces;
-    if (spacesBar.hidden && spacesTrigger.getAttribute("aria-expanded") === "true") setSpacesMenu(false);
-    spacesCurrent.textContent = selected.id === "default" ? t("spaces.default") : selected.name;
-    spacesTrigger.setAttribute("aria-label", `${t("spaces.title")}: ${spacesCurrent.textContent}`);
-    spacesIcon.hidden = selected.id === "default";
-    spacesIcon.classList.toggle("spaces-icon-default", selected.id === "default");
-    spacesIcon.classList.toggle("spaces-icon-container", selected.id !== "default");
-    spacesIcon.style.maskImage = selected.id === "default" ? "" : `url("${spaceIconUrl(spaceIcon(selected.icon))}")`;
-    const signature = JSON.stringify([spaces, selectedId, getLanguage(), rebindSpaceId]);
-    if (spacesSignature === signature) return;
-    spacesSignature = signature;
-    if (rebindSpaceId) {
-      const heading = element("div", "spaces-rebind-title", t("spaces.choose_existing_container"));
-      const choices = spaces.filter((item) => item.firefoxContainer);
-      const nodes = choices.map((item) => {
-        const choice = button(item.name, "spaces-option spaces-rebind-option", document.createTextNode(item.name), () => {
-          const missingId = rebindSpaceId;
-          rebindSpaceId = null;
-          setSpacesMenu(false, true);
-          run({ type: "rebindSpace", spaceId: missingId, cookieStoreId: item.id.slice("container:".length) });
-        });
-        choice.setAttribute("role", "menuitem");
-        return choice;
-      });
-      if (!choices.length) nodes.push(element("div", "spaces-rebind-empty", t("spaces.no_available_containers")));
-      const back = button(t("spaces.cancel"), "spaces-option spaces-rebind-back", document.createTextNode(t("spaces.cancel")), () => {
-        rebindSpaceId = null;
-        renderSpaces();
-      });
-      back.setAttribute("role", "menuitem");
-      spacesOptions.replaceChildren(heading, ...nodes, back);
-      return;
-    }
-    spacesOptions.replaceChildren(...spaces.map((space) => {
-      const option = document.createElement("button");
-      option.type = "button";
-      option.className = "spaces-option";
-      option.dataset.spaceId = space.id;
-      option.setAttribute("role", "menuitemradio");
-      option.setAttribute("aria-checked", String(space.id === selectedId));
-      const marker = document.createElement("span");
-      marker.className = `spaces-icon ${space.id === "default" ? "spaces-icon-default" : "spaces-icon-container"}`;
-      marker.setAttribute("aria-hidden", "true");
-      const label = document.createElement("span");
-      label.className = "spaces-option-label";
-      label.textContent = space.id === "default" ? t("spaces.default") : space.name;
-      option.append(label);
-      if (space.unavailable) {
-        option.title = t("spaces.container_unavailable");
-        option.setAttribute("aria-label", `${space.name}: ${t("spaces.container_unavailable")}`);
-        const missing = element("span", "spaces-unavailable", "!");
-        missing.setAttribute("aria-hidden", "true");
-        option.append(missing);
-      }
-      option.addEventListener("click", () => {
-        if (space.unavailable) {
-          rebindSpaceId = space.id;
-          renderSpaces();
-          return;
-        }
-        setSpacesMenu(false, true);
-        if (space.id === selectedId) return;
-        opened.clear();
-        run({ type: "activateSpace", spaceId: space.id });
-      });
-      const row = document.createElement("div");
-      row.className = "spaces-option-row";
-      if (space.id !== "default") {
-        marker.style.maskImage = `url("${spaceIconUrl(spaceIcon(space.icon))}")`;
-        const iconButton = document.createElement("button");
-        iconButton.type = "button";
-        iconButton.className = "spaces-icon-button";
-        iconButton.setAttribute("aria-label", `${t("spaces.choose_icon")}: ${space.name}`);
-        iconButton.setAttribute("aria-expanded", "false");
-        iconButton.setAttribute("aria-haspopup", "true");
-        iconButton.append(marker);
-        iconButton.addEventListener("click", () => {
-          if (paletteAnchor === iconButton) { closePalette(); return; }
-          closePalette();
-          palette.replaceChildren();
-          for (const name of SPACE_ICONS) {
-            const glyph = element("span", "spaces-icon spaces-icon-container");
-            glyph.style.maskImage = `url("${spaceIconUrl(name)}")`;
-            glyph.setAttribute("aria-hidden", "true");
-            const choice = button(`${t("spaces.choose_icon")}: ${name}`, "group-color-swatch spaces-icon-choice", glyph, () => {
-              closePalette(true);
-              run({ type: "setSpaceIcon", spaceId: space.id, icon: name });
-            });
-            choice.setAttribute("aria-pressed", String(name === spaceIcon(space.icon)));
-            palette.append(choice);
-          }
-          showPalette(iconButton, t("spaces.choose_icon"), true);
-        });
-        row.append(iconButton);
-      }
-      row.append(option);
-      if (space.unavailable) {
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "tab-close spaces-delete";
-        remove.setAttribute("aria-label", `${t("spaces.delete")}: ${space.name}`);
-        remove.title = t("spaces.delete");
-        remove.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4 4 12" /></svg>';
-        remove.addEventListener("click", () => {
-          if (!window.confirm(t("spaces.delete_confirm").replace("{name}", space.name))) return;
-          opened.clear();
-          run({ type: "deleteSpace", spaceId: space.id }).then(() => setSpacesMenu(false, true));
-        });
-        row.append(remove);
-      }
-      return row;
-    }));
-  }
   search.addEventListener("input", () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => animatePanelChange(render), 180);
@@ -610,6 +545,15 @@ export async function mountApplication(api) {
     const header = button(group.id === "inbox" && group.title === "Основная" ? t("groups.main") : group.title, "group-header", marker, () =>
       run({ type: "activateGroup", groupId: group.id }),
     );
+    const spaceGlyph = element("span", "spaces-icon spaces-icon-container");
+    spaceGlyph.setAttribute("aria-hidden", "true");
+    const spaceLabel = button(t("spaces.title"), "group-space-label", spaceGlyph, (event) => {
+      event.stopPropagation();
+      if (!groupMenu.hidden) resetGroupMenu();
+      showContainerPicker(group.id, spaceLabel);
+    });
+    spaceLabel.setAttribute("aria-haspopup", "menu");
+    spaceLabel.setAttribute("aria-expanded", "false");
     header.append(title);
     const colorInput = button(`${t("groups.group_color")}: ${group.title}`, "group-color-input", document.createTextNode(""), () => {
       if (paletteAnchor === colorInput) { closePalette(); return; }
@@ -695,7 +639,6 @@ export async function mountApplication(api) {
       event.preventDefault();
       event.stopPropagation();
       resetGroupMenu();
-      const destinations = snapshot.spaces.filter((space) => space.id !== snapshot.activeSpaceId && !space.unavailable);
       function showActions() {
         groupMenu.replaceChildren();
         addAction(t("groups.rename_group"), renameGroup);
@@ -728,8 +671,11 @@ export async function mountApplication(api) {
           if (current.parentId) entries.unshift({ label: t("groups.move_to_root"), root: true, action: () => run({ type: "moveGroup", groupId: group.id, parentId: null }) });
           addSubmenu(t("groups.move_to_group"), entries, "group-context-move-group");
         }
-        if (snapshot.settings.experimentalSpaces && group.id !== "inbox")
-          addSubmenu(t("groups.move_to_container"), destinations.map((destination) => ({ label: destination.id === "default" ? t("spaces.default") : destination.name, space: destination, action: () => { if (window.confirm(t("groups.move_container_confirm"))) run({ type: "moveGroupToSpace", groupId: group.id, spaceId: destination.id }); } })), "group-context-move");
+        let move;
+        move = addAction(t("groups.move_to_container"), () => showContainerPicker(group.id, move), false, "group-context-move", true);
+        move.setAttribute("aria-haspopup", "menu");
+        move.setAttribute("aria-expanded", "false");
+        move.append(icon("m6 3 5 5-5 5", "group-context-arrow"));
         addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), group.id === "inbox", "group-context-delete");
       }
       showActions();
@@ -739,7 +685,7 @@ export async function mountApplication(api) {
       groupMenu.style.top = `${Math.max(0, Math.min(event.clientY, window.innerHeight - bounds.height))}px`;
       groupMenu.querySelector("button")?.focus();
     });
-    controls.append(header, colorInput, add, toggle);
+    controls.append(header, colorInput, add, spaceLabel, toggle);
     const tabs = element("div", "tabs is-closed"),
       inner = element("div", "tabs-inner"),
       children = element("div", "subgroups");
@@ -748,6 +694,8 @@ export async function mountApplication(api) {
     return {
       node,
       title,
+      spaceLabel,
+      spaceGlyph,
       header,
       count,
       marker,
@@ -788,7 +736,8 @@ export async function mountApplication(api) {
       if (current.audible || current.muted) addAction(t(current.muted ? "tabs.actions.unmute" : "tabs.actions.mute"), () => run({ type: "toggleTabMute", tabId }));
       if (current.pinned || current.managedPinned) addAction(t("tabs.actions.unpin"), () => run({ type: "unpinTab", tabId }));
       else addAction(t("tabs.actions.pin"), () => run({ type: "pinTab", tabId }));
-      const destinations = snapshot.groups.filter((item) => item.id !== current.groupId).map((item) => ({
+      const currentSpace = viewIndex.groups.get(current.groupId)?.spaceId || "default";
+      const destinations = snapshot.groups.filter((item) => item.id !== current.groupId && (item.spaceId || "default") === currentSpace).map((item) => ({
         label: item.id === "inbox" && item.title === "Основная" ? t("groups.main") : item.title,
         group: item,
         action: () => run({ type: "moveTab", tabId, groupId: item.id, keepActiveGroup: true }),
@@ -933,7 +882,6 @@ export async function mountApplication(api) {
   );
   function render() {
     if (disposed) return;
-    renderSpaces();
     const query = search.value.trim().toLocaleLowerCase();
     filterResult = viewIndex.search(query);
     for (const [id, view] of groupViews)
@@ -960,6 +908,14 @@ export async function mountApplication(api) {
         view.marker.style.setProperty("--marker-color", group.color);
         view.color = group.color;
       }
+      const assignedSpace = (snapshot.spaces || []).find((item) => item.id === (group.spaceId || "default"));
+      const spaceName = group.spaceId ? assignedSpace?.name || group.spaceId : t("spaces.default");
+      view.spaceLabel.hidden = !group.spaceId;
+      view.spaceGlyph.style.maskImage = group.spaceId ? `url("${spaceIconUrl(spaceIcon(assignedSpace?.icon))}")` : "";
+      view.spaceLabel.title = assignedSpace?.unavailable ? `${spaceName}: ${t("spaces.container_unavailable")}` : spaceName;
+      view.spaceLabel.setAttribute("aria-label", view.spaceLabel.title);
+      const groupTitle = group.id === "inbox" && group.title === "Основная" ? t("groups.main") : group.title;
+      view.header.setAttribute("aria-label", group.spaceId ? `${groupTitle} — ${view.spaceLabel.title}` : groupTitle);
       const count = String(viewIndex.byGroup.get(group.id)?.length || 0);
       if (view.count.textContent !== count) view.count.textContent = count;
       view.node.classList.toggle("active", group.id === snapshot.activeGroupId);
@@ -1006,11 +962,6 @@ export async function mountApplication(api) {
     () => {
       disposed = true;
       disposeScrollbar();
-      clearTimeout(spacesCloseTimer);
-        cancelAnimationFrame(spacesOpenFrame);
-      document.removeEventListener("pointerdown", outsideSpaces);
-      document.removeEventListener("focusin", outsideSpaces);
-      document.removeEventListener("keydown", spacesKey);
       document.removeEventListener("pointerdown", outsidePalette);
       document.removeEventListener("keydown", paletteKey);
       document.removeEventListener("pointerdown", outsideGroupMenu);

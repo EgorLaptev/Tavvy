@@ -168,6 +168,7 @@
     "merry_mole": "Fröhlicher Maulwurf"
   },
   "errors": {
+    "container_created_move_failed": "Der Container wurde erstellt, aber die Gruppe konnte nicht verschoben werden. Prüfe deine Tabs und versuche es erneut.",
     "background_process_is_unavailable": "Der Hintergrundprozess ist nicht verfügbar",
     "private_windows_are_not_supported_yet": "Private Fenster werden noch nicht unterstützt",
     "could_not_get_status": "Status konnte nicht abgerufen werden",
@@ -236,13 +237,15 @@
   },
   "spaces": {
     "experimental": "Experimentelle Bereiche",
-    "title": "Bereiche",
-    "default": "Standard",
-    "new": "Neuer Bereich",
-    "name": "Name des Bereichs",
+    "title": "Container",
+    "default": "Keiner",
+    "new": "Neuer Container",
+    "name": "Containername",
     "create": "Erstellen",
+    "confirm_move": "Verschieben",
+    "reconnect_action": "Verbinden mit",
     "cancel": "Abbrechen",
-    "permission": "Erlaube den Containerzugriff, um Bereiche zu verwenden.",
+    "permission": "Erlaube den Zugriff auf Firefox-Container.",
     "help": "Getrennte Website-Konten",
     "move_unsupported": "Tabs können nicht zwischen Bereichen verschoben werden.",
     "import_main": "Simple Tab Groups kann nur in den Hauptbereich importiert werden.",

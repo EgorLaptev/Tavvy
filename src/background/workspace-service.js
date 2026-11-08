@@ -144,7 +144,7 @@ export function createWorkspaceService(
   }
   async function emptySpace(windowId) {
     const value = await api.sessions.getWindowValue(windowId, EMPTY_SPACE);
-    return state.settings?.experimentalSpaces && state.spaces.some((item) => item.id === value) && !groupsInSpace(state.groups, value).length ? value : null;
+    return state.spaces.some((item) => item.id === value) && !groupsInSpace(state.groups, value).length ? value : null;
   }
   function visibleGroups(groupId) {
     if (state.settings?.nestedGroups === false) return new Set([groupId]);
@@ -200,10 +200,9 @@ export function createWorkspaceService(
             if (!windowGroups.has(tab.windowId))
               windowGroups.set(tab.windowId, active(tab.windowId));
             groupId = await windowGroups.get(tab.windowId);
-            const activeSpace = groupSpaceId(group(groupId));
             const tabSpace = state.spaces.find((item) => item.cookieStoreId === tab.cookieStoreId);
-            if (tabSpace && tabSpace.id !== activeSpace) groupId = groupsInSpace(state.groups, tabSpace.id)[0]?.id || "inbox";
-            else if (!tabSpace && activeSpace !== DEFAULT_SPACE_ID) groupId = "inbox";
+            const actualSpace = tabSpace?.id || DEFAULT_SPACE_ID;
+            if (groupSpaceId(group(groupId)) !== actualSpace) groupId = groupsInSpace(state.groups, actualSpace)[0]?.id || "inbox";
             try {
               await api.sessions.setTabValue(tab.id, TAG, groupId);
             } catch {
@@ -281,7 +280,7 @@ export function createWorkspaceService(
     return scanCache;
   }
   async function firefoxSpaces() {
-    if (!state.settings.experimentalSpaces || !browserApi.contextualIdentities?.query ||
+    if (!browserApi.contextualIdentities?.query ||
         !await browserApi.permissions?.contains({ permissions: ["cookies"] })) return [];
     const identities = await browserApi.contextualIdentities.query({});
     const signature = JSON.stringify(identities.map(({ cookieStoreId, name, icon }) => [cookieStoreId, name, icon]));
@@ -290,11 +289,7 @@ export function createWorkspaceService(
   }
   async function snapshot(windowId) {
     const identities = await firefoxSpaces();
-    if (!state.settings.experimentalSpaces && groupSpaceId(group(await active(windowId))) !== DEFAULT_SPACE_ID) {
-      const previous = await api.sessions.getWindowValue(windowId, "tavvy:space-group:" + DEFAULT_SPACE_ID);
-      const target = groupsInSpace(state.groups, DEFAULT_SPACE_ID).find((item) => item.id === previous) || group("inbox");
-      await activate(windowId, target.id);
-    }
+    const spacePermission = !!(browserApi.contextualIdentities?.query && await browserApi.permissions?.contains({ permissions: ["cookies"] }));
     const records = await scan();
     let sorted = sortedWindows.get(windowId);
     if (!sorted || sorted.version !== scanOrderVersion || sorted.groupPinnedTabs !== !!state.settings?.groupPinnedTabs) {
@@ -311,9 +306,8 @@ export function createWorkspaceService(
     const activeGroupId = await active(windowId);
     const selectedEmptySpace = await emptySpace(windowId);
     const activeSpaceId = selectedEmptySpace || groupSpaceId(group(activeGroupId));
-    const groups = groupsInSpace(state.groups, activeSpaceId);
-    const groupIds = new Set(groups.map((item) => item.id));
-    const tabs = sorted.ids.map((id) => recordsById.get(id)).filter((tab) => tab && groupIds.has(tab.groupId));
+    const groups = state.groups;
+    const tabs = sorted.ids.map((id) => recordsById.get(id)).filter(Boolean);
     await toolbar?.setDynamic?.(state.settings?.dynamicIcon !== false).catch(console.error);
     await toolbar?.setStyle?.(state.settings.markerStyle).catch(console.error);
     await toolbar?.update(windowId, group(activeGroupId)).catch(console.error);
@@ -321,11 +315,12 @@ export function createWorkspaceService(
       revision,
       groups,
       tabs,
-      activeGroupId: selectedEmptySpace ? null : activeGroupId,
+      activeGroupId,
       activeSpaceId,
+      spacePermission,
       spaces: [{ id: DEFAULT_SPACE_ID, name: "" }, ...state.spaces.map(({ id, name, icon, cookieStoreId }) => {
         const identity = identities.find((item) => item.cookieStoreId === cookieStoreId);
-        return { id, name: identity?.name || name, icon: spaceIcon(identity?.icon || icon), ...(state.settings.experimentalSpaces && browserApi.contextualIdentities?.query && !identity ? { unavailable: true } : {}) };
+        return { id, name: identity?.name || name, icon: spaceIcon(identity?.icon || icon), ...(spacePermission && !identity ? { unavailable: true } : {}) };
       }), ...identities.filter((item) => !state.spaces.some((space) => space.cookieStoreId === item.cookieStoreId)).map((item) => ({ id: `container:${item.cookieStoreId}`, name: item.name, icon: spaceIcon(item.icon), firefoxContainer: true }))],
       settings: normalizeSettings(state.settings),
       importReport: state.importReport,
@@ -454,7 +449,9 @@ export function createWorkspaceService(
     if (job?.complete) job = null;
     const resuming = !!job;
     if (!job) {
-      state.groups = [state.groups.find((group) => group.id === "inbox") || { id: "inbox", title: "Основная", color: colors[0], parentId: null }];
+      const inbox = state.groups.find((group) => group.id === "inbox") || { id: "inbox", title: "Основная", color: colors[0], parentId: null };
+      delete inbox.spaceId;
+      state.groups = [inbox];
       state.spaces = [];
       state.archive = [];
       state.imports = {};
@@ -598,11 +595,22 @@ export function createWorkspaceService(
       return snapshot(windowId);
     }
     if (type === "importStg") {
-      if (groupSpaceId(group(await active(windowId))) !== DEFAULT_SPACE_ID) throw new Error("Импорт Simple Tab Groups доступен только в основном пространстве");
       await importStg(command.backup, windowId);
       return snapshot(windowId);
     }
-    if (type === "createSpace" || type === "recoverSpace") {
+    if (type === "createContainer") {
+      const name = typeof command.name === "string" ? command.name.trim() : "";
+      if (!name || name.length > 100) throw new Error("Введите название пространства");
+      group(command.groupId);
+      if (!browserApi.contextualIdentities?.create || !await browserApi.permissions?.contains({ permissions: ["cookies"] }))
+        throw new Error("Для пространства необходимо разрешение на контейнеры Firefox");
+      if (state.spaces.length >= 100) throw new Error("Слишком много пространств");
+      const targetTabs = (await scan()).filter((tab) => tab.groupId === command.groupId && (!tab.pinned || state.settings?.groupPinnedTabs));
+      if (targetTabs.some((tab) => !/^(https?:|about:(blank|newtab)$)/i.test(tab.url))) throw new Error("Некоторые вкладки нельзя перенести в контейнер");
+      const identity = await browserApi.contextualIdentities.create({ name, color: "blue", icon: "fingerprint" });
+      try { return await execute({ type: "moveGroupToSpace", groupId: command.groupId, spaceId: `container:${identity.cookieStoreId}` }, windowId); }
+      catch { throw new Error("Контейнер создан, но группу не удалось переместить. Проверьте вкладки и попробуйте снова."); }
+    } else if (type === "createSpace" || type === "recoverSpace") {
       throw new Error("Создание контейнеров Firefox в Tavvy недоступно");
     } else if (type === "setSpaceIcon") {
       if (command.spaceId === DEFAULT_SPACE_ID || !SPACE_ICONS.includes(command.icon)) throw new Error("Недопустимая иконка пространства");
@@ -675,15 +683,15 @@ export function createWorkspaceService(
         .slice(0, 100);
       if (!title) throw new Error("Введите название группы");
       const previouslyEmpty = await emptySpace(windowId);
-      const currentSpaceId = previouslyEmpty || groupSpaceId(group(await active(windowId)));
-      if (command.parentId && groupSpaceId(group(command.parentId)) !== currentSpaceId) throw new Error("Нельзя переместить группу в другое пространство");
+      const groupSpace = command.spaceId || (command.parentId ? groupSpaceId(group(command.parentId)) : DEFAULT_SPACE_ID);
+      space(groupSpace);
       const newId = id();
       state.groups.push({
         id: newId,
         title,
         color: colors[state.groups.length % colors.length],
         parentId: command.parentId || null,
-        ...(currentSpaceId === DEFAULT_SPACE_ID ? {} : { spaceId: currentSpaceId }),
+        ...(groupSpace === DEFAULT_SPACE_ID ? {} : { spaceId: groupSpace }),
       });
       if (previouslyEmpty) await activate(windowId, newId);
     } else if (type === "clearGroup" || type === "reloadGroup") {
@@ -703,7 +711,6 @@ export function createWorkspaceService(
         for (const tab of targets) { await api.tabs.remove(tab.id); forgetKnown(tab.id); }
       }
     } else if (type === "moveGroupToSpace") {
-      if (!state.settings.experimentalSpaces || command.groupId === "inbox") throw new Error("Группу нельзя переместить в контейнер");
       const moving = group(command.groupId);
       const sourceSpace = groupSpaceId(moving);
       const identities = await firefoxSpaces();
@@ -714,13 +721,10 @@ export function createWorkspaceService(
       if (command.spaceId !== DEFAULT_SPACE_ID && !identity) throw new Error("Контейнер пространства недоступен");
       if (destination?.id === sourceSpace || (command.spaceId === DEFAULT_SPACE_ID && sourceSpace === DEFAULT_SPACE_ID)) return snapshot(windowId);
       const movedIds = new Set([moving.id]);
-      let changed = true;
-      while (changed) { changed = false; for (const item of state.groups) if (movedIds.has(item.parentId) && !movedIds.has(item.id)) { movedIds.add(item.id); changed = true; } }
       const records = await scan();
       const targets = records.filter((tab) => movedIds.has(tab.groupId) && (!tab.pinned || state.settings?.groupPinnedTabs));
       if (targets.some((tab) => !/^(https?:|about:(blank|newtab)$)/i.test(tab.url))) throw new Error("Некоторые вкладки нельзя перенести в контейнер");
       let fallback = groupsInSpace(state.groups, sourceSpace).find((item) => !movedIds.has(item.id));
-      const sourceWillBeEmpty = !fallback;
       fallback ||= group("inbox");
       if (!destination && identity) {
         if (state.spaces.length >= 100) throw new Error("Слишком много пространств");
@@ -730,24 +734,21 @@ export function createWorkspaceService(
       try {
         for (const tab of targets) {
           const copy = await api.tabs.create({ windowId: tab.windowId, active: false, pinned: !!(tab.pinned || tab.managedPinned), ...(tab.url === "about:newtab" ? {} : { url: tab.url }), ...(identity ? { cookieStoreId: identity.cookieStoreId } : { cookieStoreId: "firefox-default" }) });
-          created.push(copy);
+          created.push({ copy, original: tab });
           await api.sessions.setTabValue(copy.id, TAG, tab.groupId);
         }
-      } catch (error) { for (const tab of created) await api.tabs.remove(tab.id).catch(() => {}); throw error; }
-      const emptiedWindows = [];
-      for (const affectedWindow of new Set([...records.map((tab) => tab.windowId), windowId]))
-        if (movedIds.has(await active(affectedWindow)) || targets.some((tab) => tab.windowId === affectedWindow && tab.active)) {
-          if (sourceWillBeEmpty && movedIds.has(await active(affectedWindow))) emptiedWindows.push(affectedWindow);
-          await activate(affectedWindow, fallback.id);
-        }
+        for (const { copy, original } of created) if (original.active) await api.tabs.update(copy.id, { active: true });
+      } catch (error) {
+        for (const { original } of created) if (original.active) await api.tabs.update(original.id, { active: true }).catch(() => {});
+        for (const { copy } of created) await api.tabs.remove(copy.id).catch(() => {});
+        throw error;
+      }
       for (const tab of records.filter((item) => movedIds.has(item.groupId) && item.pinned && !state.settings?.groupPinnedTabs))
         await api.sessions.setTabValue(tab.id, TAG, fallback.id);
       if (destination && !state.spaces.includes(destination)) state.spaces.push(destination);
-      moving.parentId = null;
       for (const item of state.groups) if (movedIds.has(item.id)) { if (destination) item.spaceId = destination.id; else delete item.spaceId; }
       for (const tab of targets) { await api.tabs.remove(tab.id); forgetKnown(tab.id); }
       for (const affectedWindow of new Set(targets.map((tab) => tab.windowId))) await visibility(affectedWindow, await active(affectedWindow));
-      for (const affectedWindow of emptiedWindows) await api.sessions.setWindowValue(affectedWindow, EMPTY_SPACE, sourceSpace);
     } else if (type === "renameGroup") {
       if (typeof command.title !== "string" || command.title.length > 100 || !command.title.trim())
         throw new Error("Введите название группы");
@@ -829,8 +830,7 @@ export function createWorkspaceService(
       const moving = group(command.groupId);
       const parentId = state.settings?.nestedGroups === false ? moving.parentId : command.parentId;
       let parent = parentId ? group(parentId) : null;
-      if (parent && groupSpaceId(parent) !== groupSpaceId(moving)) throw new Error("Нельзя переместить группу в другое пространство");
-      if (command.beforeId && groupSpaceId(group(command.beforeId)) !== groupSpaceId(moving)) throw new Error("Нельзя переместить группу в другое пространство");
+      if (command.beforeId) group(command.beforeId);
       while (parent) {
         if (parent.id === moving.id)
           throw new Error("Нельзя вложить группу в саму себя");
@@ -909,16 +909,6 @@ export function createWorkspaceService(
       }
       state.settings = next;
       await save();
-      if (previousSettings.experimentalSpaces && !next.experimentalSpaces) {
-        for (const affectedWindowId of new Set((await scan()).map((tab) => tab.windowId))) {
-          await api.sessions.setWindowValue(affectedWindowId, EMPTY_SPACE, null);
-          const currentGroup = await active(affectedWindowId);
-          if (groupSpaceId(group(currentGroup)) === DEFAULT_SPACE_ID) continue;
-          const previous = await api.sessions.getWindowValue(affectedWindowId, "tavvy:space-group:" + DEFAULT_SPACE_ID);
-          const target = groupsInSpace(state.groups, DEFAULT_SPACE_ID).find((item) => item.id === previous) || group("inbox");
-          await activate(affectedWindowId, target.id);
-        }
-      }
       if (wasGrouped !== next.groupPinnedTabs || previousSettings.nestedGroups !== next.nestedGroups || previousSettings.nestedTabsVisibility !== next.nestedTabsVisibility) {
         const records = await scan();
         for (const id of new Set(records.map((tab) => tab.windowId))) {

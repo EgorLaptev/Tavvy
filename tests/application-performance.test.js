@@ -238,86 +238,78 @@ test("closing the popup during group dragging clears drag state without moving g
   } finally { f.close(); }
 });
 
-test("experimental spaces can be enabled, created and switched in the popup", async () => {
+test("group container assignment keeps every group visible", async () => {
   const f = await page(10, 2, ({ api }) => {
     api.permissions = { request: async () => true, contains: async () => true };
-    const identity = { name: "Work", cookieStoreId: "firefox-container-1", icon: "fingerprint" };
-    api.contextualIdentities = {
-      query: async () => [identity],
-      get: async (cookieStoreId) => ({ cookieStoreId }),
-      update: async (cookieStoreId, details) => Object.assign(identity, details),
-    };
+    const identity = { name: "Work", cookieStoreId: "firefox-container-1", icon: "briefcase" };
+    api.contextualIdentities = { query: async () => [identity], get: async () => identity, update: async (_, details) => Object.assign(identity, details) };
   });
   try {
     const { document: doc, dom } = f;
-    assert.equal(doc.querySelector(".spaces-bar").hidden, true);
-    doc.querySelector(".settings-button").click();
-    doc.querySelector(".experimental-spaces").click();
-    await pause(100);
-    assert.equal(doc.querySelector(".experimental-spaces").checked, true);
-    doc.querySelector(".settings-back").click();
-    assert.equal(doc.querySelector(".spaces-bar").hidden, false);
-    const trigger = doc.querySelector(".spaces-trigger");
-    trigger.click();
-    assert.equal(trigger.getAttribute("aria-expanded"), "true");
-    assert.equal(doc.querySelector(".spaces-menu").hidden, false);
-    assert.equal(doc.querySelector(".spaces-current").textContent, "Default");
-    assert.equal(doc.querySelector(".spaces-trigger .spaces-icon").hidden, true);
-    assert.equal(doc.querySelector('.spaces-option-row .spaces-icon-default'), null);
-    trigger.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
-    assert.equal(doc.activeElement.dataset.spaceId, "default");
-    doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-    assert.equal(trigger.getAttribute("aria-expanded"), "false");
-    assert.equal(doc.activeElement, trigger);
-    trigger.click();
-    assert.equal(doc.querySelector(".spaces-add"), null);
-    doc.querySelector('[data-space-id="container:firefox-container-1"]').click();
-    await pause(150);
-    assert.equal(doc.querySelector(".spaces-current").textContent, "Work");
-    assert.ok(doc.querySelector(".spaces-trigger .spaces-icon-container"));
-    assert.equal(doc.querySelectorAll(".groups > .group").length, 0);
-    trigger.click();
-    assert.equal(doc.querySelector('[data-space-id="default"]').getAttribute("role"), "menuitemradio");
-    doc.querySelector('[data-space-id="default"]').click();
-    await pause(150);
+    dom.window.confirm = () => true;
+    assert.equal(doc.querySelector(".spaces-bar"), null);
+    assert.equal(doc.querySelector(".experimental-spaces"), null);
+    const group = doc.querySelector('[data-group-id="g1"]');
+    assert.equal(group.querySelector(".group-space-label").hidden, true);
+    group.querySelector(".group-controls").dispatchEvent(new dom.window.MouseEvent("contextmenu", { bubbles: true }));
+    doc.querySelector(".group-context-move").click();
+    await pause(20);
+    const work = [...doc.querySelectorAll('.group-context-submenu [role="menuitem"]')].find((item) => item.textContent === "Work");
+    assert.ok(work.parentElement.querySelector(".spaces-icon-container"));
+    work.click();
+    doc.querySelector(".group-container-submit").click();
+    await pause(180);
     assert.equal(doc.querySelectorAll(".groups > .group").length, 2);
-    const { snapshot } = await f.api.runtime.sendMessage({ channel: "tavvy-command", windowId: 1, command: { type: "snapshot" } });
-    assert.equal(snapshot.activeSpaceId, "default");
-    trigger.click();
-    assert.equal(doc.querySelectorAll(".spaces-delete").length, 0);
-    doc.querySelector(".spaces-icon-button").click();
-    assert.equal(doc.querySelectorAll(".spaces-icon-choice").length, 13);
-    doc.querySelector('.spaces-icon-choice[aria-label$="briefcase"]').click();
-    await pause(150);
-    assert.match(doc.querySelector(".spaces-icon-button .spaces-icon").style.maskImage, /briefcase/);
-    trigger.click();
-    doc.querySelector(".settings-button").click();
-    doc.querySelector(".experimental-spaces").click();
-    await pause(150);
-    doc.querySelector(".settings-back").click();
-    assert.equal(doc.querySelector(".spaces-bar").hidden, true);
-    const disabled = await f.api.runtime.sendMessage({ channel: "tavvy-command", windowId: 1, command: { type: "snapshot" } });
-    assert.equal(disabled.snapshot.settings.experimentalSpaces, false);
-    assert.ok(disabled.snapshot.spaces.some((item) => item.name === "Work"));
-    doc.querySelector(".settings-button").click();
-    doc.querySelector(".experimental-spaces").click();
-    await pause(150);
-    doc.querySelector(".settings-back").click();
-    assert.equal(doc.querySelector(".spaces-bar").hidden, false);
-    trigger.click();
-    assert.ok([...doc.querySelectorAll(".spaces-option")].some((item) => item.textContent === "Work"));
+    const icon = group.querySelector(".group-space-label");
+    assert.equal(icon.hidden, false);
+    assert.equal(icon.title, "Work");
+    assert.equal(icon.textContent, "");
+    assert.match(icon.querySelector(".spaces-icon").style.maskImage, /briefcase/);
+    assert.ok(icon.nextElementSibling.classList.contains("group-toggle"));
+    icon.click();
+    assert.equal(doc.querySelector(".group-context-submenu").hidden, false);
+    assert.ok([...doc.querySelectorAll('.group-context-submenu [role="menuitem"]')].some((item) => item.textContent === "None"));
+    doc.querySelector(".group-container-edit").click();
+    assert.equal(doc.querySelectorAll(".group-container-icon-choice").length, 13);
+    doc.querySelector('.group-container-icon-choice[title="tree"]').click();
+    await pause(100);
+    assert.match(icon.querySelector(".spaces-icon").style.maskImage, /tree/);
+    assert.equal(doc.querySelector('[data-group-id="inbox"] .group-space-label').hidden, true);
+    const snapshot = await f.service.dispatch({ type: "snapshot" }, 1);
+    assert.equal(snapshot.groups.length, 2);
+    assert.equal(snapshot.groups.find((item) => item.id === "g1").spaceId, snapshot.spaces.find((item) => item.name === "Work").id);
   } finally { f.close(); }
 });
 
-test("denied container permission leaves experimental spaces disabled", async () => {
-  const f = await page(2, 2, ({ api }) => { api.permissions = { request: async () => false }; });
+test("denied container permission leaves groups unchanged", async () => {
+  const f = await page(2, 2, ({ api }) => {
+    api.permissions = { request: async () => false, contains: async () => false };
+    api.contextualIdentities = { query: async () => [] };
+  });
   try {
-    f.document.querySelector(".settings-button").click();
-    f.document.querySelector(".experimental-spaces").click();
+    const doc = f.document;
+    doc.querySelector('[data-group-id="g1"] .group-controls').dispatchEvent(new f.dom.window.MouseEvent("contextmenu", { bubbles: true }));
+    doc.querySelector(".group-context-move").click();
     await pause(30);
-    assert.equal(f.document.querySelector(".experimental-spaces").checked, false);
-    assert.equal(f.document.querySelector(".spaces-permission-notice").hidden, false);
-    assert.equal(f.document.querySelector(".spaces-bar").hidden, true);
+    assert.match(doc.querySelector(".extension-status").textContent, /access to Firefox containers/i);
+    assert.equal((await f.service.dispatch({ type: "snapshot" }, 1)).groups.find((group) => group.id === "g1").spaceId, undefined);
+  } finally { f.close(); }
+});
+
+test("container access can be granted from the group action", async () => {
+  let granted = false;
+  const identity = { name: "Work", cookieStoreId: "firefox-container-1", icon: "briefcase" };
+  const f = await page(2, 2, ({ api }) => {
+    api.permissions = { request: async () => { granted = true; return true; }, contains: async () => granted };
+    api.contextualIdentities = { query: async () => [identity], get: async () => identity };
+  });
+  try {
+    const doc = f.document;
+    doc.querySelector('[data-group-id="g1"] .group-controls').dispatchEvent(new f.dom.window.MouseEvent("contextmenu", { bubbles: true }));
+    doc.querySelector(".group-context-move").click();
+    await pause(100);
+    assert.equal(granted, true);
+    assert.ok([...doc.querySelectorAll('.group-context-submenu [role="menuitem"]')].some((item) => item.textContent === "Work"));
   } finally { f.close(); }
 });
 

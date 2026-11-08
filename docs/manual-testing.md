@@ -40,19 +40,17 @@ for truncation and overflow checks.
 - Open theme and language screens and switch between them. Check that setting
   labels and descriptions remain on one line, long descriptions truncate, and
   selected values remain aligned by the arrow. Release names stay in English;
-  the Default space label follows the selected language.
-- Enable experimental spaces and grant the optional permission. Verify the
-  compact switcher lists existing Firefox containers with their current names
-  and icons. Select a container and create a tab; verify the Firefox container
-  indicator and account isolation. Existing tabs are not automatically moved.
-- Change a container icon from its marker and check the result in the switcher
-  and Firefox. This changes the Firefox container itself, so use a test container.
-- Disable spaces while a container is active: the switcher disappears and the
-  window returns to Default. Re-enable spaces and check the groups are retained.
-- With disposable containers only, remove a linked container in Firefox and
-  select its unavailable space. Reconnect it to an unassigned container and
-  verify groups remain and new tabs use the selected container. Existing tabs
-  and the removed container's sign-in state are not transferred.
+  the None container label follows the selected language.
+- Verify all groups are visible together without a global space switcher.
+  Assign a container from a group’s context menu and grant the optional
+  permission when requested. Check that only the chosen group changes and
+  its container icon appears immediately before the tab counter; hover the icon to verify its name and click it to open the picker. Groups without a container have no icon and use the group menu.
+- With disposable test tabs and containers, change the container of a group
+  with subgroups. Confirm that its tabs reopen in the chosen container while
+  subgroups keep their own assignments and remain nested.
+- Create a container from the group picker, change its icon and check the result in
+  Firefox. With a disposable container, remove a linked identity and reconnect
+  it using the affected group’s menu. Check that groups and tabs remain.
 - Export a version 2 backup in the test profile. Restore it only when an
   unassigned container with the same name exists; missing or duplicate matches
   must fail without importing groups or tabs. Backups exclude cookies and

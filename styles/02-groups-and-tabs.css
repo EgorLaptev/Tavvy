@@ -335,3 +335,20 @@ html[data-marker-style="letters"] .group-context-marker::after { content: attr(d
 html[data-marker-style="letters2"] .group-context-marker::after { content: attr(data-label2); font-size: 11px; }
 
 .group-context-root-icon { width: 10px; height: 10px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.group-space-label { flex: none; display: grid; place-items: center; width: 26px; padding: 0; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
+.group-space-label[hidden] { display: none; }
+.group-space-label:hover, .group-space-label:focus-visible { background: #ffffff14; }
+.light-theme .group-space-label:hover, .light-theme .group-space-label:focus-visible { background: #0000000d; }
+.group-container-row { display: flex; align-items: center; min-width: 0; }
+.group-container-row .group-context-item { flex: 1; min-width: 0; }
+.group-container-edit, .group-container-icon-choice { flex: none; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 5px; background: transparent; cursor: pointer; }
+.group-container-edit:hover, .group-container-edit:focus-visible, .group-container-icon-choice:hover, .group-container-icon-choice:focus-visible, .group-container-icon-choice[aria-pressed="true"] { background: #ffffff18; }
+.light-theme .group-container-edit:hover, .light-theme .group-container-edit:focus-visible, .light-theme .group-container-icon-choice:hover, .light-theme .group-container-icon-choice:focus-visible, .light-theme .group-container-icon-choice[aria-pressed="true"] { background: #00000012; }
+.group-container-icon-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; padding: 4px; }
+.group-container-form { display: grid; gap: 6px; padding: 4px; }
+.group-container-name { width: 100%; min-width: 0; padding: 6px; border: 1px solid #555; border-radius: 5px; background: transparent; color: inherit; font: inherit; font-size: 12px; }
+.group-container-warning { margin: 4px 8px; color: #aaa; font-size: 11px; line-height: 1.35; }
+.light-theme .group-container-warning { color: #555; }
+.group-container-submit { color: #5797f4; }
+.group-context-item.is-current { font-weight: 600; }

@@ -16,7 +16,6 @@ export function mountSettings({
   onBackupStatus,
   appVersion,
   onLanguageChange,
-  requestSpacesPermission,
 }) {
   const { listen, dispose } = createEventScope();
   const discardInput = document.querySelector(
@@ -28,8 +27,6 @@ export function mountSettings({
   const nestedInput = document.querySelector('input[aria-label="Вложенные группы"]');
   const nestedVisibility = document.querySelector('select[aria-label="Показывать вкладки"]');
   const nestedVisibilityRow = document.querySelector(".nested-visibility-setting");
-  const experimentalSpaces = document.querySelector(".experimental-spaces");
-  const spacesPermissionNotice = document.querySelector(".spaces-permission-notice");
   const dynamicIconInput = document.querySelector('input[aria-label="Динамическая иконка"]');
   const backupInput = document.querySelector('input[aria-label="Автоматические копии"]');
   const backupFrequency = document.querySelector('select[aria-label="Частота копирования"]');
@@ -183,7 +180,6 @@ export function mountSettings({
     nestedVisibility.value = savedSettings.nestedTabsVisibility;
     nestedVisibilityRow.hidden = !nestedInput.checked;
     dynamicIconInput.checked = savedSettings.dynamicIcon !== false;
-    experimentalSpaces.checked = savedSettings.experimentalSpaces;
     backupInput.checked = Boolean(savedSettings.backupEnabled);
     backupFrequency.value = savedSettings.backupFrequency || "fourHours";
     backupFolder.value = savedSettings.backupFolder || "Tavvy";
@@ -261,20 +257,6 @@ export function mountSettings({
   });
   listen(nestedVisibility, "change", () => {
     savedSettings.nestedTabsVisibility = nestedVisibility.value;
-    saveSettings();
-  });
-  listen(experimentalSpaces, "change", async () => {
-    if (experimentalSpaces.checked) {
-      let granted = false;
-      try { granted = await requestSpacesPermission?.(); } catch {}
-      if (!granted) {
-        experimentalSpaces.checked = false;
-        spacesPermissionNotice.hidden = false;
-        return;
-      }
-    }
-    spacesPermissionNotice.hidden = true;
-    savedSettings.experimentalSpaces = experimentalSpaces.checked;
     saveSettings();
   });
   listen(dynamicIconInput, "change", () => {

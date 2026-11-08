@@ -97,7 +97,7 @@ test("repository migrates legacy settings and handles corrupted JSON", () => {
   values.set("tavvy:settings:v1", "{");
   assert.equal(repository.read().animations, true);
 });
-test("preview shows mock containers and switches without Firefox APIs", async () => {
+test("preview shows all groups and assigns containers without a global switcher", async () => {
   const dom = new JSDOM(await readFile("index.html", "utf8"), {
     url: "http://localhost", runScripts: "outside-only", pretendToBeVisual: true,
   });
@@ -108,7 +108,7 @@ test("preview shows mock containers and switches without Firefox APIs", async ()
     window.eval(await readFile("dist/app.js", "utf8"));
     await new Promise((resolve) => setTimeout(resolve, 100));
     const doc = window.document;
-    assert.equal(doc.querySelector(".spaces-bar").hidden, false);
+    assert.equal(doc.querySelector(".spaces-bar"), null);
     const projects = doc.querySelector('[data-group-id="group-projects"]');
     assert.equal(projects.querySelector(":scope > .group-controls .group-toggle").getAttribute("aria-expanded"), "true");
     assert.equal(projects.querySelectorAll(":scope > .subgroups > .group").length, 2);
@@ -142,17 +142,20 @@ test("preview shows mock containers and switches without Firefox APIs", async ()
     assert.ok(!submenu.textContent.includes("Ideas & inspiration"));
     window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-    doc.querySelector(".spaces-trigger").click();
-    const work = doc.querySelector('[data-space-id="container:firefox-container-1"]');
-    assert.equal(work.textContent, "Work");
-    assert.match(work.parentElement.querySelector(".spaces-icon").style.maskImage, /data:image/);
+    window.confirm = () => true;
+    projects.querySelector(":scope > .group-controls").dispatchEvent(new window.MouseEvent("contextmenu", { bubbles: true }));
+    groupMenu.querySelector(".group-context-move").click();
+    const work = [...submenu.querySelectorAll('[role="menuitem"]')].find((item) => item.textContent === "Work");
+    assert.ok(work);
     work.click();
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    assert.equal(doc.querySelector(".spaces-current").textContent, "Work");
-    doc.querySelector(".spaces-trigger").click();
-    doc.querySelector('[data-space-id="default"]').click();
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    assert.equal(doc.querySelector(".spaces-current").textContent, "Default");
+    submenu.querySelector(".group-container-submit").click();
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    const spaceIcon = projects.querySelector(":scope > .group-controls .group-space-label");
+    assert.equal(spaceIcon.hidden, false);
+    assert.equal(spaceIcon.title, "Work");
+    assert.match(spaceIcon.querySelector(".spaces-icon").style.maskImage, /data:image/);
+    assert.equal(doc.querySelectorAll(".group").length, 10);
+    assert.equal(doc.querySelector('[data-group-id="group-orbit"] .group-space-label').hidden, true);
   } finally { dom.window.close(); }
 });
 

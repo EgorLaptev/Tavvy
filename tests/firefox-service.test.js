@@ -540,8 +540,8 @@ async function attachTestSpace(f, service, name = "Work") {
   f.api.contextualIdentities.query = async () => [identity];
   const current = await service.dispatch({ type: "snapshot" }, 1);
   await service.dispatch({ type: "saveSettings", settings: { ...current.settings, experimentalSpaces: true } }, 1);
-  await service.dispatch({ type: "activateSpace", spaceId: `container:${identity.cookieStoreId}` }, 1);
-  return service.dispatch({ type: "createGroup", title: name }, 1);
+  const selected = await service.dispatch({ type: "activateSpace", spaceId: `container:${identity.cookieStoreId}` }, 1);
+  return service.dispatch({ type: "createGroup", title: name, spaceId: selected.activeSpaceId }, 1);
 }
 
 test("experimental spaces open new tabs in their container and preserve existing groups", async () => {
@@ -561,21 +561,22 @@ test("experimental spaces open new tabs in their container and preserve existing
   const workTab = snap.tabs.find((tab) => tab.active);
   assert.notEqual(spaceId, "default");
   assert.equal(workTab.cookieStoreId, "firefox-container-1");
-  assert.equal(snap.groups.length, 1);
+  assert.equal(snap.groups.filter((group) => group.spaceId === spaceId).length, 1);
+  assert.ok(snap.groups.some((group) => group.id === "inbox"));
   assert.equal(f.records.find((tab) => tab.id === 1).hidden, true);
-  snap = await service.dispatch({ type: "createGroup", title: "Project" }, 1);
+  snap = await service.dispatch({ type: "createGroup", title: "Project", spaceId }, 1);
   const projectId = snap.groups.find((group) => group.title === "Project").id;
   snap = await service.dispatch({ type: "createTab", groupId: projectId }, 1);
   assert.equal(snap.tabs.find((tab) => tab.active).cookieStoreId, "firefox-container-1");
   snap = await service.dispatch({ type: "activateSpace", spaceId: "default" }, 1);
   assert.equal(snap.activeGroupId, "inbox");
-  assert.equal(snap.groups.some((group) => group.id === workGroup), false);
+  assert.equal(snap.groups.some((group) => group.id === workGroup), true);
   assert.equal(f.records.find((tab) => tab.id === 1).hidden, false);
   await assert.rejects(service.dispatch({ type: "moveTab", tabId: 1, groupId: workGroup }, 1), /пространств/);
   service = f.service();
   snap = await service.dispatch({ type: "activateSpace", spaceId }, 1);
   assert.equal(snap.activeSpaceId, spaceId);
-  assert.equal(snap.groups.length, 2);
+  assert.equal(snap.groups.filter((group) => group.spaceId === spaceId).length, 2);
   snap = await service.dispatch({ type: "setSpaceIcon", spaceId, icon: "briefcase" }, 1);
   assert.equal(snap.spaces.find((item) => item.id === spaceId).icon, "briefcase");
   assert.equal(identities.get("firefox-container-1").icon, "briefcase");
@@ -587,7 +588,7 @@ test("experimental spaces open new tabs in their container and preserve existing
   assert.equal(JSON.stringify(backup).includes("firefox-container-1"), false);
 });
 
-test("disabling spaces returns to Default and keeps space data", async () => {
+test("legacy spaces setting does not hide groups or change the active group", async () => {
   const f = fixture();
   f.api.permissions = { contains: async () => true };
   f.api.contextualIdentities = {
@@ -599,7 +600,7 @@ test("disabling spaces returns to Default and keeps space data", async () => {
   const spaceId = snap.activeSpaceId, groupId = snap.activeGroupId;
   const tabIds = f.records.map((item) => item.id);
   snap = await service.dispatch({ type: "saveSettings", settings: { ...snap.settings, experimentalSpaces: false } }, 1);
-  assert.equal(snap.activeSpaceId, "default");
+  assert.equal(snap.activeSpaceId, spaceId);
   assert.equal(snap.settings.experimentalSpaces, false);
   assert.ok(snap.spaces.some((item) => item.id === spaceId));
   assert.deepEqual(f.records.map((item) => item.id), tabIds);
@@ -608,7 +609,7 @@ test("disabling spaces returns to Default and keeps space data", async () => {
   assert.equal(snap.activeGroupId, groupId);
 });
 
-test("an already disabled space returns to Default on restart", async () => {
+test("legacy disabled space setting preserves the active group after restart", async () => {
   const f = fixture();
   f.api.permissions = { contains: async () => true };
   f.api.contextualIdentities = {
@@ -623,7 +624,7 @@ test("an already disabled space returns to Default on restart", async () => {
   await f.api.storage.local.set(saved);
   service = f.service();
   const snap = await service.dispatch({ type: "snapshot" }, 1);
-  assert.equal(snap.activeSpaceId, "default");
+  assert.equal(snap.activeSpaceId, work.activeSpaceId);
   assert.ok(snap.spaces.some((item) => item.id === work.activeSpaceId));
 });
 
@@ -671,7 +672,7 @@ test("a missing container can be reconnected to an existing unassigned Firefox c
   snap = await service.dispatch({ type: "saveSettings", settings: { ...snap.settings, experimentalSpaces: true } }, 1);
   snap = await service.dispatch({ type: "activateSpace", spaceId: "container:firefox-container-7" }, 1);
   const spaceId = snap.activeSpaceId;
-  snap = await service.dispatch({ type: "createGroup", title: "Project" }, 1);
+  snap = await service.dispatch({ type: "createGroup", title: "Project", spaceId }, 1);
   const groupId = snap.activeGroupId;
   await service.dispatch({ type: "activateSpace", spaceId: "default" }, 1);
   identities.shift();
@@ -728,7 +729,7 @@ test("space backup restores tabs into matching existing containers", async () =>
   addContainers(original, 1);
   const source = original.service();
   let snap = await attachTestSpace(original, source);
-  snap = await source.dispatch({ type: "createGroup", title: "Project" }, 1);
+  snap = await source.dispatch({ type: "createGroup", title: "Project", spaceId: snap.activeSpaceId }, 1);
   const groupId = snap.groups.find((group) => group.title === "Project").id;
   snap = await source.dispatch({ type: "createTab", groupId }, 1);
   const backup = await source.dispatch({ type: "exportBackup" }, 1);
@@ -746,7 +747,8 @@ test("space backup restores tabs into matching existing containers", async () =>
   const importedSpace = state.spaces.find((item) => item.name === "Work");
   const work = await destination.dispatch({ type: "activateSpace", spaceId: importedSpace.id }, 1);
   assert.ok(work.groups.some((group) => group.title === "Project"));
-  assert.ok(work.tabs.every((tab) => tab.cookieStoreId === "firefox-container-50"));
+  const workGroups = new Set(work.groups.filter((group) => group.spaceId === importedSpace.id).map((group) => group.id));
+  assert.ok(work.tabs.filter((tab) => workGroups.has(tab.groupId)).every((tab) => tab.cookieStoreId === "firefox-container-50"));
 });
 
 test("ambiguous backup container names do not modify the workspace", async () => {
@@ -820,7 +822,7 @@ test("each space remembers the last selected group in each window", async () => 
   await service.dispatch({ type: "activateGroup", groupId: personal }, 1);
   snap = await attachTestSpace(f, service);
   const work = snap.activeSpaceId;
-  snap = await service.dispatch({ type: "createGroup", title: "Project" }, 1);
+  snap = await service.dispatch({ type: "createGroup", title: "Project", spaceId: work }, 1);
   const project = snap.groups.find((item) => item.title === "Project").id;
   await service.dispatch({ type: "activateGroup", groupId: project }, 1);
   snap = await service.dispatch({ type: "activateSpace", spaceId: "default" }, 1);
@@ -910,7 +912,7 @@ test("moving a group reopens its tabs in the chosen container", async () => {
   const groupId = snap.groups.find((item) => item.title === "Project").id;
   await service.dispatch({ type: "moveTab", tabId: 2, groupId }, 1);
   snap = await service.dispatch({ type: "moveGroupToSpace", groupId, spaceId: "container:firefox-container-1" }, 1);
-  assert.ok(!snap.groups.some((item) => item.id === groupId));
+  assert.ok(snap.groups.some((item) => item.id === groupId && item.spaceId));
   assert.ok(!f.records.some((item) => item.id === 2));
   assert.ok(f.records.some((item) => item.url === "https://mozilla.org" && item.cookieStoreId === "firefox-container-1"));
   const destination = snap.spaces.find((item) => item.name === "Work");
@@ -933,13 +935,14 @@ test("moving the last group from a container preserves the source space and new 
   await service.dispatch({ type: "saveSettings", settings: { experimentalSpaces: true } }, 1);
   let snap = await service.dispatch({ type: "activateSpace", spaceId: "container:firefox-container-1" }, 1);
   const sourceId = snap.activeSpaceId;
-  assert.equal(snap.groups.length, 0);
-  snap = await service.dispatch({ type: "createGroup", title: "Work" }, 1);
+  assert.equal(snap.groups.filter((item) => item.spaceId === sourceId).length, 0);
+  snap = await service.dispatch({ type: "createGroup", title: "Work", spaceId: sourceId }, 1);
   const movingId = snap.activeGroupId;
   assert.ok(snap.tabs.some((item) => item.groupId === movingId && item.url === "about:newtab"));
   snap = await service.dispatch({ type: "moveGroupToSpace", groupId: movingId, spaceId: "default" }, 1);
-  assert.equal(snap.activeSpaceId, sourceId);
-  assert.equal(snap.groups.length, 0);
+  assert.equal(snap.activeGroupId, movingId);
+  assert.equal(snap.activeSpaceId, "default");
+  assert.equal(snap.groups.filter((item) => item.spaceId === sourceId).length, 0);
   snap = await service.dispatch({ type: "activateSpace", spaceId: "default" }, 1);
   assert.ok(snap.groups.some((item) => item.id === movingId));
   assert.ok(snap.tabs.some((item) => item.groupId === movingId && item.url === "about:newtab"));
@@ -955,22 +958,22 @@ test("empty containers remain selectable after deleting their last group and in 
   await service.dispatch({ type: "saveSettings", settings: { experimentalSpaces: true } }, 1);
   let snap = await service.dispatch({ type: "activateSpace", spaceId: "container:firefox-container-1" }, 1);
   const spaceId = snap.activeSpaceId;
-  assert.deepEqual(snap.groups, []);
-  snap = await service.dispatch({ type: "createGroup", title: "Only group" }, 1);
+  assert.equal(snap.groups.filter((item) => item.spaceId === spaceId).length, 0);
+  snap = await service.dispatch({ type: "createGroup", title: "Only group", spaceId }, 1);
   snap = await service.dispatch({ type: "deleteGroup", groupId: snap.activeGroupId }, 1);
   assert.equal(snap.activeSpaceId, spaceId);
-  assert.deepEqual(snap.groups, []);
+  assert.equal(snap.groups.filter((item) => item.spaceId === spaceId).length, 0);
   service = f.service();
   snap = await service.dispatch({ type: "snapshot" }, 1);
   assert.equal(snap.activeSpaceId, spaceId);
-  assert.deepEqual(snap.groups, []);
+  assert.equal(snap.groups.filter((item) => item.spaceId === spaceId).length, 0);
   const backup = await service.dispatch({ type: "exportBackup" }, 1);
   assert.ok(backup.spaces.some((item) => item.id === spaceId));
   assert.ok(!backup.groups.some((item) => item.spaceId === spaceId));
   await service.dispatch({ type: "activateSpace", spaceId: "default" }, 1);
   snap = await service.dispatch({ type: "activateSpace", spaceId }, 1);
   assert.equal(snap.activeSpaceId, spaceId);
-  assert.deepEqual(snap.groups, []);
+  assert.equal(snap.groups.filter((item) => item.spaceId === spaceId).length, 0);
 });
 
 
@@ -995,4 +998,102 @@ test("pinning a tab respects grouped and global pinned-tab behavior", async () =
     }
     await assert.rejects(service.dispatch({ type: "pinTab", tabId: 4 }, 1), /другом окне/);
   }
+});
+
+
+test("assigning a container changes only the selected group and preserves mixed-space hierarchy in backups", async () => {
+  const f = fixture();
+  const identity = { name: "Work", cookieStoreId: "firefox-container-1", icon: "briefcase" };
+  f.api.permissions = { contains: async () => true };
+  f.api.contextualIdentities = { query: async () => [identity], get: async () => identity };
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "Parent" }, 1);
+  const parent = snap.groups.find((item) => item.title === "Parent").id;
+  snap = await service.dispatch({ type: "createGroup", title: "Child", parentId: parent }, 1);
+  const child = snap.groups.find((item) => item.title === "Child").id;
+  await service.dispatch({ type: "moveTab", tabId: 2, groupId: child }, 1);
+  await service.dispatch({ type: "createTab", groupId: parent }, 1);
+  snap = await service.dispatch({ type: "moveGroupToSpace", groupId: parent, spaceId: "container:firefox-container-1" }, 1);
+  const work = snap.spaces.find((item) => item.name === "Work");
+  assert.equal(snap.groups.find((item) => item.id === parent).spaceId, work.id);
+  assert.equal(snap.groups.find((item) => item.id === child).spaceId, undefined);
+  assert.equal(snap.groups.find((item) => item.id === child).parentId, parent);
+  assert.equal(snap.activeGroupId, parent);
+  assert.ok(snap.tabs.some((item) => item.groupId === parent && item.cookieStoreId === identity.cookieStoreId));
+  assert.ok(snap.tabs.some((item) => item.id === 2 && item.groupId === child));
+  snap = await service.dispatch({ type: "createGroup", title: "New root" }, 1);
+  assert.equal(snap.groups.find((item) => item.title === "New root").spaceId, undefined);
+  const backup = await service.dispatch({ type: "exportBackup" }, 1);
+  const restored = fixture();
+  restored.api.permissions = { contains: async () => true };
+  restored.api.contextualIdentities = { query: async () => [identity], get: async () => identity };
+  const destination = restored.service();
+  const result = await destination.dispatch({ type: "importBackup", backup }, 1);
+  const restoredParent = result.groups.find((item) => item.title === "Parent");
+  const restoredChild = result.groups.find((item) => item.title === "Child");
+  assert.equal(restoredChild.parentId, restoredParent.id);
+  assert.ok(restoredParent.spaceId);
+  assert.equal(restoredChild.spaceId, undefined);
+});
+
+test("failed container reassignment preserves the original group and tabs", async () => {
+  const f = fixture();
+  const identity = { name: "Work", cookieStoreId: "firefox-container-1" };
+  f.api.permissions = { contains: async () => true };
+  f.api.contextualIdentities = { query: async () => [identity], get: async () => identity };
+  const create = f.api.tabs.create;
+  let attempts = 0;
+  f.api.tabs.create = async (options) => { if (options.cookieStoreId && ++attempts === 2) throw new Error("create failed"); return create(options); };
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "Parent" }, 1);
+  const groupId = snap.groups.find((item) => item.title === "Parent").id;
+  await service.dispatch({ type: "moveTab", tabId: 2, groupId }, 1);
+  await service.dispatch({ type: "createTab", groupId }, 1);
+  const before = f.records.filter((item) => item.windowId === 1).map((item) => item.id).sort();
+  await assert.rejects(service.dispatch({ type: "moveGroupToSpace", groupId, spaceId: "container:firefox-container-1" }, 1), /create failed/);
+  snap = await service.dispatch({ type: "snapshot" }, 1);
+  assert.equal(snap.groups.find((item) => item.id === groupId).spaceId, undefined);
+  assert.deepEqual(f.records.filter((item) => item.windowId === 1).map((item) => item.id).sort(), before);
+});
+
+
+test("a new Firefox container can be created for any group, including Main", async () => {
+  const f = fixture();
+  const identities = [];
+  f.api.permissions = { contains: async () => true };
+  f.api.contextualIdentities = {
+    query: async () => structuredClone(identities),
+    get: async (store) => identities.find((item) => item.cookieStoreId === store),
+    create: async (details) => { const result = { ...details, cookieStoreId: "firefox-container-8" }; identities.push(result); return result; },
+  };
+  const service = f.service();
+  await service.dispatch({ type: "createGroup", title: "Other" }, 1);
+  const snap = await service.dispatch({ type: "createContainer", groupId: "inbox", name: "Research" }, 1);
+  const assigned = snap.spaces.find((item) => item.name === "Research");
+  assert.ok(assigned);
+  assert.equal(snap.groups.find((item) => item.id === "inbox").spaceId, assigned.id);
+  assert.ok(snap.tabs.some((tab) => tab.groupId === "inbox" && tab.cookieStoreId === "firefox-container-8"));
+  assert.equal(snap.groups.find((item) => item.title === "Other").spaceId, undefined);
+  const external = await f.api.tabs.create({ windowId: 1, active: false, url: "https://new.example" });
+  service.invalidate({ type: "created", tabId: external.id });
+  const next = await service.dispatch({ type: "snapshot" }, 1);
+  assert.equal(next.groups.find((item) => item.id === next.tabs.find((tab) => tab.id === external.id).groupId).title, "Other");
+  const backup = await service.dispatch({ type: "exportBackup" }, 1);
+  const { parseTavvyBackup } = await import("../src/domain/tavvy-backup.js");
+  assert.equal(parseTavvyBackup(backup).groups.find((item) => item.id === "inbox").spaceId, assigned.id);
+});
+
+test("container creation validates permission and unsafe tabs before creating an identity", async () => {
+  const f = fixture();
+  let created = 0;
+  f.api.permissions = { contains: async () => false };
+  f.api.contextualIdentities = { query: async () => [], create: async () => { created++; } };
+  let service = f.service();
+  await assert.rejects(service.dispatch({ type: "createContainer", groupId: "inbox", name: "Work" }, 1), /разрешение/);
+  assert.equal(created, 0);
+  f.api.permissions.contains = async () => true;
+  f.records[0].url = "about:addons";
+  service = f.service();
+  await assert.rejects(service.dispatch({ type: "createContainer", groupId: "inbox", name: "Work" }, 1), /нельзя перенести/);
+  assert.equal(created, 0);
 });

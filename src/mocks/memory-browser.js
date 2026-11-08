@@ -174,6 +174,14 @@ export function createMemoryBrowser({
     };
     api.contextualIdentities = {
       async query() { return structuredClone(identities); },
+      async create({ name, color, icon }) {
+        const used = new Set(identities.map((item) => item.cookieStoreId));
+        let number = 1;
+        while (used.has(`firefox-container-${number}`)) number++;
+        const identity = { name, color, icon, cookieStoreId: `firefox-container-${number}` };
+        identities.push(identity);
+        return structuredClone(identity);
+      },
       async get(cookieStoreId) {
         const identity = identities.find((item) => item.cookieStoreId === cookieStoreId);
         if (!identity) throw new Error(`Invalid contextual identity: ${cookieStoreId}`);

@@ -168,6 +168,7 @@
     "merry_mole": "Merry Mole"
   },
   "errors": {
+    "container_created_move_failed": "The container was created, but the group could not be moved. Check your tabs and try again.",
     "background_process_is_unavailable": "Background process is unavailable",
     "private_windows_are_not_supported_yet": "Private windows are not supported yet",
     "could_not_get_status": "Could not get status",
@@ -236,13 +237,15 @@
   },
   "spaces": {
     "experimental": "Experimental spaces",
-    "title": "Spaces",
-    "default": "Default",
-    "new": "New space",
-    "name": "Space name",
+    "title": "Container",
+    "default": "None",
+    "new": "New container",
+    "name": "Container name",
     "create": "Create",
+    "confirm_move": "Move",
+    "reconnect_action": "Reconnect to",
     "cancel": "Cancel",
-    "permission": "Allow container access to use spaces.",
+    "permission": "Allow access to Firefox containers.",
     "help": "Separate website accounts",
     "move_unsupported": "Tabs cannot be moved between spaces.",
     "import_main": "Simple Tab Groups can only be imported into the main space.",

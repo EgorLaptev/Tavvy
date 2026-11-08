@@ -75,28 +75,27 @@ cascade; full consolidation remains separate work.
 Browser operations are separated from UI components, and the service accepts
 an API argument for testing without Firefox.
 
-## Experimental spaces and Firefox containers
+## Group containers
 
-Spaces are disabled by default; groups without a `spaceId` belong to Default.
-When enabled, the switcher queries Firefox contextual identities, displaying
-existing containers using their Firefox names and icons. Selecting a previously
-unlinked container creates only a local space record; groups can be added later. Existing
-Tavvy space IDs and group relationships are preserved. Containers missing in
-Firefox remain available as records so their groups and tabs are not discarded.
-Selecting one offers unassigned Firefox containers; explicit selection updates
-only the existing space association and does not move tabs or modify cookies.
+Groups share one tree across Firefox containers. A group without a `spaceId`
+uses no container; a group with one uses its linked Firefox container. Parent and
+child groups may use different containers. Creating a top-level group uses
+no container; a subgroup initially inherits its parent’s container. Existing group
+IDs, tab associations and the legacy spaces setting remain in storage.
 
-The optional `cookies` permission allows tabs to be created in the selected
-container. Tab creation never falls back to the default cookie store. Existing
-tabs are not reopened or automatically moved between containers. Changing a
-space icon updates the Firefox identity. Tavvy does not create containers.
+The optional `cookies` permission is requested from the group action when
+needed. Tavvy can create Firefox containers and change their icons; it does not
+read or write cookie values. Reassigning one group reopens only its own
+non-global-pinned tabs in the target container; descendant groups retain their
+assignments and hierarchy. The popup asks for confirmation because page state
+and sign-ins can be lost. Firefox pages that cannot be safely reopened are
+rejected before changes are made. Missing container links can be reconnected
+from the affected group’s menu.
 
 Version 2 backups omit browser-specific container IDs and site data. Restore
 requires exactly one unassigned existing Firefox container with the same name
-for each saved space. The operation checks all matches before modifying groups
-or tabs, and refuses missing or ambiguous matches. Version 1 backups remain
-supported. Disabling spaces hides the switcher and returns active windows to
-Default while preserving space data for later use.
+for each saved space. It validates matches before modifying groups or tabs.
+Version 1 backups remain supported.
 
 ## Firefox tab context menu
 

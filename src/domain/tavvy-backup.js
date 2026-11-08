@@ -25,7 +25,7 @@ export function parseTavvyBackup(data) {
       throw new Error("Повреждены данные группы");
     ids.add(g.id);
     const spaceId = g.spaceId || DEFAULT_SPACE_ID;
-    if (!spaceIds.has(spaceId) || (g.id === "inbox" && spaceId !== DEFAULT_SPACE_ID)) throw new Error("Повреждены данные пространств");
+    if (!spaceIds.has(spaceId)) throw new Error("Повреждены данные пространств");
     return { id: g.id, title: g.title.slice(0, 120), color: g.color, parentId: g.parentId ?? null, ...(spaceId === DEFAULT_SPACE_ID ? {} : { spaceId }) };
   });
   const map = new Map(groups.map((g) => [g.id, g]));
@@ -33,7 +33,7 @@ export function parseTavvyBackup(data) {
     const seen = new Set([g.id]);
     let parent = g.parentId;
     while (parent !== null) {
-      if (!map.has(parent) || seen.has(parent) || (map.get(parent).spaceId || DEFAULT_SPACE_ID) !== (g.spaceId || DEFAULT_SPACE_ID)) throw new Error("Повреждена вложенность групп");
+      if (!map.has(parent) || seen.has(parent)) throw new Error("Повреждена вложенность групп");
       seen.add(parent);
       parent = map.get(parent).parentId;
     }

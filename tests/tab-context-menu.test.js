@@ -71,6 +71,16 @@ test("a closed menu is not rebuilt after its snapshot arrives", async () => {
   assert.equal(calls.includes("refresh"), false);
 });
 
+test("tab destinations only include groups in the tab's container", async () => {
+  const { handlers, items, state } = fixture();
+  state.groups.push({ id: "private", title: "Private", color: "#00aa88", spaceId: "space-1" });
+  state.tabs = [{ id: 17, groupId: "private" }];
+  handlers.shown({ contexts: ["tab"] }, { id: 17, windowId: 3, pinned: false });
+  await tick();
+  assert.equal(items.get("tavvy-move-tab-0").title, "Private");
+  assert.equal(items.has("tavvy-move-tab-1"), false);
+});
+
 test("menu markers follow the chosen style, including letters and no marker", async () => {
   const { handlers, state, canvases } = fixture();
   const show = () => handlers.shown({ contexts: ["tab"] }, { id: 1, windowId: 1 });

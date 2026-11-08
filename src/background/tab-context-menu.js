@@ -47,7 +47,10 @@ export function mountTabContextMenu(api, service, notify, createCanvas = () => d
       childIds = [];
       destinations = new Map();
       if (generation !== current) return;
-      for (const [index, group] of snapshot.groups.entries()) {
+      const sourceGroup = snapshot.groups.find((group) => group.id === snapshot.tabs?.find((item) => item.id === tab.id)?.groupId);
+      const sourceSpace = sourceGroup?.spaceId || "default";
+      const available = snapshot.groups.filter((group) => (group.spaceId || "default") === sourceSpace);
+      for (const [index, group] of available.entries()) {
         const id = `${rootId}-${index}`;
         const title = group.id === "inbox" && group.title === "Основная" ? locale.groups.main : group.title;
         const canvas = createCanvas();

@@ -168,6 +168,7 @@
     "merry_mole": "Topo alegre"
   },
   "errors": {
+    "container_created_move_failed": "Se creó el contenedor, pero no se pudo mover el grupo. Comprueba tus pestañas y vuelve a intentarlo.",
     "background_process_is_unavailable": "El proceso en segundo plano no está disponible",
     "private_windows_are_not_supported_yet": "Las ventanas privadas aún no son compatibles",
     "could_not_get_status": "No se pudo obtener el estado",
@@ -236,13 +237,15 @@
   },
   "spaces": {
     "experimental": "Espacios experimentales",
-    "title": "Espacios",
-    "default": "Predeterminado",
-    "new": "Nuevo espacio",
-    "name": "Nombre del espacio",
+    "title": "Contenedor",
+    "default": "Ninguno",
+    "new": "Nuevo contenedor",
+    "name": "Nombre del contenedor",
     "create": "Crear",
+    "confirm_move": "Mover",
+    "reconnect_action": "Reconectar a",
     "cancel": "Cancelar",
-    "permission": "Permite el acceso a contenedores para usar espacios.",
+    "permission": "Permite el acceso a los contenedores de Firefox.",
     "help": "Cuentas web separadas",
     "move_unsupported": "No se pueden mover pestañas entre espacios.",
     "import_main": "Simple Tab Groups solo se puede importar al espacio principal.",

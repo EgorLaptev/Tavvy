@@ -12,7 +12,7 @@ Tavvy brings tabs together in nested groups, so you can switch between projects,
 - **Move tabs quickly:** right-click a Firefox tab to send it to a Tavvy group without switching groups.
 - **Make it yours:** choose a theme, group markers, popup size, and interface language. Tavvy is available in English, Russian, Simplified Chinese, Spanish, French, and German.
 - **Keep a backup:** save and restore your groups and tabs, or import a Simple Tab Groups backup. Tavvy creates a backup before a restore and lets you choose whether to keep your current tabs.
-- **Try experimental spaces:** organize groups around your existing Firefox containers. New tabs use the selected container; existing tabs are not moved between containers.
+- **Use Firefox containers:** assign a container to each group while keeping all groups in one tree.
 
 ## Installation
 
@@ -39,13 +39,13 @@ Tavvy stores its tab groups and settings in Firefox's local extension storage an
 
 If **Group pinned tabs** is enabled, turn it off before disabling or removing Tavvy so the extension can restore their pinned state.
 
-## Experimental spaces
+## Firefox containers
 
-Enable **Experimental spaces** in Settings to show existing Firefox containers in the space switcher. Tavvy uses their names and icons; it does not create containers. The optional `cookies` permission is requested when enabling spaces; Tavvy does not read or write cookie values through the cookies API.
+All groups appear together. A container icon appears immediately before the tab counter on each group assigned to a Firefox container; click it to open the container picker or hover to see its name. Groups without a container have no icon: right-click the group and choose **Move to container**. Choose **None** to remove an assignment. Subgroups keep their own assignments. New top-level groups use no container; new subgroups initially use their parent’s container.
 
-Groups from previously configured spaces are preserved if a container becomes unavailable. Select that space to reconnect it to an unassigned container. Pinned tabs remain shared unless **Group pinned tabs** is enabled. Simple Tab Groups imports are limited to Default.
+Firefox asks for the optional `cookies` permission when container access is first needed. Tavvy does not read or write cookie values through the cookies API. The picker can create Firefox containers and change their icons. Changing a group’s container reopens its tabs there after confirmation; page state and sign-ins may be lost. Global pinned tabs remain shared unless **Group pinned tabs** is enabled.
 
-Space backups exclude cookies, account sessions, and Firefox container IDs. When restoring, each space must match exactly one unassigned Firefox container by name. Version 1 backups remain supported. See [architecture](docs/architecture.md) for details.
+Groups remain visible if their container becomes unavailable. Use the group’s context menu to reconnect the missing container to an unassigned Firefox container. Space backups exclude cookies, account sessions and Firefox container IDs. When restoring, each space must match exactly one unassigned Firefox container by name. Version 1 backups remain supported. See [architecture](docs/architecture.md) for details.
 
 ## Development
 

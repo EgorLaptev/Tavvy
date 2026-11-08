@@ -32,14 +32,14 @@ websites visited by the user. Icon requests serve the tab manager's display
 only and do not send the tab list to the developer. Please confirm this
 classification during review.
 
-Experimental spaces can be enabled in Settings. The switcher lists existing
-Firefox containers and new tabs use the selected container. Tavvy does not
-create containers or move existing tabs between them.
-The optional `cookies` permission is requested only when enabling spaces and
-is used to create tabs in containers; Tavvy does not access cookie values.
-Backups contain space names and tab URLs, not cookies or logged-in sessions.
+Groups can be assigned independently to existing or newly created Firefox containers from their
+context menu, while all groups remain visible in one tree. Tavvy requests the
+optional `cookies` permission when container access is needed and uses it to
+create tabs in containers; it does not access cookie values. Reassigning a group
+reopens its tabs in the chosen container after confirmation. Backups contain
+space names and tab URLs, not cookies or logged-in sessions.
 
-Permissions: `contextualIdentities` manages Firefox containers for experimental spaces; `menus` adds a tab context menu for moving tabs between groups; `tabs` reads and manages tabs; `tabHide` switches visible groups;
+Permissions: `contextualIdentities` reads Firefox container identities for group assignment; `menus` adds a tab context menu for moving tabs between groups; `tabs` reads and manages tabs; `tabHide` switches visible groups;
 `sessions` stores group associations across restarts; `storage` saves groups,
 settings and legacy archive data; `alarms` schedules backups; `downloads` saves backup
 files. Private windows are excluded by the manifest.

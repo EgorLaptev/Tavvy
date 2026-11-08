@@ -69,9 +69,6 @@ export function mountNavigation({ onOpenSettings, settingsPage = false } = {}) {
     const generalSection = document.querySelector("#settings-tabs-title").closest(".settings-group");
     generalSection.id = "general";
     appearanceSection.id = "appearance";
-    const spacesSetting = document.querySelector(".experimental-spaces").closest(".setting");
-    const spacesNotice = document.querySelector(".spaces-permission-notice");
-    generalSection.append(spacesSetting, spacesNotice);
     const leftColumn = document.createElement("div");
     const rightColumn = document.createElement("div");
     leftColumn.className = rightColumn.className = "settings-column";

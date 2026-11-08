@@ -5,6 +5,9 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Show all groups in one tree and assign Firefox containers per group.
+- Create containers and change their icons from group controls.
+
 - Correct the Clear action hover colors.
 
 - Limit group move destinations to groups at the same nesting level.
