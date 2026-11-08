@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Move group deletion to the end of the context menu and remove the rename button from group rows.
+
 - Add a group context menu for renaming, deleting, clearing, refreshing and moving groups to containers.
 
 - Replace existing groups when restoring Tavvy or Simple Tab Groups backups.

@@ -313,3 +313,6 @@ button.group-header {
 .light-theme .group-context-menu { background: #fff; border-color: #ddd; }
 .light-theme .group-context-item { color: #222; }
 .light-theme .group-context-item:hover, .light-theme .group-context-item:focus-visible { background: #eee; }
+
+.group-context-menu .group-context-delete { color: #f16b70; }
+.light-theme .group-context-menu .group-context-delete { color: #bd2531; }

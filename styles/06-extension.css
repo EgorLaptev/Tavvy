@@ -183,24 +183,6 @@ button.tab-status-icon:hover { color: #ddd; }
 }
 .extension-mode .group > .group-controls,
 .extension-mode .new-group-form > .group-controls { position: relative; }
-.group-rename {
-  display: grid;
-  place-items: center;
-  flex: none;
-  align-self: center;
-  width: 24px;
-  height: 24px;
-  padding: 5px;
-  border: 0;
-  background: transparent;
-  color: #666;
-  opacity: 0;
-  cursor: pointer;
-  transition: opacity .15s, color .15s;
-}
-.group-rename svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.group-controls:hover .group-rename, .group-rename:focus-visible { opacity: 1; }
-.group-rename:hover { color: #ccc; }
 .group-rename-input { position: absolute; top: 0; height: 100%; z-index: 2; min-width: 0; padding: 0; border: 0; outline: 0; background: transparent; color: inherit; font-family: inherit; font-size: 13px; font-weight: 500; }
 .extension-mode .group-color-input {
   position: absolute;

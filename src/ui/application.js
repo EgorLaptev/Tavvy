@@ -594,8 +594,7 @@ export async function mountApplication(api) {
       document.createTextNode("+"),
       () => run({ type: "createTab", groupId: group.id }),
     );
-    const rename = button(t("groups.rename_group"), "group-rename", icon("M3 11.5V13h1.5l7.7-7.7-1.5-1.5L3 11.5Zm6.9-6.9 1.5 1.5"), (event) => {
-      event.stopPropagation();
+    function renameGroup() {
       if (controls.querySelector(".group-rename-input")) return;
       const field = element("input", "group-rename-input");
       const current = viewIndex.groups.get(group.id);
@@ -627,19 +626,19 @@ export async function mountApplication(api) {
       field.addEventListener("blur", () => finish(true));
       field.focus();
       field.select();
-    });
+    }
     controls.addEventListener("contextmenu", (event) => {
       event.preventDefault();
       event.stopPropagation();
       closeGroupMenu();
-      const addAction = (label, action, disabled = false) => {
+      const addAction = (label, action, disabled = false, className = "") => {
         const item = button(label, "group-context-item", document.createTextNode(label), () => { closeGroupMenu(); action(); });
+        if (className) item.classList.add(className);
         item.setAttribute("role", "menuitem");
         item.disabled = disabled;
         groupMenu.append(item);
       };
-      addAction(t("groups.rename_group"), () => rename.click());
-      addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), group.id === "inbox");
+      addAction(t("groups.rename_group"), renameGroup);
       addAction(t("groups.clear_group"), () => { if (window.confirm(t("groups.clear_confirm"))) run({ type: "clearGroup", groupId: group.id }); });
       addAction(t("groups.reload_group"), () => run({ type: "reloadGroup", groupId: group.id }));
       if (snapshot.settings.experimentalSpaces && group.id !== "inbox") {
@@ -650,13 +649,14 @@ export async function mountApplication(api) {
           if (window.confirm(t("groups.move_container_confirm"))) run({ type: "moveGroupToSpace", groupId: group.id, spaceId: destination.id });
         });
       }
+      addAction(t("groups.delete_group"), () => run({ type: "deleteGroup", groupId: group.id }), group.id === "inbox", "group-context-delete");
       groupMenu.hidden = false;
       const bounds = groupMenu.getBoundingClientRect();
       groupMenu.style.left = `${Math.max(0, Math.min(event.clientX, window.innerWidth - bounds.width))}px`;
       groupMenu.style.top = `${Math.max(0, Math.min(event.clientY, window.innerHeight - bounds.height))}px`;
       groupMenu.querySelector("button")?.focus();
     });
-    controls.append(header, colorInput, rename, add, toggle);
+    controls.append(header, colorInput, add, toggle);
     const tabs = element("div", "tabs is-closed"),
       inner = element("div", "tabs-inner"),
       children = element("div", "subgroups");

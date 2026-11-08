@@ -146,6 +146,8 @@ test("built app mounts and connects settings, groups and navigation", async () =
   const menu = document.querySelector(".group-context-menu");
   assert.equal(menu.hidden, false);
   assert.equal(menu.querySelectorAll('[role="menuitem"]').length >= 4, true);
+  assert.ok(menu.lastElementChild.classList.contains("group-context-delete"));
+  assert.equal(group.querySelector(".group-rename"), null);
   menu.querySelector('[role="menuitem"]').click();
   const renameInput = group.querySelector(".group-rename-input");
   renameInput.value = "Projects";
