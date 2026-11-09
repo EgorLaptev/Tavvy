@@ -1,118 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createWorkspaceService } from "../src/background/workspace-service.js";
-function fixture() {
-  let next = 10,
-    counter = 0;
-  const values = {},
-    tags = new Map(),
-    windows = new Map();
-  const records = [
-    {
-      id: 1,
-      windowId: 1,
-      title: "Первая",
-      url: "https://example.com",
-      active: true,
-      index: 0,
-      pinned: false,
-    },
-    {
-      id: 2,
-      windowId: 1,
-      title: "Вторая",
-      url: "https://mozilla.org",
-      active: false,
-      index: 1,
-      pinned: false,
-    },
-    {
-      id: 3,
-      windowId: 1,
-      title: "Закреплённая",
-      url: "https://example.org",
-      active: false,
-      index: 2,
-      pinned: true,
-    },
-    {
-      id: 4,
-      windowId: 2,
-      title: "Другое окно",
-      url: "https://example.net",
-      active: true,
-      index: 0,
-      pinned: false,
-    },
-  ];
-  const api = {
-    runtime: { getURL: (path) => `moz-extension://test/${path}` },
-    storage: {
-      local: {
-        get: async (key) => structuredClone({ [key]: values[key] }),
-        set: async (data) => Object.assign(values, structuredClone(data)),
-      },
-    },
-    sessions: {
-      getTabValue: async (id, key) => tags.get(`${id}:${key}`),
-      setTabValue: async (id, key, value) => tags.set(`${id}:${key}`, value),
-      getWindowValue: async (id, key) => windows.get(`${id}:${key}`),
-      setWindowValue: async (id, key, value) => windows.set(`${id}:${key}`, value),
-    },
-    tabs: {
-      query: async () => structuredClone(records),
-      get: async (id) => structuredClone(records.find((tab) => tab.id === id)),
-      discard: async (id) => {
-        records.find((tab) => tab.id === id).discarded = true;
-      },
-      create: async (options) => {
-        const tab = {
-          id: next++,
-          index: records.length,
-          title: "Новая вкладка",
-          url: "about:newtab",
-          pinned: false,
-          hidden: false,
-          ...options,
-        };
-        records.push(tab);
-        return { ...tab };
-      },
-      update: async (id, options) => {
-        const tab = records.find((t) => t.id === id);
-        if (options.active)
-          records
-            .filter((t) => t.windowId === tab.windowId)
-            .forEach((t) => (t.active = false));
-        Object.assign(tab, options);
-        if (typeof options.muted === "boolean") tab.mutedInfo = { muted: options.muted };
-        return { ...tab };
-      },
-      show: async (ids) =>
-        ids.forEach((id) => (records.find((t) => t.id === id).hidden = false)),
-      hide: async (ids) => {
-        ids.forEach((id) => {
-          const tab = records.find((t) => t.id === id);
-          assert.equal(tab.active, false, "never hide an active tab");
-          assert.equal(tab.pinned, false, "never hide a pinned tab");
-          tab.hidden = true;
-        });
-        return ids;
-      },
-      remove: async (id) => {
-        records.splice(
-          records.findIndex((t) => t.id === id),
-          1,
-        );
-      },
-      move: async (id, { index }) => {
-        records.find((t) => t.id === id).index = index;
-      },
-    },
-  };
-  const service = () => createWorkspaceService(api, () => `id-${++counter}`);
-  return { api, records, tags, service };
-}
+import { fixture } from "./helpers/fake-browser.js";
 test("background refresh restores the saved toolbar marker before opening the popup", async () => {
   const f = fixture();
   const initial = f.service();
@@ -348,7 +237,7 @@ test("a pinned tab that Firefox refuses to hide is pinned again", async () => {
   assert.equal(f.records.find((tab) => tab.id === 3).pinned, true);
   assert.equal(f.tags.get("3:tavvy:group-pinned"), false);
 });
-test("Tavvy backup restores nested groups and tabs without deleting existing tabs", async () => {
+test("Tavvy backup replaces groups and closes previous tabs in every window", async () => {
   const f = fixture();
   const source = f.service();
   let snap = await source.dispatch({ type: "createGroup", title: "Parent" }, 1);
@@ -363,8 +252,18 @@ test("Tavvy backup restores nested groups and tabs without deleting existing tab
   const restoredParent = restored.groups.find((g) => g.title === "Parent");
   const restoredChild = restored.groups.find((g) => g.title === "Child");
   assert.equal(restoredChild.parentId, restoredParent.id);
-  assert.equal(target.records.length, 8);
+  // The previous tabs (1, 2, pinned 3 in window 1 and 4 in window 2) are gone.
+  assert.deepEqual(target.records.filter((tab) => tab.id < 10), []);
+  assert.equal(target.records.filter((tab) => tab.windowId === 1).length, 4);
+  // Window 2 is kept open with a new tab in the default group.
+  const second = target.records.filter((tab) => tab.windowId === 2);
+  assert.equal(second.length, 1);
+  assert.equal(target.tags.get(`${second[0].id}:tavvy:group`), "inbox");
   assert.ok(restored.tabs.some((tab) => tab.groupId === restoredChild.id && tab.url === "https://mozilla.org"));
+  assert.ok(restored.tabs.some((tab) => tab.pinned && tab.url === "https://example.org"));
+  // The window shows an imported group, not tabs of removed groups.
+  assert.ok(restored.groups.some((group) => group.id === restored.activeGroupId));
+  assert.ok(restored.tabs.every((tab) => restored.groups.some((group) => group.id === tab.groupId)));
 });
 test("cycles rejected; deleting a group keeps its tabs and reparents children", async () => {
   const f = fixture(),
@@ -439,10 +338,12 @@ test("STG import replaces groups and preserves empty groups, titles, colors and 
   let snapshot = await service.dispatch({ type: "importStg", backup }, 1);
   assert.equal(snapshot.groups.length, 3);
   assert.ok(!snapshot.groups.some((group) => group.title === "Old group"));
-  const count = f.records.length;
+  const firstRun = new Set(f.records.map((tab) => tab.id));
   await service.dispatch({ type: "createGroup", title: "Added later" }, 1);
   snapshot = await service.dispatch({ type: "importStg", backup }, 1);
-  assert.equal(f.records.length, count + 5);
+  // Importing again replaces the previous import instead of duplicating it.
+  assert.equal(f.records.filter((tab) => firstRun.has(tab.id)).length, 0);
+  assert.equal(f.records.filter((tab) => tab.windowId === 1).length, 5);
   assert.ok(!snapshot.groups.some((group) => group.title === "Added later"));
   assert.equal(snapshot.groups[1].title, "Пустая");
   assert.equal(snapshot.groups[1].color, "hsla(150, 100%, 50%, 1)");
@@ -456,8 +357,9 @@ test("STG import replaces groups and preserves empty groups, titles, colors and 
   assert.ok(exported.tabs.some((tab) => tab.url === extensionUrl));
   assert.ok(exported.tabs.some((tab) => tab.url === "about:addons"));
   await service.dispatch({ type: "importBackup", backup: exported }, 1);
-  assert.equal(f.records.filter(savedExtensionPage).length, 4);
-  assert.equal(f.records.filter((tab) => tab.url.includes("local-file.html#") && JSON.parse(decodeURIComponent(tab.url.split("#")[1])).url === "about:addons").length, 4);
+  assert.equal(f.records.filter(savedExtensionPage).length, 1);
+  assert.equal(f.records.filter((tab) => tab.url.includes("local-file.html#") && JSON.parse(decodeURIComponent(tab.url.split("#")[1])).url === "about:addons").length, 1);
+  assert.equal(f.records.filter((tab) => tab.url === "https://example.test/mail").length, 1);
   assert.ok(
     f.records.some((tab) =>
       tab.url.startsWith("moz-extension://test/local-file.html#"),
@@ -714,7 +616,7 @@ test("space backup restores tabs into matching existing containers", async () =>
   const allTabs = restored.records;
   assert.ok(allTabs.some((tab) => tab.cookieStoreId === "firefox-container-50"));
   assert.equal(allTabs.some((tab) => tab.cookieStoreId === "firefox-container-1"), false);
-  assert.ok(allTabs.some((tab) => tab.id === 1));
+  assert.equal(allTabs.some((tab) => tab.id === 1), false);
   const state = await destination.dispatch({ type: "snapshot" }, 1);
   const importedSpace = state.spaces.find((item) => item.name === "Work");
   const work = await destination.dispatch({ type: "activateSpace", spaceId: importedSpace.id }, 1);
@@ -803,7 +705,7 @@ test("each space remembers the last selected group in each window", async () => 
   assert.equal(snap.activeGroupId, project);
 });
 
-test("untagged tabs follow their Firefox container rather than the previous space", async () => {
+test("tabs opened in another container join its group; tabs without a container stay in the current group", async () => {
   const f = fixture();
   f.api.permissions = { contains: async () => true };
   f.api.contextualIdentities = {
@@ -827,8 +729,11 @@ test("untagged tabs follow their Firefox container rather than the previous spac
   service.invalidate({ type: "tab", tabId: ordinary.id });
   await service.refresh();
   snap = await service.dispatch({ type: "snapshot" }, 1);
-  assert.equal(snap.activeSpaceId, "default");
-  assert.equal(snap.tabs.find((tab) => tab.id === ordinary.id).groupId, "inbox");
+  // Firefox pages (about:addons…) and links from other apps cannot be in a container:
+  // they must not throw the window into the first default-space group.
+  assert.equal(snap.activeSpaceId, workId);
+  assert.equal(snap.activeGroupId, workGroup);
+  assert.equal(snap.tabs.find((tab) => tab.id === ordinary.id).groupId, workGroup);
 });
 
 test("a normal new tab opens in the active group's container", async () => {

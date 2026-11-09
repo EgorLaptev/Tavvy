@@ -1,6 +1,8 @@
 // Storage and Firefox session keys. Changing any value breaks existing user data.
 export const WORKSPACE_KEY = "tavvy:workspace:v1";
 export const KNOWN_KEY = "tavvy:known:v1";
+/** The group used most recently in any window; new windows start with it. */
+export const LAST_ACTIVE_GROUP_KEY = "tavvy:last-active-group:v1";
 
 // sessions.setTabValue keys
 export const TAB_GROUP = "tavvy:group";

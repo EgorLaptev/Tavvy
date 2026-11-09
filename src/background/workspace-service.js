@@ -114,6 +114,7 @@ export function createWorkspaceService(browserApi, newId = () => crypto.randomUU
     },
     created: ctx.created,
     removed: ctx.removed,
+    attached: ctx.attached,
     refresh: ctx.refresh,
   };
 }

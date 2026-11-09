@@ -1,5 +1,4 @@
-import { groupSpaceId, groupsInSpace } from "../../domain/spaces.js";
-import { INBOX_ID, findGroup } from "../../domain/group-tree.js";
+import { chooseGroupForNewTab } from "../../domain/tab-assignment.js";
 import { readPlaceholder } from "../../domain/urls.js";
 import { TAB_GROUP, TAB_GROUP_PINNED, TAB_IMPORT_METADATA } from "./keys.js";
 
@@ -22,14 +21,14 @@ export function createTabScanner(ctx) {
     return pages.some((page) => url === page || url?.startsWith(page + "?") || url?.startsWith(page + "#"));
   }
 
-  /** Group for a tab without a valid tag: the window's group, adjusted to the tab's container. */
+  /** Group for a tab without a valid tag (see `chooseGroupForNewTab`). */
   async function inferGroup(tab, windowGroups) {
     if (!windowGroups.has(tab.windowId)) windowGroups.set(tab.windowId, ctx.activeGroupId(tab.windowId));
-    let groupId = await windowGroups.get(tab.windowId);
-    const tabSpace = ctx.spaceIdForCookieStore(tab.cookieStoreId);
-    if (groupSpaceId(findGroup(store.state.groups, groupId)) !== tabSpace)
-      groupId = groupsInSpace(store.state.groups, tabSpace)[0]?.id || INBOX_ID;
-    return groupId;
+    return chooseGroupForNewTab({
+      groups: store.state.groups,
+      windowGroupId: await windowGroups.get(tab.windowId),
+      tabSpaceId: ctx.spaceIdForCookieStore(tab.cookieStoreId),
+    });
   }
 
   async function readRecord(tab, validGroups, windowGroups) {
@@ -45,12 +44,16 @@ export function createTabScanner(ctx) {
       return null; // A tab can close while Firefox answers a query.
     }
     if (!validGroups.has(groupId)) {
+      const untagged = groupId === undefined || groupId === null;
       groupId = await inferGroup(tab, windowGroups);
-      try {
-        await api.sessions.setTabValue(tab.id, TAB_GROUP, groupId);
-      } catch {
-        return null;
-      }
+      // A tag naming an unknown group is shown in the current group but never overwritten:
+      // if the group list is ever incomplete, tabs must not be reassigned for good.
+      if (untagged)
+        try {
+          await api.sessions.setTabValue(tab.id, TAB_GROUP, groupId);
+        } catch {
+          return null;
+        }
     }
     let metadata;
     try {
