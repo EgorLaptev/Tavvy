@@ -11,8 +11,10 @@ so these values identify the exact archive listed, not every build of a version.
 - Release date: 2026-11-09
 - Release source: `v0.3.0`
 - Artifact: `tavvy_tabs_group-0.3.0.zip`
+- Published size: 120,979 bytes
+- Published SHA-256: `1ab7b0ad880fd7c0b0ef97365a04b2d443bf71285ec48909b5438cecabca3b9d`
 - Checksums: https://github.com/EgorLaptev/Tavvy/releases/download/v0.3.0/SHA256SUMS
-- Verification: npm test, Firefox validation and isolated Firefox smoke test passed.
+- Verification: [Release workflow](https://github.com/EgorLaptev/Tavvy/actions/runs/42694988623) passed tests, Firefox validation and isolated Firefox smoke test.
 - Signature: unsigned
 
 ## 0.2.16 — Playful Pangolin
@@ -101,7 +103,7 @@ the source used to build those local archives. Version 0.2.0 has no local tag.
 
 | Version | Release reference | Archive source | Size (bytes) | SHA-256 |
 | --- | --- | --- | ---: | --- |
-| 0.3.0 | `v0.3.0` | GitHub Release | pending | pending |
+| 0.3.0 | `v0.3.0` | GitHub Release | 120,979 | `1ab7b0ad880fd7c0b0ef97365a04b2d443bf71285ec48909b5438cecabca3b9d` |
 | 0.2.16 | `v0.2.16` | GitHub Release | 117,632 | `b3a2506033da6e65ee0e0a036fd3cb3c00f68aaafa7ae71bc8f964fe3ad73554` |
 | 0.2.15 | `v0.2.15` | GitHub Release | 117,324 | `d725b539f7eadd7231b7746d6280b143d2ae99e339c7200ec51220f6b810d7df` |
 | 0.2.14 | `v0.2.14` | GitHub Release | 116,688 | `1166ca115e0f85afcb7a3ad95e421330f1509217429d76301f664d139fe5bf76` |
