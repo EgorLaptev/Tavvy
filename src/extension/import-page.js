@@ -11,7 +11,6 @@ browser.storage.local.get("tavvy:workspace:v1").then((data) => {
 }).catch(() => {});
 const input = document.querySelector("input[type=file]");
 const status = document.querySelector("#status");
-const closeExisting = document.querySelector("#close-existing");
 const retry = document.querySelector("#retry");
 const done = document.querySelector("#done");
 let file,
@@ -46,7 +45,6 @@ async function importFile() {
   if (!file || busy) return;
   busy = true;
   input.disabled = true;
-  closeExisting.disabled = true;
   retry.hidden = true;
   done.hidden = true;
   status.dataset.error = "false";
@@ -54,12 +52,12 @@ async function importFile() {
     status.textContent = t("import_page.reading_file");
     const data = JSON.parse((await file.text()).replace(/^\uFEFF/, ""));
     if (data.format === "tavvy-backup") {
-      await command({ type: "importBackup", backup: data, closeExistingTabs: closeExisting.checked });
+      await command({ type: "importBackup", backup: data });
       status.textContent = t("import_page.backup_restored") + (data.version === 2 ? " " + t("spaces.restored_sign_in") : "");
     } else if (Array.isArray(data.groups)) {
       const plan = parseStgBackup(data);
       status.textContent = format("import_page.import_in_progress", {groups: plan.groups.length, tabs: plan.tabCount});
-      const snapshot = await command({ type: "importStg", backup: data, closeExistingTabs: closeExisting.checked });
+      const snapshot = await command({ type: "importStg", backup: data });
       const report = snapshot.importReport;
       if (!report)
         throw new Error(
@@ -93,7 +91,6 @@ async function importFile() {
   } finally {
     busy = false;
     input.disabled = false;
-    closeExisting.disabled = false;
     input.value = "";
   }
 }

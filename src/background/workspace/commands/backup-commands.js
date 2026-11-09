@@ -64,9 +64,39 @@ export function createBackupCommands(ctx) {
     return { mapping, restored };
   }
 
+  /** Tabs an import replaces: everything except Tavvy's own pages (placeholders are ordinary tabs). */
+  async function existingTabs() {
+    const ownPages = api.runtime.getURL("");
+    return (await ctx.scan()).filter((tab) => !tab.url.startsWith(ownPages) || readPlaceholder(tab.url));
+  }
+
+  /**
+   * An import replaces the whole workspace, like Simple Tab Groups: the tabs that existed
+   * before (pinned ones included — the backup brings its own) are closed in every window. Each window is first switched to a group with a
+   * tab of its own, so Firefox never closes a window whose last tab goes away.
+   */
+  async function replacePreviousTabs(previous, importWindowId, importGroupId, importTabId) {
+    const previousIds = new Set(previous.map((tab) => tab.id));
+    const windows = new Set([importWindowId, ...previous.map((tab) => tab.windowId)]);
+    for (const windowId of windows) {
+      const groupId = windowId === importWindowId ? importGroupId : INBOX_ID;
+      const preferred = windowId === importWindowId ? importTabId : null;
+      const tabId = preferred ?? (await ctx.createTabInGroup(windowId, groupId)).id;
+      await ctx.activate(windowId, groupId, tabId);
+    }
+    for (const tabId of previousIds) await ctx.closeTab(tabId).catch(() => {});
+  }
+
+  /** The group to show after an import and one of its tabs (if any were imported). */
+  function firstImported(created) {
+    const first = created.find((entry) => !entry.pinned);
+    return first ? { groupId: first.groupId, tabId: first.tabId } : { groupId: INBOX_ID, tabId: null };
+  }
+
   async function importBackup(command, windowId) {
     const plan = parseTavvyBackup(command.backup);
     const { mapping: spaceMapping, restored } = await matchBackupSpaces(plan.spaces);
+    const previous = await existingTabs();
     const ids = new Map(plan.groups.map((g) => [g.id, g.id === INBOX_ID ? INBOX_ID : ctx.newId()]));
     const state = store.state;
     state.spaces = restored;
@@ -81,7 +111,7 @@ export function createBackupCommands(ctx) {
     state.archive = [];
     state.imports = {};
     await store.save();
-    const visible = ctx.visibleGroups(await ctx.activeGroupId(windowId));
+    const created = [];
     for (const entry of plan.tabs) {
       const groupId = ids.get(entry.groupId);
       const url = restorableUrl(entry.url, entry.title);
@@ -95,13 +125,15 @@ export function createBackupCommands(ctx) {
       });
       await api.sessions.setTabValue(tab.id, TAB_GROUP, groupId);
       await api.sessions.setTabValue(tab.id, TAB_IMPORT_METADATA, { title: entry.title });
-      if (!entry.pinned && !visible.has(groupId)) await api.tabs.hide([tab.id]);
+      created.push({ tabId: tab.id, groupId, pinned: entry.pinned });
     }
     for (const entry of plan.archive)
       state.archive.push({ id: ctx.newId(), groupId: ids.get(entry.groupId), title: entry.title, url: entry.url, closedAt: entry.closedAt });
     state.archive = state.archive.slice(0, MAX_ARCHIVE);
     state.settings = plan.settings;
     await store.save();
+    const shown = firstImported(created);
+    await replacePreviousTabs(previous, windowId, shown.groupId, shown.tabId);
   }
 
   /** Resumable: progress is stored per backup fingerprint and tabs carry an import marker. */
@@ -130,15 +162,15 @@ export function createBackupCommands(ctx) {
       await store.save();
     }
     const completed = new Set(job.completed || []);
-    const visible = ctx.visibleGroups(await ctx.activeGroupId(windowId));
     const existingByMarker = new Map();
-    if (resuming)
-      await Promise.all(
-        (await api.tabs.query({ windowId })).map(async (tab) => {
-          const marker = await api.sessions.getTabValue(tab.id, TAB_IMPORT_MARKER);
-          if (typeof marker === "string") existingByMarker.set(marker, tab);
-        }),
-      );
+    const previous = [];
+    // Tabs from an interrupted run of this import carry its marker and are reused.
+    for (const tab of await existingTabs()) {
+      const marker = await api.sessions.getTabValue(tab.id, TAB_IMPORT_MARKER);
+      if (resuming && typeof marker === "string" && marker.startsWith(fingerprint + ":")) existingByMarker.set(marker, tab);
+      else previous.push(tab);
+    }
+    const created = [];
 
     async function importTab(record, key, groupId, pinned) {
       if (completed.has(key)) return;
@@ -157,7 +189,9 @@ export function createBackupCommands(ctx) {
       }
       await api.sessions.setTabValue(tab.id, TAB_GROUP, groupId);
       await api.sessions.setTabValue(tab.id, TAB_IMPORT_METADATA, { title: record.title, faviconUrl: record.faviconUrl });
-      if (!pinned && !visible.has(groupId)) await api.tabs.hide([tab.id]);
+      // Keep the import window usable meanwhile: imported tabs stay hidden until the end.
+      if (!pinned) await api.tabs.hide([tab.id]);
+      created.push({ tabId: tab.id, groupId, pinned });
       completed.add(key);
       job.completed.push(key);
       if (job.completed.length % 20 === 0) await store.save();
@@ -180,6 +214,8 @@ export function createBackupCommands(ctx) {
     delete job.completed;
     delete job.groupIds;
     await store.save();
+    const shown = firstImported(created);
+    await replacePreviousTabs(previous, windowId, shown.groupId, shown.tabId);
   }
 
   return { exportBackup, importBackup, importStg };
