@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Show the pointer cursor when hovering over tabs.
+
 - Keep ordinary new tabs in the active group's Firefox container.
 
 - Show audio, screen sharing and microphone indicators on groups and their ancestors; close tabs through their actions menu.

@@ -293,10 +293,10 @@ button.group-header {
   display: none !important;
 }
 
-.group-header[draggable="true"],
-.tab-row[draggable="true"] {
+.group-header[draggable="true"] {
   cursor: grab;
 }
+.tab-row[draggable="true"] { cursor: pointer; }
 .dragging {
   opacity: 0.35;
 }
