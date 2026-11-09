@@ -24,10 +24,10 @@ export function groupMoveTargets(groups, index, groupId) {
   const level = groupDepth(current, index);
   return groups.filter((candidate) => {
     if (groupDepth(candidate, index) !== level) return false;
-    let item = candidate;
-    while (item) {
+    const seen = new Set();
+    for (let item = candidate; item && !seen.has(item.id); item = item.parentId ? index.get(item.parentId) : null) {
       if (item.id === groupId) return false;
-      item = item.parentId ? index.get(item.parentId) : null;
+      seen.add(item.id);
     }
     return candidate.id !== current.parentId;
   });

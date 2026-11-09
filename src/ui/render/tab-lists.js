@@ -55,7 +55,11 @@ export function createTabLists(ctx) {
       view.tabs.style.height = view.inner.scrollHeight + "px";
     }
     ctx.tabRows.prune(used);
-    mountDragDrop(ctx.dragActions);
+    // Bind drag handling only when cards or rows were created, not on every scroll frame.
+    if (ctx.dragTargetsDirty) {
+      ctx.dragTargetsDirty = false;
+      mountDragDrop(ctx.dragActions);
+    }
   }
 
   function onScroll() {

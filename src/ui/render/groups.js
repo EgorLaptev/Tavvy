@@ -91,11 +91,13 @@ export function createGroupList(ctx) {
 
   function update(view, group) {
     const { snapshot, viewIndex } = ctx;
-    if (view.title.textContent !== group.title) {
-      view.title.textContent = groupTitle(group, t);
+    // Compare the displayed (translated) title, so the default group is not rewritten every render.
+    const title = groupTitle(group, t);
+    if (view.title.textContent !== title || view.rawTitle !== group.title) {
+      view.rawTitle = group.title;
+      view.title.textContent = title;
       view.marker.dataset.label = markerLetters(group.title);
       view.marker.dataset.label2 = markerLetters(group.title, 2);
-      view.header.setAttribute("aria-label", groupTitle(group, t));
       view.colorInput.setAttribute("aria-label", `${t("groups.group_color")}: ${group.title}`);
     }
     if (view.color !== group.color) {
@@ -108,7 +110,6 @@ export function createGroupList(ctx) {
     view.spaceGlyph.style.maskImage = group.spaceId ? `url("${ctx.spaceIconUrl(spaceIcon(space?.icon))}")` : "";
     view.spaceLabel.title = spaceLabel;
     view.spaceLabel.setAttribute("aria-label", view.spaceLabel.title);
-    const title = groupTitle(group, t);
     view.header.setAttribute("aria-label", group.spaceId ? `${title} — ${view.spaceLabel.title}` : title);
     renderGroupStatus(view.statuses, viewIndex.groupStatus.get(group.id) || 0);
     const count = String(viewIndex.byGroup.get(group.id)?.length || 0);
@@ -150,6 +151,7 @@ export function createGroupList(ctx) {
       if (!view) {
         view = create(group);
         groupViews.set(group.id, view);
+        ctx.dragTargetsDirty = true;
       }
       update(view, group);
     }

@@ -51,6 +51,8 @@ export async function mountApplication(api) {
     filterResult: null,
     opened: new Set(api.isDemo ? api.previewExpandedGroupIds || [] : []),
     groupViews: new Map(),
+    /** Set when cards or rows are created; the list then binds drag handling to them. */
+    dragTargetsDirty: true,
     tabViews: new Map(),
     spaceIconUrl: (name) => api.spaceIconUrl?.(name) || `resource://usercontext-content/${name}.svg`,
     render: () => ctx.groups.render(),
@@ -75,7 +77,6 @@ export async function mountApplication(api) {
   ctx.run = ctx.client.run;
   state.setSnapshot(await ctx.client.request({ type: "snapshot" }));
 
-  document.querySelector("#panel-height").max = "600";
   const settingsPage = document.documentElement.classList.contains("settings-page");
   const navigation = mountNavigation({
     settingsPage,

@@ -37,6 +37,9 @@ export function validBackupFolder(value) {
   if (typeof value !== "string" || !value || value.length > 180 || value.includes("\\")) return false;
   return value.split("/").every((part) => part.length > 0 && part.length <= 80 && !/^[. ]|[. ]$/.test(part) && !/[<>:"|?*\x00-\x1f]/.test(part) && !/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part));
 }
+/** Firefox never shows an extension popup taller than 600 px. */
+export const MAX_POPUP_HEIGHT = 600;
+
 export function normalizeSettings(input) {
   const value = input && typeof input === "object" ? input : {};
   return {
@@ -65,6 +68,6 @@ export function normalizeSettings(input) {
         ? value.discardInactiveTabs
         : false,
     width: clamp(value.width, 440, 320, 800),
-    height: clamp(value.height, 300, 200, 800),
+    height: clamp(value.height, 300, 200, MAX_POPUP_HEIGHT),
   };
 }
