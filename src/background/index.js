@@ -95,7 +95,7 @@ browser.tabs.onRemoved.addListener((id, info) => whenEnabled(() => {
 browser.tabs.onCreated.addListener((tab) => {
   const handle = () => {
     workspace().invalidate({ type: "tab", tabId: tab.id });
-    workspace().created(tab).catch(console.error);
+    workspace().created(tab).catch(console.error).finally(scheduleRefresh);
     scheduleRefresh();
   };
   if (gate.enabled) handle();

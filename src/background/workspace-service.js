@@ -32,6 +32,7 @@ export function createWorkspaceService(
   let recordsById = new Map();
   const sortedWindows = new Map();
   const pendingRemovals = new Map();
+  const pendingNewTabs = new Set();
   let removing;
   let tail = Promise.resolve();
   const ready = api.storage.local.get(KEY).then(async (data) => {
@@ -184,6 +185,7 @@ export function createWorkspaceService(
       tabs
         .filter((tab) => !tab.incognito)
         .map(async (tab) => {
+          if (pendingNewTabs.has(tab.id)) return null;
           const utilities = ["import.html", "settings.html"].map((name) => api.runtime?.getURL?.(name)).filter(Boolean);
           if (utilities.some((url) => tab.url === url || tab.url?.startsWith(url + "?") || tab.url?.startsWith(url + "#"))) {
             forgetKnown(tab.id);
@@ -934,6 +936,7 @@ export function createWorkspaceService(
     created: (tab) => {
       const blank = (value) => !value || /^(about:(blank|newtab|home))$/i.test(value);
       if (tab.incognito || tab.pinned || !tab.active || tab.openerTabId != null || tab.cookieStoreId !== "firefox-default" || !blank(tab.pendingUrl || tab.url)) return Promise.resolve();
+      pendingNewTabs.add(tab.id);
       return queue(async () => {
         const groupId = await active(tab.windowId);
         if (groupSpaceId(group(groupId)) === DEFAULT_SPACE_ID) return;
@@ -957,6 +960,9 @@ export function createWorkspaceService(
           if (replacement) await api.tabs.remove(replacement.id).catch(() => {});
           throw error;
         }
+      }).finally(() => {
+        pendingNewTabs.delete(tab.id);
+        index.mark({ type: "window", windowId: tab.windowId });
       });
     },
     removed: (tabId, isWindowClosing) => {
