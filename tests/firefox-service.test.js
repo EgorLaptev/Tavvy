@@ -993,7 +993,7 @@ test("failed container reassignment preserves the original group and tabs", asyn
   assert.deepEqual(f.records.filter((item) => item.windowId === 1).map((item) => item.id).sort(), before);
 });
 
-test("moving a group drops unsupported tabs and retains transferable tabs", async () => {
+test("moving a group keeps Firefox pages as links in the new container", async () => {
   const f = fixture();
   const identity = { name: "Work", cookieStoreId: "firefox-container-1" };
   f.api.permissions = { contains: async () => true };
@@ -1007,10 +1007,14 @@ test("moving a group drops unsupported tabs and retains transferable tabs", asyn
   snap = await service.dispatch({ type: "moveGroupToSpace", groupId, spaceId: "container:firefox-container-1" }, 1);
   assert.equal(f.records.some((tab) => tab.id === 2), false);
   assert.ok(f.records.some((tab) => tab.url === "about:newtab" && tab.cookieStoreId === "firefox-container-1"));
+  const link = f.records.find((tab) => tab.url.startsWith("moz-extension://test/local-file.html#"));
+  assert.equal(JSON.parse(decodeURIComponent(link.url.split("#")[1])).url, "about:addons");
+  assert.equal(link.cookieStoreId, "firefox-container-1");
+  assert.equal(snap.tabs.find((tab) => tab.id === link.id).groupId, groupId);
   assert.equal(snap.groups.find((group) => group.id === groupId).spaceId, snap.spaces.find((space) => space.name === "Work").id);
 });
 
-test("moving a group with only an active unsupported tab opens a replacement", async () => {
+test("moving a group whose active tab is a Firefox page keeps it as an active link", async () => {
   const f = fixture();
   const identity = { name: "Work", cookieStoreId: "firefox-container-1" };
   f.api.permissions = { contains: async () => true };
@@ -1019,7 +1023,11 @@ test("moving a group with only an active unsupported tab opens a replacement", a
   await service.dispatch({ type: "snapshot" }, 1);
   f.records.find((tab) => tab.id === 1).url = "about:addons";
   f.records.find((tab) => tab.id === 2).url = "about:config";
+  for (const tabId of [1, 2]) service.invalidate({ type: "tab", tabId });
   const snap = await service.dispatch({ type: "moveGroupToSpace", groupId: "inbox", spaceId: "container:firefox-container-1" }, 1);
   assert.ok(!f.records.some((tab) => tab.id === 1 || tab.id === 2));
-  assert.ok(snap.tabs.some((tab) => tab.groupId === "inbox" && tab.active && tab.cookieStoreId === "firefox-container-1"));
+  const active = snap.tabs.find((tab) => tab.groupId === "inbox" && tab.active);
+  assert.equal(active.cookieStoreId, "firefox-container-1");
+  assert.equal(JSON.parse(decodeURIComponent(active.url.split("#")[1])).url, "about:addons");
+  assert.equal(snap.tabs.filter((tab) => tab.url.includes("local-file.html#")).length, 2);
 });

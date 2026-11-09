@@ -100,7 +100,7 @@
     "reload_group": "Recargar grupo",
     "move_to_container": "Mover al contenedor",
     "clear_confirm": "¿Cerrar todas las pestañas de este grupo?",
-    "move_container_confirm": "Las páginas del navegador y otras pestañas incompatibles se cerrarán. Las demás se abrirán en el contenedor elegido; se pueden perder su estado y las sesiones. ¿Continuar?",
+    "move_container_confirm": "Las pestañas se volverán a abrir en el contenedor seleccionado. Las páginas de Firefox y los archivos locales se conservarán como enlaces. Puede perderse el estado de las páginas y el inicio de sesión. ¿Continuar?",
     "rename_group": "Cambiar nombre de grupo",
     "delete_group": "Eliminar grupo",
     "create_group": "Crear grupo",

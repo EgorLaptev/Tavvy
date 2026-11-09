@@ -100,7 +100,7 @@
     "reload_group": "刷新分组",
     "move_to_container": "移至容器",
     "clear_confirm": "关闭此分组中的所有标签页？",
-    "move_container_confirm": "浏览器页面和其他不受支持的标签页将被关闭。其余标签页将在所选容器中重新打开，页面状态和登录状态可能丢失。继续？",
+    "move_container_confirm": "标签页将在所选容器中重新打开。Firefox 页面和本地文件会以链接形式保留。页面状态和登录信息可能会丢失。是否继续？",
     "rename_group": "重命名分组",
     "delete_group": "删除分组",
     "create_group": "创建分组",

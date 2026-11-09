@@ -100,7 +100,7 @@
     "reload_group": "Gruppe neu laden",
     "move_to_container": "In Container verschieben",
     "clear_confirm": "Alle Tabs dieser Gruppe schließen?",
-    "move_container_confirm": "Browserseiten und andere nicht unterstützte Tabs werden geschlossen. Andere Tabs werden im gewählten Container neu geöffnet; Seitenzustand und Anmeldung können verloren gehen. Fortfahren?",
+    "move_container_confirm": "Tabs werden im ausgewählten Container neu geöffnet. Firefox-Seiten und lokale Dateien bleiben als Links erhalten. Seitenzustand und Anmeldungen können verloren gehen. Fortfahren?",
     "rename_group": "Gruppe umbenennen",
     "delete_group": "Gruppe löschen",
     "create_group": "Gruppe erstellen",

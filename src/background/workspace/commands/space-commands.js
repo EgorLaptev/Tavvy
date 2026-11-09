@@ -1,6 +1,6 @@
 import { INBOX_ID, findGroup } from "../../../domain/group-tree.js";
 import { DEFAULT_SPACE_ID, groupSpaceId, groupsInSpace, spaceIcon } from "../../../domain/spaces.js";
-import { isTransferableUrl } from "../../../domain/urls.js";
+import { isTransferableUrl, placeholderUrl, readPlaceholder } from "../../../domain/urls.js";
 import { MAX_SPACES, UNLINKED_CONTAINER_PREFIX } from "../containers.js";
 import { TAB_GROUP } from "../keys.js";
 
@@ -85,6 +85,17 @@ export function createSpaceCommands(ctx) {
     return { space, identity };
   }
 
+  /**
+   * URL for reopening a tab in another container. Pages a tab cannot be created with
+   * (Firefox pages, local files, other extensions) become Tavvy's placeholder page that
+   * keeps the original address, so nothing is lost. `undefined` opens a new-tab page.
+   */
+  function reopenUrl(tab) {
+    if (tab.url === "about:newtab") return undefined;
+    if (isTransferableUrl(tab.url) || readPlaceholder(tab.url)) return tab.url;
+    return placeholderUrl(api.runtime.getURL("local-file.html"), tab.url, tab.title);
+  }
+
   /** Reopens a group's tabs in another container and links the group to it. */
   async function moveGroupToSpace(command, windowId) {
     const moving = findGroup(store.state.groups, command.groupId);
@@ -94,35 +105,25 @@ export function createSpaceCommands(ctx) {
       return ctx.snapshot(windowId);
     const records = await ctx.scan();
     const targets = records.filter((tab) => tab.groupId === moving.id && (!tab.pinned || groupPinned()));
-    const transferable = targets.filter((tab) => isTransferableUrl(tab.url));
     const fallback =
       groupsInSpace(store.state.groups, sourceSpace).find((item) => item.id !== moving.id) || findGroup(store.state.groups, INBOX_ID);
     if (!destination && identity) destination = newSpace(identity);
     const cookieStoreId = identity ? identity.cookieStoreId : "firefox-default";
     const created = [];
     try {
-      for (const tab of transferable) {
+      for (const tab of targets) {
+        const url = reopenUrl(tab);
         const copy = await api.tabs.create({
           windowId: tab.windowId,
           active: false,
           pinned: !!(tab.pinned || tab.managedPinned),
-          ...(tab.url === "about:newtab" ? {} : { url: tab.url }),
+          ...(url ? { url } : {}),
           cookieStoreId,
         });
         created.push({ copy, original: tab });
         await api.sessions.setTabValue(copy.id, TAB_GROUP, tab.groupId);
       }
       for (const { copy, original } of created) if (original.active) await api.tabs.update(copy.id, { active: true });
-      // Windows whose active tab cannot be reopened get an empty tab in the new container.
-      for (const tab of targets.filter((item) => item.active && !transferable.includes(item))) {
-        let replacement = created.find((item) => item.original.windowId === tab.windowId)?.copy;
-        if (!replacement) {
-          replacement = await api.tabs.create({ windowId: tab.windowId, active: false, cookieStoreId });
-          created.push({ copy: replacement, original: tab });
-          await api.sessions.setTabValue(replacement.id, TAB_GROUP, tab.groupId);
-        }
-        await api.tabs.update(replacement.id, { active: true });
-      }
     } catch (error) {
       for (const original of targets) if (original.active) await api.tabs.update(original.id, { active: true }).catch(() => {});
       for (const { copy } of created) await api.tabs.remove(copy.id).catch(() => {});
