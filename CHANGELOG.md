@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.3.0 — Clever Chameleon — 2026-11-09
+
 - Fix dragging inside the new group field, a color picker label shown in Russian before first use, leftover drop highlights after a cancelled drag and a possible popup hang on damaged group data; limit the popup height setting to Firefox's 600 px maximum; bind drag handling only to new rows instead of on every scroll frame.
 
 - Open links from other apps and bookmarks in the container of the current group, and stop leaving an extra empty container tab behind for each of them.
