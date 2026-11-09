@@ -1,3 +1,7 @@
+/** Snapshots without `viewVersion` (older backgrounds) always need a new index. */
+export function snapshotChanged(previous, next) {
+  return next.viewVersion !== undefined ? next.viewVersion !== previous.viewVersion : true;
+}
 export function buildViewIndex(snapshot) {
   const groups = new Map(snapshot.groups.map((group) => [group.id, group]));
   const tabs = new Map(),
@@ -90,4 +94,15 @@ export function windowRange(
     ),
   );
   return { start, end };
+}
+/** Fixed row height assumed by virtualization; styles must keep `.tab-row` at this height. */
+export const TAB_ROW_HEIGHT = 30;
+
+/**
+ * The visible slice of a group's rows and the spacer heights above and below it.
+ * Groups up to 120 rows are rendered whole (see `windowRange`).
+ */
+export function virtualSlice(count, offset, viewport, rowHeight = TAB_ROW_HEIGHT) {
+  const { start, end } = windowRange(count, offset, viewport, rowHeight);
+  return { start, end, before: start * rowHeight, after: (count - end) * rowHeight };
 }
