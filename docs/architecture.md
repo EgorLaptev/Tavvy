@@ -74,10 +74,14 @@ notify open popups; snapshot messages do not trigger another notification.
   used group. The choice is stored once in the window's session value.
 - Window session values are read live, never cached, because Firefox restores
   them itself during session restore.
-- Ctrl+T in a container group is handled immediately, outside the command
-  queue: the replacement is created active and without a URL, the only way
-  Firefox keeps the address bar focused. Tabs restored with Ctrl+Shift+T carry
-  a group and are left alone.
+- New foreground tabs without an opener or container are reopened in the
+  container of a container group, immediately and outside the command queue.
+  Ctrl+T tabs are created as about:newtab and replaced by an empty container
+  tab created active and without a URL, the only way Firefox keeps the address
+  bar focused. Links from other apps and bookmarks are created as about:blank
+  and get their address a few milliseconds later; they are reopened with it.
+  Tabs restored with Ctrl+Shift+T carry a group and are left alone; Tavvy's own
+  tabs are created inactive and never qualify.
 
 ## Rules
 

@@ -216,3 +216,53 @@ test("a tab restored with Ctrl+Shift+T is not replaced", async () => {
   await service.created(restored);
   assert.ok(f.records.some((item) => item.id === restored.id));
 });
+
+async function containerGroup(f) {
+  const identity = withContainers(f);
+  const service = f.service();
+  let snap = await service.dispatch({ type: "activateSpace", spaceId: `container:${identity.cookieStoreId}` }, 1);
+  snap = await service.dispatch({ type: "createGroup", title: "Work", spaceId: snap.activeSpaceId }, 1);
+  const work = snap.groups.find((g) => g.title === "Work").id;
+  await service.dispatch({ type: "activateGroup", groupId: work }, 1);
+  return { service, identity, work };
+}
+
+test("a link from another app opens in the container of the current group", async () => {
+  const f = fixture();
+  const { service, identity, work } = await containerGroup(f);
+  // Firefox creates it as about:blank and sets the address right after.
+  const tab = await f.api.tabs.create({ windowId: 1, active: true, cookieStoreId: "firefox-default", url: "about:blank", title: "example.org/page" });
+  const handled = service.created(tab);
+  f.records.find((item) => item.id === tab.id).url = "https://example.org/page";
+  service.updated(tab.id, { url: "https://example.org/page" });
+  await handled;
+  assert.equal(f.records.some((item) => item.id === tab.id), false);
+  const reopened = f.records.find((item) => item.url === "https://example.org/page");
+  assert.equal(reopened.cookieStoreId, identity.cookieStoreId);
+  assert.equal(reopened.active, true);
+  assert.equal(f.tags.get(`${reopened.id}:${GROUP}`), work);
+});
+
+test("a link is never replaced by an empty tab", async () => {
+  const f = fixture();
+  const { service } = await containerGroup(f);
+  const tab = await f.api.tabs.create({ windowId: 1, active: true, cookieStoreId: "firefox-default", url: "about:blank" });
+  const before = f.records.length;
+  const handled = service.created(tab);
+  service.updated(tab.id, { url: "about:blank" });
+  service.updated(tab.id, { url: "file:///home/user/notes.txt" });
+  await handled;
+  assert.equal(f.records.length, before, "no extra tab, nothing closed");
+  assert.ok(f.records.some((item) => item.id === tab.id));
+});
+
+test("a new tab that loads about:newtab after about:blank is treated like Ctrl+T", async () => {
+  const f = fixture();
+  const { service, identity } = await containerGroup(f);
+  const tab = await f.api.tabs.create({ windowId: 1, active: true, cookieStoreId: "firefox-default", url: "about:blank" });
+  const handled = service.created(tab);
+  service.updated(tab.id, { url: "about:newtab" });
+  await handled;
+  assert.equal(f.records.some((item) => item.id === tab.id), false);
+  assert.ok(f.records.some((item) => item.active && item.cookieStoreId === identity.cookieStoreId && item.url === "about:newtab"));
+});

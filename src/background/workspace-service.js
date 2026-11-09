@@ -113,6 +113,7 @@ export function createWorkspaceService(browserApi, newId = () => crypto.randomUU
       return index.dirty;
     },
     created: ctx.created,
+    updated: ctx.updated,
     removed: ctx.removed,
     attached: ctx.attached,
     refresh: ctx.refresh,

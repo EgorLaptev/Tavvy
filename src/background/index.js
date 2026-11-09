@@ -108,6 +108,7 @@ browser.tabs.onCreated.addListener((tab) => {
   else whenEnabled(handle);
 });
 browser.tabs.onUpdated.addListener((id, changes) => whenEnabled(() => {
+  workspace().updated(id, changes);
   workspace().invalidate({ type: "updated", tabId: id, changes });
   scheduleRefresh();
 }), { properties: ["title", "url", "favIconUrl", "pinned", "hidden", "audible", "mutedInfo", "sharingState", "discarded"] });

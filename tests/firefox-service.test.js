@@ -757,7 +757,7 @@ test("a normal new tab opens in the active group's container", async () => {
   assert.ok(snapshot.tabs.some((tab) => tab.active && tab.groupId === groupId && tab.cookieStoreId === "firefox-container-1"));
 });
 
-test("opening a page or explicitly choosing a container does not replace the tab", async () => {
+test("links and tabs explicitly opened in another container keep their tab", async () => {
   const f = fixture();
   f.api.permissions = { contains: async () => true };
   f.api.contextualIdentities = {
@@ -766,7 +766,7 @@ test("opening a page or explicitly choosing a container does not replace the tab
   };
   const service = f.service();
   await attachTestSpace(f, service);
-  for (const options of [{ url: "https://example.org/", cookieStoreId: "firefox-default" }, { cookieStoreId: "firefox-container-2" }, { cookieStoreId: "firefox-default", openerTabId: 1 }]) {
+  for (const options of [{ cookieStoreId: "firefox-container-2" }, { cookieStoreId: "firefox-default", openerTabId: 1 }, { url: "https://example.org/", cookieStoreId: "firefox-default", active: false }]) {
     const tab = await f.api.tabs.create({ windowId: 1, active: true, ...options });
     await service.created(tab);
     assert.ok(f.records.some((item) => item.id === tab.id));
