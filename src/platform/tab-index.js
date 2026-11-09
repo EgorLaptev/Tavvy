@@ -2,8 +2,7 @@
 // All writes update the cache immediately; native events are reconciled afterwards.
 export function createTabIndex(browser, limit = 16) {
   const tabs = new Map(),
-    sessions = new Map(),
-    windows = new Map();
+    sessions = new Map();
   const dirtyTabs = new Set(),
     dirtyWindows = new Set(),
     removed = new Set();
@@ -23,7 +22,7 @@ export function createTabIndex(browser, limit = 16) {
     );
   }
   function put(tab) {
-    if (!tab || removed.has(tab.id)) return;
+    if (!Number.isInteger(tab?.id) || removed.has(tab.id)) return;
     if (tab.active)
       for (const value of tabs.values())
         if (
@@ -144,8 +143,6 @@ export function createTabIndex(browser, limit = 16) {
       version++;
       if (Number.isInteger(event.windowId)) dirtyWindows.add(event.windowId);
     } else if (event.type === "windowRemoved") {
-      for (const key of windows.keys())
-        if (key.startsWith(event.windowId + ":")) windows.delete(key);
       dirtyWindows.delete(event.windowId);
       for (const [id, tab] of tabs)
         if (tab.windowId === event.windowId) {
@@ -173,19 +170,12 @@ export function createTabIndex(browser, limit = 16) {
       ...browser.sessions,
       getTabValue: value,
       setTabValue: writeGroup,
-      async getWindowValue(id, key) {
-        const cacheKey = id + ":" + key;
-        if (!windows.has(cacheKey))
-          windows.set(
-            cacheKey,
-            Promise.resolve(browser.sessions.getWindowValue(id, key)),
-          );
-        return windows.get(cacheKey);
-      },
+      // Window values are read live: Firefox changes them itself when it
+      // restores a session, so a cached copy can silently go stale.
+      getWindowValue: (id, key) => browser.sessions.getWindowValue(id, key),
       async setWindowValue(id, key, data) {
-        if ((await api.sessions.getWindowValue(id, key)) === data) return;
+        if ((await browser.sessions.getWindowValue(id, key)) === data) return;
         await browser.sessions.setWindowValue(id, key, data);
-        windows.set(id + ":" + key, Promise.resolve(data));
         version++;
       },
     },
@@ -222,12 +212,12 @@ export function createTabIndex(browser, limit = 16) {
       async hide(ids) {
         const changed = ids.filter((id) => !tabs.get(id)?.hidden);
         const hidden = changed.length ? await browser.tabs.hide(changed) : [];
-        for (const id of hidden) put({ ...tabs.get(id), hidden: true });
+        for (const id of hidden) if (tabs.has(id)) put({ ...tabs.get(id), hidden: true });
         return hidden;
       },
       async discard(id) {
         await browser.tabs.discard(id);
-        put({ ...tabs.get(id), discarded: true });
+        if (tabs.has(id)) put({ ...tabs.get(id), discarded: true });
       },
       async move(id, options) {
         const result = await browser.tabs.move(id, options);

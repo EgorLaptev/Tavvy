@@ -34,7 +34,7 @@ export function createActivation(ctx) {
     // Show and focus the destination before hiding anything, so the window never empties.
     await api.tabs.show([...new Set([...tabs.map((tab) => tab.id), target.id])]);
     await api.tabs.update(target.id, { active: true });
-    await ctx.setActiveGroupId(windowId, groupId);
+    await ctx.setActiveGroupId(windowId, groupId, true);
     await ctx.rememberGroupInSpace(windowId, groupSpaceId(group), groupId);
     await ctx.applyVisibility(windowId, groupId);
     if (store.state.settings?.discardInactiveTabs && previousGroupId !== groupId)

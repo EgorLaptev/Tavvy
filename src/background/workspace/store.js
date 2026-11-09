@@ -1,6 +1,6 @@
 import { normalizeSettings } from "../../domain/settings.js";
 import { defaultInbox } from "../../domain/group-tree.js";
-import { KNOWN_KEY, WORKSPACE_KEY } from "./keys.js";
+import { KNOWN_KEY, LAST_ACTIVE_GROUP_KEY, WORKSPACE_KEY } from "./keys.js";
 
 function defaultState() {
   return { version: 1, groups: [defaultInbox()], archive: [], known: {}, settings: normalizeSettings(null) };
@@ -48,13 +48,20 @@ export function createWorkspaceStore(storage) {
   let knownRevision = 0,
     savedKnownRevision = -1;
 
+  let lastActiveGroupId = null;
+
   const ready = storage.get(WORKSPACE_KEY).then(async (data) => {
     const stored = data[WORKSPACE_KEY];
-    state = migrateWorkspace(stored ?? defaultState());
     const known = await storage.get(KNOWN_KEY);
+    // Tab records without a workspace mean the groups were lost or are unreadable.
+    // Starting with defaults would let tabs be reassigned and the real data overwritten.
+    if (!stored && Object.keys(known[KNOWN_KEY] || {}).length)
+      throw new Error("Данные групп Tavvy не найдены. Восстановите резервную копию.");
+    state = migrateWorkspace(stored ?? defaultState());
     if (known[KNOWN_KEY]) state.known = known[KNOWN_KEY];
-    // A legacy workspace that embeds `known` is rewritten on the next save.
-    savedState = stored?.known ? null : JSON.stringify({ ...state, known: undefined });
+    lastActiveGroupId = (await storage.get(LAST_ACTIVE_GROUP_KEY))[LAST_ACTIVE_GROUP_KEY] ?? null;
+    // A new or legacy workspace (one that embeds `known`) is written on the next save.
+    savedState = !stored || stored.known ? null : JSON.stringify({ ...state, known: undefined });
     savedKnown = known[KNOWN_KEY] ? JSON.stringify(compactKnown(state.known)) : "";
     savedKnownRevision = known[KNOWN_KEY] ? knownRevision : -1;
   });
@@ -93,6 +100,14 @@ export function createWorkspaceStore(storage) {
         delete state.known[tabId];
         knownRevision++;
       }
+    },
+    get lastActiveGroupId() {
+      return lastActiveGroupId;
+    },
+    async setLastActiveGroupId(groupId) {
+      if (groupId === lastActiveGroupId) return;
+      lastActiveGroupId = groupId;
+      await storage.set({ [LAST_ACTIVE_GROUP_KEY]: groupId });
     },
     knownTab: (tabId) => state.known[tabId],
     knownIds: () => Object.keys(state.known),

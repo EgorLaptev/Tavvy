@@ -24,13 +24,19 @@ function whenEnabled(task) {
   return gate.isEnabled().then((enabled) => enabled ? task() : undefined).catch(console.error);
 }
 let refreshing;
+let refreshRequested = false;
 function refresh() {
-  if (refreshing) return refreshing;
+  if (refreshing) {
+    // Events that arrive mid-refresh may not be in its scan: run once more afterwards.
+    refreshRequested = true;
+    return refreshing;
+  }
+  refreshRequested = false;
   refreshing = workspace().refresh().then((changed) => {
     if (changed) notify();
   }).catch(console.error).finally(() => {
     refreshing = null;
-    if (workspace().needsRefresh) scheduleRefresh();
+    if (refreshRequested || workspace().needsRefresh) scheduleRefresh();
   });
   return refreshing;
 }
@@ -111,8 +117,9 @@ browser.tabs.onMoved.addListener((id, info) => whenEnabled(() => {
 }));
 browser.tabs.onAttached.addListener((id, info) => whenEnabled(() => {
   workspace().invalidate({ type: "window", windowId: info.newWindowId });
-  scheduleRefresh();
+  workspace().attached(id, info.newWindowId).catch(console.error).finally(scheduleRefresh);
 }));
+browser.windows.onCreated.addListener(() => whenEnabled(scheduleRefresh));
 browser.tabs.onDetached.addListener((id, info) => whenEnabled(() => {
   workspace().invalidate({ type: "window", windowId: info.oldWindowId });
   scheduleRefresh();
