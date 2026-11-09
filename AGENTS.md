@@ -42,7 +42,7 @@ Creating PRs with `GITHUB_TOKEN` requires the repository setting **Allow GitHub 
 ## Project map
 
 - `src/background/workspace-service.js` owns workspace commands, persistence and Firefox tab operations; `src/platform/tab-index.js` indexes browser tabs.
-- `src/ui/application.js` renders the popup; `src/features/drag-drop/drag-drop.js` handles group and tab dragging. The preview uses the same UI with mock data and a memory browser in `src/mocks/`.
+- `src/ui/application.js` wires the popup modules in `src/ui/` (rendering in `render/`, menus in `menus/`, state rules in `state/`); `src/features/drag-drop/` handles group and tab dragging. The preview uses the same UI with mock data and a memory browser in `src/mocks/`.
 - `src/locales/` contains six translations. Keep keys and placeholders consistent; release names shown in the UI remain in English regardless of the selected language.
 - See `docs/architecture.md` for persistence and container behavior, and `docs/manual-testing.md` for browser and visual checks.
 

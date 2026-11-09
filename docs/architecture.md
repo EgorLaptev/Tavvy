@@ -109,9 +109,27 @@ are not created. Groups with more than 120 rows use virtualization with fixed
 on `pagehide`. Shared `domain/settings.js` normalizes settings. The popup
 repository adapts background commands; `localStorage` is used only in preview.
 
-Dragging is implemented in `features/drag-drop/drag-drop.js`: group dragging
-uses pointer events, while tab dragging uses HTML drag events; callbacks dispatch
-workspace commands. CSS from the historical mockup retains its original
+`ui/application.js` only wires modules together, like the background service:
+each `createX(ctx)` reads the shared context (`snapshot`, `viewIndex`, the
+expanded groups `opened`, the reused card and row views) when it runs.
+
+- `command-client.js` sends commands and applies responses in order;
+  `state/view-state.js` stores the confirmed snapshot and updates expansion.
+- `render/groups.js` renders and lays out group cards, `render/tabs.js` the tab
+  rows, and `render/tab-lists.js` the virtualized row lists.
+- `menus/` holds the shared context menu, the group and tab menus, the
+  container picker and the colour palette; `new-group-form.js`,
+  `settings-bridge.js`, `drag-actions.js` and `live-updates.js` connect the
+  remaining features.
+- Pure rules (`state/tree.js`, `state/labels.js`, `state/statuses.js`,
+  `menus/menu-model.js`, `view-index.js`) are tested without a browser.
+
+Dragging is implemented in `features/drag-drop/`: `group-drag.js` moves groups
+with pointer events, `tab-drag.js` moves tabs with HTML drag events, and
+`geometry.js` holds the pointer rules; `drag-drop.js` binds them and its
+callbacks dispatch workspace commands. `features/settings/settings.js` applies
+and saves settings; `controls.js` generates settings markup and
+`backup-restore.js` handles restoring on the settings page. CSS from the historical mockup retains its original
 cascade; full consolidation remains separate work.
 Browser operations are separated from UI components, and the service accepts
 an API argument for testing without Firefox.
