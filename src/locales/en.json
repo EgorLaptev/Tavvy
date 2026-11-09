@@ -100,7 +100,7 @@
     "reload_group": "Reload group",
     "move_to_container": "Move to container",
     "clear_confirm": "Close all tabs in this group?",
-    "move_container_confirm": "Browser and other unsupported tabs will be closed. Tabs will reopen in the selected container; page state and sign-in may be lost. Continue?",
+    "move_container_confirm": "Tabs will reopen in the selected container. Firefox pages and local files are kept as links. Page state and sign-in may be lost. Continue?",
     "rename_group": "Rename group",
     "delete_group": "Delete group",
     "create_group": "Create group",

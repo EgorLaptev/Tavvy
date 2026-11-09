@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Keep Firefox pages, local files and other unsupported tabs as links when moving a group to another container instead of closing them.
+
 - Keep the window in its group when Firefox opens or switches to its own pages (settings, add-ons, extension options); such pages join the current group instead.
 
 - Keep tabs without a container, such as Firefox pages and links from other apps, in the current group when that group uses a container.
