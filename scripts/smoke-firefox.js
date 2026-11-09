@@ -223,7 +223,7 @@ await build({
  check(!restoreSubmit.disabled&&settingsUi.querySelector('.backup-dropzone-filename').textContent==='drop-test.json','dropped backup is selected');
  check(!settingsUi.querySelector('.backup-file-summary').hidden&&settingsUi.querySelector('.backup-file-counts').textContent.includes('1')&&settingsUi.querySelector('.backup-file-groups').textContent.includes('Dropped backup group'),'backup contents are summarized before restore');
  check(!(await command({type:'snapshot'})).groups.some(g=>g.title==='Dropped backup group'),'dropping a file does not restore without confirmation');
- settingsUi.querySelector('.backup-close-existing').checked=false;restoreSubmit.click();
+ check(Boolean(settingsUi.querySelector('.backup-restore-warning')),'restore warns that all groups and tabs are replaced');restoreSubmit.click();
  check(settingsUi.querySelector('.backup-file-summary').hidden,'backup preview hides when restore starts');
  for(let attempt=0;attempt<200;attempt++){state=await command({type:'snapshot'});if(state.groups.some(g=>g.title==='Dropped backup group'))break;await new Promise(resolve=>setTimeout(resolve,50));}
  check(state.groups.some(g=>g.title==='Dropped backup group'),'dropped backup restores from settings');
@@ -235,7 +235,6 @@ await build({
  check(Boolean(importTab),'import button opens a persistent import page');
  const importFrame=document.createElement('iframe');importFrame.src=importTab.url;document.documentElement.append(importFrame);
  for(let attempt=0;attempt<100&&!importFrame.contentDocument?.querySelector('input[type=file]');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
- importFrame.contentDocument.querySelector('#close-existing').checked=false;
  const backupFile=new importFrame.contentWindow.File([JSON.stringify(backup)],'stg.json',{type:'application/json'});
  const importer=importFrame.contentDocument.querySelector('input[type=file]');Object.defineProperty(importer,'files',{configurable:true,value:[backupFile]});importer.dispatchEvent(new Event('change'));
  for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.importReport?.groups===2)break;await new Promise(resolve=>setTimeout(resolve,50));}
@@ -251,11 +250,12 @@ await build({
  const previousId=second.tabs[0].id;
  for(let attempt=0;attempt<100;attempt++){const tab=await browser.tabs.get(previousId);if(tab.status==='complete'&&tab.url.includes('/discard'))break;await new Promise(resolve=>setTimeout(resolve,50));}
  async function secondCommand(cmd){const result=await browser.runtime.sendMessage({channel:'tavvy-command',windowId:second.id,command:cmd});if(!result?.ok)throw new Error(result?.error||'No response');return result.snapshot;}
+ const secondGroup=(await secondCommand({type:'snapshot'})).activeGroupId;check(secondGroup===(await command({type:'snapshot'})).activeGroupId,'a new window opens in the most recently used group');
  await secondCommand({type:'saveSettings',settings:{theme:'Чёрная',animations:true,discardInactiveTabs:true}});
  let secondState=await secondCommand({type:'createGroup',title:'Discard test'});const nextGroup=secondState.groups.find(group=>group.title==='Discard test').id;
  await secondCommand({type:'activateGroup',groupId:nextGroup});
  check((await browser.tabs.get(previousId)).discarded===true,'silent inactive tab is unloaded in Firefox');
- await secondCommand({type:'activateGroup',groupId:'inbox'});
+ await secondCommand({type:'activateGroup',groupId:secondGroup});
  check((await browser.tabs.get(previousId)).discarded===false,'tab reloads after returning to its group');
  await browser.windows.remove(second.id);
 

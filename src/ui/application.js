@@ -400,9 +400,9 @@ export async function mountApplication(api) {
       return result.status;
     },
     onImportGroups: (backup) => run({ type: "importStg", backup }),
-    onRestoreBackup: api.isDemo ? null : async (backup, closeExistingTabs) => {
+    onRestoreBackup: api.isDemo ? null : async (backup) => {
       const type = backup?.format === "tavvy-backup" ? "importBackup" : "importStg";
-      const result = await api.runtime.sendMessage({ channel: "tavvy-command", windowId, command: { type, backup, closeExistingTabs } });
+      const result = await api.runtime.sendMessage({ channel: "tavvy-command", windowId, command: { type, backup } });
       if (!result?.ok) throw new Error(translateText(result?.error || "Фоновый процесс недоступен"));
       await run({ type: "snapshot" });
       return result.snapshot;

@@ -322,7 +322,7 @@ export function mountSettings({
   if (document.documentElement.classList.contains("settings-page")) {
     const area = document.createElement("div");
     area.className = "backup-restore";
-    area.innerHTML = `<label class="backup-dropzone"><span class="backup-dropzone-title" data-i18n="settings.backup.drop_file">Перетащите файл сюда или выберите</span><span class="backup-dropzone-filename" aria-live="polite"></span><input class="backup-file-input" type="file" accept=".json,application/json" data-i18n-aria-label="import_page.choose_json_file" aria-label="Выбрать JSON-файл"></label><div class="backup-file-summary" hidden aria-live="polite"><strong class="backup-file-counts"></strong><p class="backup-file-extra"></p><ul class="backup-file-groups"></ul><p class="backup-file-more"></p></div><p class="backup-restore-help" data-i18n="settings.backup.safety_backup">Перед восстановлением будет создана резервная копия текущих вкладок.</p><label class="backup-restore-option"><input class="backup-close-existing" type="checkbox" checked><span data-i18n="import_page.close_existing_tabs">Закрыть текущие вкладки этого окна после восстановления</span></label><button class="backup-restore-submit" type="button" disabled data-i18n="settings.backup.restore_selected">Восстановить</button><p class="backup-restore-status" role="status" aria-live="polite"></p>`;
+    area.innerHTML = `<label class="backup-dropzone"><span class="backup-dropzone-title" data-i18n="settings.backup.drop_file">Перетащите файл сюда или выберите</span><span class="backup-dropzone-filename" aria-live="polite"></span><input class="backup-file-input" type="file" accept=".json,application/json" data-i18n-aria-label="import_page.choose_json_file" aria-label="Выбрать JSON-файл"></label><div class="backup-file-summary" hidden aria-live="polite"><strong class="backup-file-counts"></strong><p class="backup-file-extra"></p><ul class="backup-file-groups"></ul><p class="backup-file-more"></p></div><p class="backup-restore-help" data-i18n="settings.backup.safety_backup">Перед восстановлением будет создана резервная копия текущих вкладок.</p><p class="backup-restore-help backup-restore-warning" data-i18n="import_page.replaces_all_tabs">Все текущие группы и вкладки во всех окнах будут закрыты и заменены содержимым файла.</p><button class="backup-restore-submit" type="button" disabled data-i18n="settings.backup.restore_selected">Восстановить</button><p class="backup-restore-status" role="status" aria-live="polite"></p>`;
     importButton.before(area);
     importButton.hidden = true;
     const zone = area.querySelector(".backup-dropzone");
@@ -330,7 +330,6 @@ export function mountSettings({
     const filename = area.querySelector(".backup-dropzone-filename");
     const submit = area.querySelector(".backup-restore-submit");
     const result = area.querySelector(".backup-restore-status");
-    const closeExisting = area.querySelector(".backup-close-existing");
     const summary = area.querySelector(".backup-file-summary");
     const counts = area.querySelector(".backup-file-counts");
     const extra = area.querySelector(".backup-file-extra");
@@ -392,13 +391,12 @@ export function mountSettings({
       summary.hidden = true;
       submit.disabled = true;
       picker.disabled = true;
-      closeExisting.disabled = true;
       result.dataset.error = "false";
       result.textContent = t("import_page.reading_file");
       try {
         const data = selectedData;
         await savePending;
-        const restored = await onRestoreBackup(data, closeExisting.checked);
+        const restored = await onRestoreBackup(data);
         if (data.format === "tavvy-backup") {
           savedSettings = normalizeSettings(restored.settings);
           setLanguage(savedSettings.language);
@@ -419,7 +417,6 @@ export function mountSettings({
       } finally {
         submit.disabled = !selectedData;
         picker.disabled = false;
-        closeExisting.disabled = false;
       }
     });
   }

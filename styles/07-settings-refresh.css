@@ -304,14 +304,13 @@ html .space-icon-palette .group-color-swatch::before { content: none; }
 .backup-dropzone input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .backup-dropzone-filename { max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: #ddd; white-space: nowrap; }
 .backup-restore-help, .backup-restore-status { font-size: 12px; line-height: 1.5; color: #888; white-space: pre-line; }
-.backup-restore-option { display: flex; align-items: flex-start; gap: 9px; font-size: 12px; line-height: 1.5; color: #aaa; }
-.backup-restore-option input { margin-top: 3px; accent-color: #398dff; }
+.backup-restore-warning { color: #e0a24a; }
 .backup-restore-submit { margin-top: 14px; padding: 8px 16px; border: 0; border-radius: 8px; background: #398dff; color: white; font: inherit; font-size: 12px; cursor: pointer; }
 .backup-restore-submit:disabled { opacity: .4; cursor: default; }
 .backup-restore-status[data-error="true"] { color: #e87373; }
 .light-theme .backup-dropzone { border-color: #bbb; color: #666; }
 .light-theme .backup-dropzone-filename { color: #222; }
-.light-theme .backup-restore-option { color: #555; }
+.light-theme .backup-restore-warning { color: #9a5b00; }
 
 .backup-file-summary { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--settings-control); font-size: 12px; }
 .backup-file-summary[hidden] { display: none; }
