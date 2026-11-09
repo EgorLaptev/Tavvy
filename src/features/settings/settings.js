@@ -1,9 +1,16 @@
-import { previewBackup } from "../../domain/backup-preview.js";
 import { LANGUAGES } from "../../domain/languages.js";
 import { createEventScope } from "../../ui/event-scope.js";
 import { normalizeSettings, THEMES, validBackupFolder } from "../../domain/settings.js";
 import { versionLabel } from "../../domain/version-names.js";
 import { setLanguage, t, format, getLanguage, translateStatic, translateText } from "../../locales/index.js";
+import { createPageSelects, fillLanguageView, createMarkerOptions } from "./controls.js";
+import { mountBackupRestore } from "./backup-restore.js";
+import { themeClasses, panelSize, sliderProgress, isSettingsExport } from "./appearance.js";
+
+/**
+ * Connects the settings view to `repository` ({read, write}). Changes are applied to the
+ * page immediately and saved through the repository; returns a dispose function.
+ */
 export function mountSettings({
   themeView,
   languageView,
@@ -36,50 +43,9 @@ export function mountSettings({
   const appearanceGroup = document.querySelector(".settings-appearance");
   const languageCurrent = document.querySelector(".language-current");
   let themeSelect, languageSelect;
-  if (document.documentElement.classList.contains("settings-page")) {
-    function makeSelect(button, labelKey, labelText) {
-      const row = document.createElement("label");
-      row.className = "setting";
-      const title = document.createElement("strong");
-      title.dataset.i18n = labelKey;
-      title.textContent = labelText;
-      const select = document.createElement("select");
-      select.setAttribute("aria-label", labelText);
-      select.setAttribute("data-i18n-aria-label", labelKey);
-      row.append(title, select);
-      button.before(row);
-      button.hidden = true;
-      return select;
-    }
-    themeSelect = makeSelect(appearanceGroup.querySelector(".theme-open:not(.language-open)"), "settings.theme.title", "Тема");
-    for (const [value, key, label] of [["Чёрная", "black", "Чёрная"], ["Тёмная", "dark", "Тёмная"], ["Светлая", "light", "Светлая"], ["Стандартная", "default", "Стандартная"], ["Как в системе", "system", "Как в системе"]]) {
-      const option = document.createElement("option");
-      option.value = value;
-      option.dataset.i18n = `settings.theme.${key}`;
-      option.textContent = label;
-      themeSelect.append(option);
-    }
-    languageSelect = makeSelect(appearanceGroup.querySelector(".language-open"), "settings.language", "Язык");
-    document.querySelector("#settings-tabs-title").after(languageSelect.closest(".setting"));
-    for (const [value, label] of LANGUAGES) {
-      const option = document.createElement("option");
-      option.value = value;
-      option.textContent = label;
-      languageSelect.append(option);
-    }
-  }
-  for (const [value, text] of LANGUAGES) {
-    const label = document.createElement("label");
-    label.className = "theme-option";
-    const name = document.createElement("span");
-    name.textContent = text;
-    const input = document.createElement("input");
-    input.type = "radio";
-    input.name = "language";
-    input.value = value;
-    label.append(name, input);
-    languageView.append(label);
-  }
+  if (document.documentElement.classList.contains("settings-page"))
+    ({ themeSelect, languageSelect } = createPageSelects(appearanceGroup));
+  fillLanguageView(languageView);
   let savePending = Promise.resolve();
   async function updateBackupStatus() {
     if (!onBackupStatus) return;
@@ -96,43 +62,7 @@ export function mountSettings({
     try { await savePending; await onBackup(); backupNotice.textContent = format("settings.backup.backup_saved_to_downloads_folder", {folder: savedSettings.backupFolder}); }
     catch (error) { backupNotice.textContent = format("settings.backup.could_not_create_backup_error", {error: translateText(error.message)}); }
   });
-  const markerRow = document.createElement("div");
-  markerRow.className = "setting marker-setting";
-  const markerTitle = document.createElement("strong");
-  markerTitle.textContent = "Метки групп";
-  markerTitle.dataset.i18n = "settings.markers.title";
-  const markerSelect = document.createElement("div");
-  markerSelect.className = "marker-options";
-  markerSelect.setAttribute("role", "radiogroup");
-  markerSelect.setAttribute("aria-label", "Форма меток групп");
-  markerSelect.setAttribute("data-i18n-aria-label", "settings.markers.style");
-  for (const [value, title, key] of [
-    ["blob", "Блоб", "settings.markers.blob"],
-    ["circle", "Круг", "settings.markers.circle"],
-    ["square", "Скруглённый квадрат", "settings.markers.rounded_square"],
-    ["diamond", "Ромб", "settings.markers.diamond"],
-    ["letters2", "Первые две буквы", "settings.markers.first_two_letters"],
-    ["letters", "Первые три буквы", "settings.markers.first_three_letters"],
-    ["none", "Без метки", "settings.markers.no_marker"],
-  ]) {
-    const label = document.createElement("label");
-    label.className = "marker-option";
-    label.title = title;
-    label.setAttribute("data-i18n-title", key);
-    const input = document.createElement("input");
-    input.type = "radio";
-    input.name = "marker-style";
-    input.value = value;
-    input.setAttribute("aria-label", title);
-    input.setAttribute("data-i18n-aria-label", key);
-    const preview = document.createElement("span");
-    preview.className = `marker-preview marker-preview-${value}`;
-    preview.setAttribute("aria-hidden", "true");
-    label.append(input, preview);
-    markerSelect.append(label);
-  }
-  markerRow.append(markerTitle, markerSelect);
-  appearanceGroup.append(markerRow);
+  const markerSelect = createMarkerOptions(appearanceGroup);
   if (appVersion) {
     const version = document.createElement("div");
     version.className = "app-version";
@@ -149,15 +79,10 @@ export function mountSettings({
     if (!THEMES.includes(savedSettings.theme))
       savedSettings.theme = "Чёрная";
     if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion);
-    const light =
-      savedSettings.theme === "Светлая" ||
-      (["Как в системе", "Стандартная"].includes(savedSettings.theme) && systemTheme.matches);
-    document.documentElement.classList.toggle("light-theme", light);
-    document.documentElement.classList.toggle(
-      "dark-theme",
-      savedSettings.theme === "Тёмная",
-    );
-    document.documentElement.classList.toggle("standard-theme", savedSettings.theme === "Стандартная");
+    const theme = themeClasses(savedSettings.theme, systemTheme.matches);
+    document.documentElement.classList.toggle("light-theme", theme.light);
+    document.documentElement.classList.toggle("dark-theme", theme.dark);
+    document.documentElement.classList.toggle("standard-theme", theme.standard);
     document.documentElement.classList.toggle(
       "animations-off",
       !savedSettings.animations,
@@ -185,14 +110,9 @@ export function mountSettings({
     backupFolder.value = savedSettings.backupFolder || "Tavvy";
     backupFrequencyRow.hidden = !backupInput.checked;
     discardInput.checked = Boolean(savedSettings.discardInactiveTabs);
-    panelWidth.value = Math.max(
-      320,
-      Math.min(800, Number(savedSettings.width) || 440),
-    );
-    panelHeight.value = Math.max(
-      200,
-      Math.min(800, Number(savedSettings.height) || 300),
-    );
+    const size = panelSize(savedSettings);
+    panelWidth.value = size.width;
+    panelHeight.value = size.height;
     updateSliderFill(panelWidth);
     updateSliderFill(panelHeight);
     document.documentElement.style.setProperty(
@@ -319,107 +239,20 @@ export function mountSettings({
   listen(systemTheme, "change", applySettings);
   applySettings();
   const importButton = document.querySelector('[aria-label="Импортировать"]');
-  if (document.documentElement.classList.contains("settings-page")) {
-    const area = document.createElement("div");
-    area.className = "backup-restore";
-    area.innerHTML = `<label class="backup-dropzone"><span class="backup-dropzone-title" data-i18n="settings.backup.drop_file">Перетащите файл сюда или выберите</span><span class="backup-dropzone-filename" aria-live="polite"></span><input class="backup-file-input" type="file" accept=".json,application/json" data-i18n-aria-label="import_page.choose_json_file" aria-label="Выбрать JSON-файл"></label><div class="backup-file-summary" hidden aria-live="polite"><strong class="backup-file-counts"></strong><p class="backup-file-extra"></p><ul class="backup-file-groups"></ul><p class="backup-file-more"></p></div><p class="backup-restore-help" data-i18n="settings.backup.safety_backup">Перед восстановлением будет создана резервная копия текущих вкладок.</p><p class="backup-restore-help backup-restore-warning" data-i18n="import_page.replaces_all_tabs">Все текущие группы и вкладки во всех окнах будут закрыты и заменены содержимым файла.</p><button class="backup-restore-submit" type="button" disabled data-i18n="settings.backup.restore_selected">Восстановить</button><p class="backup-restore-status" role="status" aria-live="polite"></p>`;
-    importButton.before(area);
-    importButton.hidden = true;
-    const zone = area.querySelector(".backup-dropzone");
-    const picker = area.querySelector(".backup-file-input");
-    const filename = area.querySelector(".backup-dropzone-filename");
-    const submit = area.querySelector(".backup-restore-submit");
-    const result = area.querySelector(".backup-restore-status");
-    const summary = area.querySelector(".backup-file-summary");
-    const counts = area.querySelector(".backup-file-counts");
-    const extra = area.querySelector(".backup-file-extra");
-    const groups = area.querySelector(".backup-file-groups");
-    const more = area.querySelector(".backup-file-more");
-    let selectedData = null, selectionId = 0;
-    async function selectFile(file) {
-      const current = ++selectionId;
-      selectedData = null;
-      summary.hidden = true;
-      filename.textContent = file?.name || "";
-      submit.disabled = true;
-      result.textContent = file ? t("import_page.reading_file") : "";
-      result.dataset.error = "false";
-      if (!file) return;
-      try {
-        const data = JSON.parse((await file.text()).replace(/^\uFEFF/, ""));
-        const preview = previewBackup(data);
-        if (current !== selectionId) return;
-        selectedData = data;
-        counts.textContent = format("settings.backup.preview_counts", { groups: preview.groups.length, tabs: preview.tabs, pinned: preview.pinned });
-        const details = [];
-        if (preview.spaces) details.push(format("settings.backup.preview_spaces", { count: preview.spaces }));
-        if (preview.legacy) details.push(format("settings.backup.preview_legacy", { count: preview.legacy }));
-        extra.textContent = details.join(" · ");
-        groups.replaceChildren(...preview.groups.slice(0, 30).map((group) => {
-          const row = document.createElement("li");
-          const name = document.createElement("span");
-          name.textContent = group.title;
-          const count = document.createElement("span");
-          count.textContent = String(group.tabs);
-          row.append(name, count);
-          return row;
-        }));
-        more.textContent = preview.groups.length > 30 ? format("settings.backup.preview_more", { count: preview.groups.length - 30 }) : "";
-        summary.hidden = false;
-        result.textContent = "";
-        submit.disabled = false;
-      } catch (error) {
-        if (current !== selectionId) return;
-        result.dataset.error = "true";
-        result.textContent = format("import_page.import_failed_error", { error: translateText(error.message) });
-      }
-    }
-    listen(picker, "change", () => selectFile(picker.files?.[0]));
-    for (const name of ["dragenter", "dragover"]) listen(zone, name, (event) => {
-      event.preventDefault();
-      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
-      zone.classList.add("is-dragging");
+  if (document.documentElement.classList.contains("settings-page"))
+    mountBackupRestore({
+      listen,
+      importButton,
+      onRestoreBackup,
+      waitForSave: () => savePending,
+      onSettingsRestored(settings) {
+        savedSettings = normalizeSettings(settings);
+        setLanguage(savedSettings.language);
+        translateStatic(document.querySelector(".popup"));
+        applySettings();
+        onLanguageChange?.();
+      },
     });
-    listen(zone, "dragleave", (event) => { if (!zone.contains(event.relatedTarget)) zone.classList.remove("is-dragging"); });
-    listen(zone, "drop", (event) => {
-      event.preventDefault();
-      zone.classList.remove("is-dragging");
-      if (!picker.disabled) selectFile(event.dataTransfer?.files?.[0]);
-    });
-    listen(submit, "click", async () => {
-      if (!selectedData || !onRestoreBackup) return;
-      summary.hidden = true;
-      submit.disabled = true;
-      picker.disabled = true;
-      result.dataset.error = "false";
-      result.textContent = t("import_page.reading_file");
-      try {
-        const data = selectedData;
-        await savePending;
-        const restored = await onRestoreBackup(data);
-        if (data.format === "tavvy-backup") {
-          savedSettings = normalizeSettings(restored.settings);
-          setLanguage(savedSettings.language);
-          translateStatic(document.querySelector(".popup"));
-          applySettings();
-          onLanguageChange?.();
-          result.textContent = t("import_page.backup_restored");
-        } else {
-          const report = restored.importReport;
-          if (!report) throw new Error(t("import_page.import_result_missing"));
-          result.textContent = report.alreadyImported ? t("import_page.backup_already_imported_no_duplicates") : format("import_page.import_complete", { groups: report.groups, tabs: report.tabs, pinned: report.pinnedTabs });
-          if (report.browserPages) result.textContent += format("import_page.import_browser_pages_result", { count: report.browserPages });
-          if (report.localFiles) result.textContent += format("import_page.import_local_files_result", { count: report.localFiles });
-        }
-      } catch (error) {
-        result.dataset.error = "true";
-        result.textContent = format("import_page.import_failed_error", { error: translateText(error.message) });
-      } finally {
-        submit.disabled = !selectedData;
-        picker.disabled = false;
-      }
-    });
-  }
   const importInput = document.createElement("input");
   importInput.type = "file";
   importInput.accept = ".json,application/json";
@@ -439,13 +272,7 @@ export function mountSettings({
         await onImportGroups(data);
         return;
       }
-      if (
-        data.version !== 1 ||
-        !data.settings ||
-        !THEMES.includes(data.settings.theme) ||
-        typeof data.settings.animations !== "boolean"
-      )
-        throw new Error();
+      if (!isSettingsExport(data)) throw new Error();
       savedSettings = normalizeSettings(data.settings);
       applySettings();
       saveSettings();
@@ -457,10 +284,7 @@ export function mountSettings({
   });
   const sizeSliders = [panelWidth, panelHeight];
   function updateSliderFill(slider) {
-    slider.style.setProperty(
-      "--progress",
-      `${((slider.value - slider.min) / (slider.max - slider.min)) * 100}%`,
-    );
+    slider.style.setProperty("--progress", sliderProgress(slider.value, slider.min, slider.max));
     const output = slider.parentElement.querySelector("output");
     if (output) output.textContent = `${slider.value} px`;
   }
