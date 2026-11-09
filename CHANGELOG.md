@@ -5,6 +5,20 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Keep the window in its group when Firefox opens or switches to its own pages (settings, add-ons, extension options); such pages join the current group instead.
+
+- Keep tabs without a container, such as Firefox pages and links from other apps, in the current group when that group uses a container.
+
+- Open new tabs in a container group directly in its container with the address bar focused and without waiting for other work.
+
+- Move a tab dragged into another window to the group shown there; a window torn off from another keeps the tab's group.
+
+- Open new windows in the most recently used group.
+
+- Never reassign tabs whose group is unknown and refuse to start when the group data is missing, instead of moving every tab to the default group.
+
+- Restoring a backup or importing Simple Tab Groups now replaces all groups and closes the previous tabs in every window, instead of leaving them behind in the default group.
+
 ## 0.2.16 — Playful Pangolin — 2026-11-09
 
 - Shorten tab action labels consistently across all supported languages.
