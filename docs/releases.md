@@ -6,6 +6,15 @@ Release notes are in [CHANGELOG.md](../CHANGELOG.md). ZIPs produced by
 and therefore its size and hash. A later rebuild can also have a different hash,
 so these values identify the exact archive listed, not every build of a version.
 
+## 0.2.16 — Playful Pangolin
+
+- Release date: 2026-11-09
+- Release source: `v0.2.16`
+- Artifact: `tavvy_tabs_group-0.2.16.zip`
+- Checksums: https://github.com/EgorLaptev/Tavvy/releases/download/v0.2.16/SHA256SUMS
+- Verification: npm test, Firefox validation and isolated Firefox smoke test passed.
+- Signature: unsigned
+
 ## 0.2.15 — Jolly Jerboa
 
 - Release date: 2026-11-08
@@ -81,6 +90,7 @@ the source used to build those local archives. Version 0.2.0 has no local tag.
 
 | Version | Release reference | Archive source | Size (bytes) | SHA-256 |
 | --- | --- | --- | ---: | --- |
+| 0.2.16 | `v0.2.16` | GitHub Release | pending | pending |
 | 0.2.15 | `v0.2.15` | GitHub Release | 117,324 | `d725b539f7eadd7231b7746d6280b143d2ae99e339c7200ec51220f6b810d7df` |
 | 0.2.14 | `v0.2.14` | GitHub Release | 116,688 | `1166ca115e0f85afcb7a3ad95e421330f1509217429d76301f664d139fe5bf76` |
 | 0.2.13 | `v0.2.13` | GitHub Release | 116,496 | `a9958079886aae880ed8526cf43edc34a2bf86796ac743b3cc4bcfa4357ba491` |

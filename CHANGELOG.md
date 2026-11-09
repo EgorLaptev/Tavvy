@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.2.16 — Playful Pangolin — 2026-11-09
+
 - Shorten tab action labels consistently across all supported languages.
 
 - Show the pointer cursor when hovering over tabs.
