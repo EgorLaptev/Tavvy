@@ -107,7 +107,7 @@
     "new_group_action": "+ New group",
     "group_name": "Group name",
     "show_tabs": "Show tabs",
-    "new_tab_in_group": "New tab in group",
+    "new_tab_in_group": "New tab",
     "group_color": "Group color",
     "colors": {
       "blue": "Blue",
@@ -127,16 +127,16 @@
     },
     "choose_group_color": "Choose group color",
     "main": "Main",
-    "move_tab_to_group": "Move tab to group"
+    "move_tab_to_group": "Move to group"
   },
   "tabs": {
     "actions": {
-      "open": "Open tab",
-      "reload": "Reload tab",
-      "pin": "Pin tab",
-      "unpin": "Unpin tab",
-      "mute": "Mute tab",
-      "unmute": "Unmute tab"
+      "open": "Open",
+      "reload": "Reload",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "mute": "Mute",
+      "unmute": "Unmute"
     },
     "status": {
       "pinned": "Pinned tab",

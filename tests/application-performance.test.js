@@ -597,27 +597,27 @@ test("tab status indicators update when Firefox reports changed states", async (
     assert.deepEqual([...row.querySelectorAll(".tab-status-icon")].map((el) => el.dataset.status), ["pinned", "audible", "screen", "microphone", "camera"]);
     const openMenu = () => row.dispatchEvent(new f.dom.window.MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
     openMenu();
-    assert.ok(f.document.querySelector('.group-context-menu [aria-label="Mute tab"]'));
-    assert.ok(f.document.querySelector('.group-context-menu [aria-label="Unpin tab"]'));
+    assert.ok(f.document.querySelector('.group-context-menu [aria-label="Mute"]'));
+    assert.ok(f.document.querySelector('.group-context-menu [aria-label="Unpin"]'));
     f.service.invalidate({ type: "updated", tabId: 1, changes: { pinned: false, audible: false, mutedInfo: { muted: true }, sharingState: { microphone: false, camera: false } } });
     await send({ type: "renameGroup", groupId: "inbox", title: "Group 0" });
     await pause(180);
     assert.deepEqual([...row.querySelectorAll(".tab-status-icon")].map((el) => el.dataset.status), ["muted"]);
     openMenu();
-    assert.ok(f.document.querySelector('.group-context-menu [aria-label="Unmute tab"]'));
+    assert.ok(f.document.querySelector('.group-context-menu [aria-label="Unmute"]'));
     f.service.invalidate({ type: "updated", tabId: 1, changes: { mutedInfo: { muted: false }, audible: false } });
     await send({ type: "renameGroup", groupId: "inbox", title: "Group 0" });
     await pause(180);
     assert.equal(row.querySelectorAll(".tab-status-icon").length, 0);
     openMenu();
-    assert.equal(f.document.querySelector('.group-context-menu [aria-label="Mute tab"]'), null);
-    assert.equal(f.document.querySelector('.group-context-menu [aria-label="Unmute tab"]'), null);
-    const pin = f.document.querySelector('.group-context-menu [aria-label="Pin tab"]');
+    assert.equal(f.document.querySelector('.group-context-menu [aria-label="Mute"]'), null);
+    assert.equal(f.document.querySelector('.group-context-menu [aria-label="Unmute"]'), null);
+    const pin = f.document.querySelector('.group-context-menu [aria-label="Pin"]');
     assert.ok(pin);
     pin.click();
     await pause(180);
     openMenu();
-    assert.ok(f.document.querySelector('.group-context-menu [aria-label="Unpin tab"]'));
+    assert.ok(f.document.querySelector('.group-context-menu [aria-label="Unpin"]'));
   } finally { f.close(); }
 });
 

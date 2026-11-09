@@ -107,7 +107,7 @@
     "new_group_action": "+ 新建分组",
     "group_name": "分组名称",
     "show_tabs": "显示标签页",
-    "new_tab_in_group": "在分组中新建标签页",
+    "new_tab_in_group": "新建标签页",
     "group_color": "分组颜色",
     "colors": {
       "blue": "蓝色",
@@ -127,16 +127,16 @@
     },
     "choose_group_color": "选择分组颜色",
     "main": "主分组",
-    "move_tab_to_group": "将标签页移至分组"
+    "move_tab_to_group": "移至分组"
   },
   "tabs": {
     "actions": {
-      "open": "打开标签页",
-      "reload": "刷新标签页",
-      "pin": "固定标签页",
-      "unpin": "取消固定标签页",
-      "mute": "静音标签页",
-      "unmute": "取消标签页静音"
+      "open": "打开",
+      "reload": "刷新",
+      "pin": "固定",
+      "unpin": "取消固定",
+      "mute": "静音",
+      "unmute": "取消静音"
     },
     "status": {
       "pinned": "已固定的标签页",

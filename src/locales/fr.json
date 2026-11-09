@@ -107,7 +107,7 @@
     "new_group_action": "+ Nouveau groupe",
     "group_name": "Nom du groupe",
     "show_tabs": "Afficher les onglets",
-    "new_tab_in_group": "Nouvel onglet dans le groupe",
+    "new_tab_in_group": "Nouvel onglet",
     "group_color": "Couleur du groupe",
     "colors": {
       "blue": "Bleu",
@@ -127,16 +127,16 @@
     },
     "choose_group_color": "Choisissez la couleur du groupe",
     "main": "Principal",
-    "move_tab_to_group": "Déplacer l’onglet vers un groupe"
+    "move_tab_to_group": "Déplacer vers un groupe"
   },
   "tabs": {
     "actions": {
-      "open": "Ouvrir l’onglet",
-      "reload": "Actualiser l’onglet",
-      "pin": "Épingler l’onglet",
-      "unpin": "Désépingler l'onglet",
-      "mute": "Onglet Muet",
-      "unmute": "Activer l'onglet"
+      "open": "Ouvrir",
+      "reload": "Actualiser",
+      "pin": "Épingler",
+      "unpin": "Désépingler",
+      "mute": "Couper le son",
+      "unmute": "Activer le son"
     },
     "status": {
       "pinned": "Onglet épinglé",

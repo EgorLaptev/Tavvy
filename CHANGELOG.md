@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Shorten tab action labels consistently across all supported languages.
+
 - Show the pointer cursor when hovering over tabs.
 
 - Keep ordinary new tabs in the active group's Firefox container.

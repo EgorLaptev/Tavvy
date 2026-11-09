@@ -107,7 +107,7 @@
     "new_group_action": "+ Nuevo grupo",
     "group_name": "Nombre del grupo",
     "show_tabs": "Mostrar pestañas",
-    "new_tab_in_group": "Nueva pestaña en el grupo",
+    "new_tab_in_group": "Nueva pestaña",
     "group_color": "Color del grupo",
     "colors": {
       "blue": "azul",
@@ -127,16 +127,16 @@
     },
     "choose_group_color": "Elige el color del grupo",
     "main": "principal",
-    "move_tab_to_group": "Mover pestaña al grupo"
+    "move_tab_to_group": "Mover al grupo"
   },
   "tabs": {
     "actions": {
-      "open": "Abrir pestaña",
-      "reload": "Recargar pestaña",
-      "pin": "Fijar pestaña",
-      "unpin": "Desanclar pestaña",
-      "mute": "Pestaña de silencio",
-      "unmute": "Pestaña activar silencio"
+      "open": "Abrir",
+      "reload": "Recargar",
+      "pin": "Fijar",
+      "unpin": "Desanclar",
+      "mute": "Silenciar",
+      "unmute": "Activar sonido"
     },
     "status": {
       "pinned": "Pestaña fijada",

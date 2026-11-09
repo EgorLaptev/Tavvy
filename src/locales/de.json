@@ -107,7 +107,7 @@
     "new_group_action": "+ Neue Gruppe",
     "group_name": "Gruppenname",
     "show_tabs": "Registerkarten anzeigen",
-    "new_tab_in_group": "Neuer Tab in der Gruppe",
+    "new_tab_in_group": "Neuer Tab",
     "group_color": "Gruppenfarbe",
     "colors": {
       "blue": "Blau",
@@ -127,16 +127,16 @@
     },
     "choose_group_color": "Wählen Sie die Gruppenfarbe",
     "main": "Hauptsächlich",
-    "move_tab_to_group": "Tab in Gruppe verschieben"
+    "move_tab_to_group": "In Gruppe verschieben"
   },
   "tabs": {
     "actions": {
-      "open": "Tab öffnen",
-      "reload": "Tab neu laden",
-      "pin": "Tab anheften",
-      "unpin": "Tab lösen",
-      "mute": "Registerkarte „Stumm“.",
-      "unmute": "Registerkarte „Stummschaltung aufheben“."
+      "open": "Öffnen",
+      "reload": "Neu laden",
+      "pin": "Anheften",
+      "unpin": "Lösen",
+      "mute": "Stummschalten",
+      "unmute": "Stummschaltung aufheben"
     },
     "status": {
       "pinned": "Angehefteter Tab",

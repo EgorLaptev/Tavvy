@@ -40,7 +40,7 @@ test("tab context menu follows groups and moves the clicked tab in its window", 
   const tab = { id: 17, windowId: 3, pinned: false };
   handlers.shown({ contexts: ["tab"] }, tab);
   await tick();
-  assert.equal(items.get("tavvy-move-tab").title, "Перенести вкладку в группу");
+  assert.equal(items.get("tavvy-move-tab").title, "Перенести в группу");
   assert.equal(items.get("tavvy-move-tab-0").title, "Основная");
   assert.equal(items.get("tavvy-move-tab-1").title, "Work && More");
   assert.match(items.get("tavvy-move-tab-1").icons[32], /^data:image\/png,/);
