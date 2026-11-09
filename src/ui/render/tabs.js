@@ -25,6 +25,7 @@ export function createTabRows(ctx) {
     if (!item) {
       item = create(tab);
       ctx.tabViews.set(tab.id, item);
+      ctx.dragTargetsDirty = true;
     }
     if (item.title !== tab.title) {
       item.label.textContent = tabTitle(tab, t);

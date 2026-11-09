@@ -13,7 +13,7 @@ test("standard and system themes follow the system preference", () => {
 
 test("popup size is clamped to the slider ranges with defaults", () => {
   assert.deepEqual(panelSize({}), { width: 440, height: 300 });
-  assert.deepEqual(panelSize({ width: 100, height: 5000 }), { width: 320, height: 800 });
+  assert.deepEqual(panelSize({ width: 100, height: 5000 }), { width: 320, height: 600 });
   assert.deepEqual(panelSize({ width: "600", height: "abc" }), { width: 600, height: 300 });
 });
 

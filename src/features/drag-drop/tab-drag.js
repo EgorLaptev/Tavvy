@@ -106,4 +106,5 @@ export function bindTabRow(row, { onMoveTab } = {}) {
 
 export function disposeTabDrag() {
   draggedTab = null;
+  document.querySelectorAll(".drop-target").forEach((el) => el.classList.remove("drop-target"));
 }

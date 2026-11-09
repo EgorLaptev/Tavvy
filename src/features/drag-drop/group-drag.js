@@ -137,6 +137,9 @@ export function bindGroupHeader(header, { onMoveGroup, onDeleteGroup, onStartGro
   header.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
     const group = header.closest(".group");
+    // Only real group cards can be dragged; the new-group draft also has a header but no card,
+    // and pointer capture would break text selection in its input.
+    if (!group || event.target.closest?.("input, textarea")) return;
     groupDrag = {
       group,
       header,

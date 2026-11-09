@@ -8,7 +8,7 @@ export function createColorPalette(ctx) {
   const palette = element("div", "group-color-palette");
   palette.hidden = true;
   palette.setAttribute("role", "group");
-  palette.setAttribute("aria-label", "Выбрать цвет группы");
+  palette.setAttribute("aria-label", t("groups.choose_group_color"));
   document.querySelector(".popup").append(palette);
   let anchor = null;
 
