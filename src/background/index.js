@@ -92,10 +92,15 @@ browser.tabs.onRemoved.addListener((id, info) => whenEnabled(() => {
     if (removalNotification === pending) removalNotification = null;
   });
 }));
-browser.tabs.onCreated.addListener((tab) => whenEnabled(() => {
-  workspace().invalidate({ type: "tab", tabId: tab.id });
-  scheduleRefresh();
-}));
+browser.tabs.onCreated.addListener((tab) => {
+  const handle = () => {
+    workspace().invalidate({ type: "tab", tabId: tab.id });
+    workspace().created(tab).catch(console.error);
+    scheduleRefresh();
+  };
+  if (gate.enabled) handle();
+  else whenEnabled(handle);
+});
 browser.tabs.onUpdated.addListener((id, changes) => whenEnabled(() => {
   workspace().invalidate({ type: "updated", tabId: id, changes });
   scheduleRefresh();

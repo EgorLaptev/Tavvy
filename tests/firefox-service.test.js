@@ -831,6 +831,66 @@ test("untagged tabs follow their Firefox container rather than the previous spac
   assert.equal(snap.tabs.find((tab) => tab.id === ordinary.id).groupId, "inbox");
 });
 
+test("a normal new tab opens in the active group's container", async () => {
+  const f = fixture();
+  f.api.permissions = { contains: async () => true };
+  f.api.contextualIdentities = {
+    create: async ({ name }) => ({ name, cookieStoreId: "firefox-container-1" }),
+    get: async (cookieStoreId) => ({ cookieStoreId }),
+  };
+  const service = f.service();
+  const before = await attachTestSpace(f, service);
+  const groupId = before.activeGroupId;
+  const ordinary = await f.api.tabs.create({ windowId: 1, active: true, cookieStoreId: "firefox-default" });
+  for (const tab of f.records) if (tab.windowId === 1 && tab.id !== ordinary.id) tab.active = false;
+  service.invalidate({ type: "tab", tabId: ordinary.id });
+  await service.created(ordinary);
+  await service.refresh();
+  const snapshot = await service.dispatch({ type: "snapshot" }, 1);
+  assert.equal(snapshot.activeGroupId, groupId);
+  assert.equal(f.records.some((tab) => tab.id === ordinary.id), false);
+  assert.ok(snapshot.tabs.some((tab) => tab.active && tab.groupId === groupId && tab.cookieStoreId === "firefox-container-1"));
+});
+
+test("opening a page or explicitly choosing a container does not replace the tab", async () => {
+  const f = fixture();
+  f.api.permissions = { contains: async () => true };
+  f.api.contextualIdentities = {
+    create: async ({ name }) => ({ name, cookieStoreId: "firefox-container-1" }),
+    get: async (cookieStoreId) => ({ cookieStoreId }),
+  };
+  const service = f.service();
+  await attachTestSpace(f, service);
+  for (const options of [{ url: "https://example.org/", cookieStoreId: "firefox-default" }, { cookieStoreId: "firefox-container-2" }, { cookieStoreId: "firefox-default", openerTabId: 1 }]) {
+    const tab = await f.api.tabs.create({ windowId: 1, active: true, ...options });
+    await service.created(tab);
+    assert.ok(f.records.some((item) => item.id === tab.id));
+  }
+});
+
+test("a new tab navigated while its replacement opens is preserved", async () => {
+  const f = fixture();
+  f.api.permissions = { contains: async () => true };
+  f.api.contextualIdentities = {
+    create: async ({ name }) => ({ name, cookieStoreId: "firefox-container-1" }),
+    get: async (cookieStoreId) => ({ cookieStoreId }),
+  };
+  const service = f.service();
+  await attachTestSpace(f, service);
+  const tab = await f.api.tabs.create({ windowId: 1, active: true, cookieStoreId: "firefox-default" });
+  for (const item of f.records) if (item.windowId === 1 && item.id !== tab.id) item.active = false;
+  service.invalidate({ type: "tab", tabId: tab.id });
+  const originalIds = f.records.map((item) => item.id).sort();
+  const create = f.api.tabs.create;
+  f.api.tabs.create = async (options) => {
+    f.records.find((item) => item.id === tab.id).pendingUrl = "https://example.org/";
+    return create(options);
+  };
+  await service.created(tab);
+  assert.equal(f.records.find((item) => item.id === tab.id).pendingUrl, "https://example.org/");
+  assert.deepEqual(f.records.map((item) => item.id).sort(), originalIds);
+});
+
 test("deleting a group closes its own tabs by default and keeps children", async () => {
   const f = fixture(), service = f.service();
   let snap = await service.dispatch({ type: "createGroup", title: "Parent" }, 1);

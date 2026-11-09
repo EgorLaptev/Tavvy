@@ -179,6 +179,9 @@ await build({
  state=await command({type:'activateGroup',groupId:smokeGroup});
  const spaceTab=state.tabs.find(tab=>tab.active);const realSpaceTab=await browser.tabs.get(spaceTab.id);
  check(realSpaceTab.cookieStoreId===smokeIdentity.cookieStoreId,'group tab uses its Firefox container');
+ const normalNewTab=await browser.tabs.create({windowId,active:true,cookieStoreId:'firefox-default'});
+ for(let attempt=0;attempt<100;attempt++){state=await command({type:'snapshot'});if(state.tabs.some(tab=>tab.active&&tab.id!==normalNewTab.id&&tab.groupId===smokeGroup&&tab.cookieStoreId===smokeIdentity.cookieStoreId))break;await new Promise(resolve=>setTimeout(resolve,50));}
+ check(state.activeGroupId===smokeGroup&&state.tabs.some(tab=>tab.active&&tab.id!==normalNewTab.id&&tab.groupId===smokeGroup&&tab.cookieStoreId===smokeIdentity.cookieStoreId),'ordinary new tab stays in the active container group');
  for(let attempt=0;attempt<100&&!ui.querySelector('[data-group-id="'+smokeGroup+'"] .group-space-label:not([hidden])');attempt++)await new Promise(resolve=>setTimeout(resolve,50));
  const spaceLabel=ui.querySelector('[data-group-id="'+smokeGroup+'"] .group-space-label');
  check(Boolean(spaceLabel)&&spaceLabel.textContent===''&&spaceLabel.title==='Smoke workspace','group displays only its container icon');

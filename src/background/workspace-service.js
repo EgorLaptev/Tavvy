@@ -931,6 +931,34 @@ export function createWorkspaceService(
     get needsRefresh() {
       return index.dirty;
     },
+    created: (tab) => {
+      const blank = (value) => !value || /^(about:(blank|newtab|home))$/i.test(value);
+      if (tab.incognito || tab.pinned || !tab.active || tab.openerTabId != null || tab.cookieStoreId !== "firefox-default" || !blank(tab.pendingUrl || tab.url)) return Promise.resolve();
+      return queue(async () => {
+        const groupId = await active(tab.windowId);
+        if (groupSpaceId(group(groupId)) === DEFAULT_SPACE_ID) return;
+        const original = await browserApi.tabs.get(tab.id).catch(() => null);
+        if (!original?.active || !blank(original.pendingUrl || original.url) || await api.sessions.getTabValue(tab.id, TAG)) return;
+        const container = await tabContainer(groupId);
+        let replacement;
+        try {
+          replacement = await api.tabs.create({ windowId: tab.windowId, index: original.index, active: false, ...container });
+          await api.sessions.setTabValue(replacement.id, TAG, groupId);
+          const current = await browserApi.tabs.get(tab.id).catch(() => null);
+          if (!current?.active || !blank(current.pendingUrl || current.url) || await active(tab.windowId) !== groupId) {
+            await api.tabs.remove(replacement.id);
+            return;
+          }
+          await api.tabs.update(replacement.id, { active: true });
+          await api.tabs.remove(tab.id);
+          forgetKnown(tab.id);
+        } catch (error) {
+          if (replacement) await api.tabs.update(tab.id, { active: true }).catch(() => {});
+          if (replacement) await api.tabs.remove(replacement.id).catch(() => {});
+          throw error;
+        }
+      });
+    },
     removed: (tabId, isWindowClosing) => {
       index.mark({ type: "removed", tabId });
       pendingRemovals.set(tabId, isWindowClosing);

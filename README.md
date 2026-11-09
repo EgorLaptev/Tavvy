@@ -41,7 +41,7 @@ If **Group pinned tabs** is enabled, turn it off before disabling or removing Ta
 
 ## Firefox containers
 
-All groups appear together. A container icon appears immediately before the tab counter on each group assigned to a Firefox container; click it to open the container picker or hover to see its name. Groups without a container have no icon: right-click the group and choose **Move to container**. Choose **None** to remove an assignment. Subgroups keep their own assignments. New top-level groups use no container; new subgroups initially use their parent’s container.
+All groups appear together. A container icon appears immediately before the tab counter on each group assigned to a Firefox container; click it to open the container picker or hover to see its name. Groups without a container have no icon: right-click the group and choose **Move to container**. Choose **None** to remove an assignment. Subgroups keep their own assignments. New top-level groups use no container; new subgroups initially use their parent’s container. A regular new tab opens in the active group’s container.
 
 Firefox asks for the optional `cookies` permission when container access is first needed. Tavvy does not read or write cookie values through the cookies API. Create containers and change their icons in Firefox settings. Changing a group’s container reopens supported tabs there after confirmation and closes unsupported browser pages; page state and sign-ins may be lost. Global pinned tabs remain shared unless **Group pinned tabs** is enabled.
 

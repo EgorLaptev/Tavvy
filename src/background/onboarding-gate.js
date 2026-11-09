@@ -8,6 +8,7 @@ export function createOnboardingGate(storage) {
     enabled = data[ONBOARDING_KEY] === true;
   });
   return {
+    get enabled() { return enabled; },
     async isEnabled() { await ready; return enabled; },
     async confirm() {
       await ready;
