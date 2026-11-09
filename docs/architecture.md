@@ -20,9 +20,7 @@ The workspace service is initialized only after confirmation. Each service insta
 `tavvy:workspace:v1` contains groups, legacy archive data, imports and settings, while
 `tavvy:known:v1` contains compact tab records. The previous format with `known`
 inside the workspace is read and migrated on save. Ordinary snapshots avoid
-writing workspace storage; when spaces are disabled, a snapshot can activate
-the Default group to recover an older window state, which changes browser tabs
-and session values. Separate dirty revisions avoid serializing and writing
+writing workspace storage. Separate dirty revisions avoid serializing and writing
 unchanged tab records when changing settings or switching groups.
 
 Groups have a UUID, `parentId`, `title`, `color` and an order in the array.
@@ -41,6 +39,45 @@ Commands include `snapshot`, `createGroup`, `activateGroup`, `createTab`,
 `deleteGroup` and `saveSettings`. The response is `{ok:true,snapshot}` or
 `{ok:false,error}`. The sender is checked against the extension ID. Changes
 notify open popups; snapshot messages do not trigger another notification.
+
+## Module layout
+
+`workspace-service.js` only wires modules together; each `createX(ctx)` in
+`src/background/workspace/` adds its functions to a shared context:
+
+- `store.js` loads, migrates and saves `tavvy:workspace:v1`, `tavvy:known:v1`
+  and the most recently used group (`tavvy:last-active-group:v1`). It refuses
+  to start when tab records exist but the workspace is missing, instead of
+  starting from defaults and overwriting real data.
+- `window-state.js`, `containers.js`, `tab-scanner.js`, `visibility.js`,
+  `activation.js` and `snapshot.js` hold the shared building blocks.
+- `reconciler.js` reacts to Firefox events, `new-tab.js` replaces new tabs in
+  container groups, and `commands/*.js` implement the popup commands.
+- Pure rules live in `src/domain/` (`group-tree.js`, `tab-assignment.js`,
+  `urls.js`) and are tested without a browser.
+
+## Tab assignment
+
+- A tab without a group joins the group shown in its window. Only a tab the
+  user opened in another Firefox container joins a group of that container.
+  Tabs without a container, including Firefox pages and links from other apps,
+  stay in the current group even when it uses a container.
+- A tab whose stored group no longer exists is shown in the current group but
+  its tag is never overwritten.
+- When the user selects a tab of a hidden group, the window follows it, except
+  for Firefox and extension pages: Firefox reuses an open about:preferences or
+  about:addons tab even when it is hidden, so such a page moves into the current
+  group instead.
+- A tab dragged into another window joins that window's group. A window torn
+  off from another has no group yet and adopts its tab's group; a new window
+  (Ctrl+N, or a launch without session restore) starts in the most recently
+  used group. The choice is stored once in the window's session value.
+- Window session values are read live, never cached, because Firefox restores
+  them itself during session restore.
+- Ctrl+T in a container group is handled immediately, outside the command
+  queue: the replacement is created active and without a URL, the only way
+  Firefox keeps the address bar focused. Tabs restored with Ctrl+Shift+T carry
+  a group and are left alone.
 
 ## Rules
 
@@ -176,10 +213,12 @@ before `discard`, so caching does not weaken the safety check.
 
 ## Restore safety
 
-The background restore manager validates the input, captures the current
-window's eligible tab IDs, and waits for a fresh Tavvy backup download to
-complete before importing. After a successful restore it closes those original
-tabs only when the import page option is checked; tabs opened during import,
-other windows and extension pages are kept. A failed backup or import and an
-already-imported STG backup never trigger closing. Existing groups are kept.
-Firefox session state such as unsaved forms is not part of the JSON backup.
+The background restore manager validates the input and waits for a fresh Tavvy
+backup download to complete before importing; a failed backup leaves everything
+unchanged. Like Simple Tab Groups, a restore or STG import then replaces the
+whole workspace: groups are replaced and the tabs that existed before, pinned
+ones included, are closed in every window. Each window is first switched to a
+group with a tab of its own (the import window to the first imported group,
+other windows to a new tab in the default group), so Firefox never closes a
+window. Tavvy's own pages, such as the import page, are kept. Firefox session
+state such as unsaved forms is not part of the JSON backup.
