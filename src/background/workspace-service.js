@@ -41,7 +41,8 @@ export function createWorkspaceService(browserApi, newId = () => crypto.randomUU
     },
     bumpRevision: () => revision++,
     group: (groupId) => findGroup(store.state.groups, groupId),
-    visibleGroups: (groupId) => visibleGroupIds(store.state.groups, groupId, store.state.settings),
+    /** A window without a group (`null`) shows only tabs without a group. */
+    visibleGroups: (groupId) => (groupId ? visibleGroupIds(store.state.groups, groupId, store.state.settings) : new Set([null])),
     async closeTab(tabId) {
       await api.tabs.remove(tabId);
       store.forget(tabId);

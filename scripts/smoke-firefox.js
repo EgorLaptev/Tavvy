@@ -116,6 +116,16 @@ await build({
  state=await command({type:'closeTab',tabId:sample.id});check(!state.tabs.some(t=>t.id===sample.id),'real tab is closed');
  const replacementTab=await browser.tabs.create({url:'http://127.0.0.1:${port}/sample',active:false});
  await command({type:'moveTab',tabId:replacementTab.id,groupId});
+ await command({type:'activateGroup',groupId:'inbox'});check((await browser.tabs.get(replacementTab.id)).hidden,'group tab is hidden before opening in a new window');
+ await command({type:'openGroupInNewWindow',groupId});let movedTab=await browser.tabs.get(replacementTab.id);const groupWindow=movedTab.windowId;
+ check(groupWindow!==windowId&&!movedTab.hidden&&movedTab.active,'group opens in a new window');
+ state=await command({type:'snapshot'});check(state.activeGroupId==='inbox'&&state.tabs.some(t=>t.id===replacementTab.id),'popup lists tabs of other windows');
+ const inGroupWindow=async(command)=>{const result=await browser.runtime.sendMessage({channel:'tavvy-command',windowId:groupWindow,command});if(!result?.ok)throw new Error(result?.error||'No background response');return result.snapshot;};
+ state=await inGroupWindow({type:'createGroup',title:'Window smoke'});const windowGroup=state.groups.find(g=>g.title==='Window smoke').id;
+ await inGroupWindow({type:'activateGroup',groupId:windowGroup});check((await browser.tabs.get(replacementTab.id)).hidden,'group hidden in its window');
+ await command({type:'activateGroup',groupId});movedTab=await browser.tabs.get(replacementTab.id);
+ check(movedTab.windowId===windowId&&!movedTab.hidden,'picking a group hidden in another window brings its tabs');
+ await inGroupWindow({type:'deleteGroup',groupId:windowGroup});await browser.windows.remove(groupWindow).catch(()=>{});
  await command({type:'saveSettings',settings:{theme:'Тёмная',animations:false}});state=await command({type:'snapshot'});check(state.settings.animations===false,'settings persisted in Firefox storage');
  state=await command({type:'deleteGroup',groupId});check(!state.groups.some(g=>g.id===groupId),'group deletion');check(!state.tabs.some(t=>t.id===replacementTab.id),'group deletion closes its tabs by default');
  state=await command({type:'createGroup',title:'Visibility parent'});const visibilityParent=state.groups.find(g=>g.title==='Visibility parent').id;
@@ -250,9 +260,12 @@ await build({
  const previousId=second.tabs[0].id;
  for(let attempt=0;attempt<100;attempt++){const tab=await browser.tabs.get(previousId);if(tab.status==='complete'&&tab.url.includes('/discard'))break;await new Promise(resolve=>setTimeout(resolve,50));}
  async function secondCommand(cmd){const result=await browser.runtime.sendMessage({channel:'tavvy-command',windowId:second.id,command:cmd});if(!result?.ok)throw new Error(result?.error||'No response');return result.snapshot;}
- const secondGroup=(await secondCommand({type:'snapshot'})).activeGroupId;check(secondGroup===(await command({type:'snapshot'})).activeGroupId,'a new window opens in the most recently used group');
+ let secondState=await secondCommand({type:'snapshot'});check(secondState.activeGroupId===null&&secondState.tabs.find(tab=>tab.id===previousId)?.groupId===null,'a new window opens without a group');
+ secondState=await secondCommand({type:'createGroup',title:'Discard home'});const secondGroup=secondState.groups.find(group=>group.title==='Discard home').id;
+ await secondCommand({type:'activateGroup',groupId:secondGroup});check((await browser.tabs.get(previousId)).hidden===true,'tabs without a group are hidden, not closed, when the window picks a group');
+ secondState=await secondCommand({type:'activateTab',tabId:previousId});check(!(await browser.tabs.get(previousId)).hidden&&secondState.tabs.find(tab=>tab.id===previousId)?.groupId===secondGroup,'a tab without a group joins the group it is opened in');
  await secondCommand({type:'saveSettings',settings:{theme:'Чёрная',animations:true,discardInactiveTabs:true}});
- let secondState=await secondCommand({type:'createGroup',title:'Discard test'});const nextGroup=secondState.groups.find(group=>group.title==='Discard test').id;
+ secondState=await secondCommand({type:'createGroup',title:'Discard test'});const nextGroup=secondState.groups.find(group=>group.title==='Discard test').id;
  await secondCommand({type:'activateGroup',groupId:nextGroup});
  check((await browser.tabs.get(previousId)).discarded===true,'silent inactive tab is unloaded in Firefox');
  await secondCommand({type:'activateGroup',groupId:secondGroup});

@@ -99,12 +99,13 @@ test("a tab dragged into another window joins the group shown there", async () =
   assert.equal(f.tags.get(`2:${GROUP}`), c);
 });
 
-test("a window torn off from another adopts the tab's group", async () => {
+test("a tab torn off into its own window loses its group, as in Simple Tab Groups", async () => {
   const f = fixture();
   const service = f.service();
   let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
   const a = snap.groups.find((g) => g.title === "A").id;
   await service.dispatch({ type: "moveTab", tabId: 2, groupId: a }, 1);
+  await service.refresh();
   const tab = f.records.find((item) => item.id === 2);
   tab.windowId = 3;
   service.invalidate({ type: "window", windowId: 1 });
@@ -112,27 +113,61 @@ test("a window torn off from another adopts the tab's group", async () => {
   await service.attached(2, 3);
   await selectInFirefox(f, service, 2);
   snap = await service.dispatch({ type: "snapshot" }, 3);
-  assert.equal(snap.activeGroupId, a);
-  assert.equal(f.tags.get(`2:${GROUP}`), a);
+  assert.equal(snap.activeGroupId, null);
+  assert.equal(f.tags.get(`2:${GROUP}`), null);
+  assert.equal(snap.tabs.find((item) => item.id === 2).groupId, null);
 });
 
-test("a new window starts in the group used most recently", async () => {
+test("windows open at installation join the default group; later new windows have no group", async () => {
   const f = fixture();
   const service = f.service();
-  let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
+  let snap = await service.dispatch({ type: "snapshot" }, 2);
+  assert.equal(snap.activeGroupId, "inbox");
+  snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
   const a = snap.groups.find((g) => g.title === "A").id;
   await service.dispatch({ type: "activateGroup", groupId: a }, 1);
+  await service.refresh();
   const fresh = await f.api.tabs.create({ windowId: 5, active: true });
   service.invalidate({ type: "tab", tabId: fresh.id });
   await service.refresh();
   snap = await service.dispatch({ type: "snapshot" }, 5);
-  assert.equal(snap.activeGroupId, a);
-  assert.equal(f.tags.get(`${fresh.id}:${GROUP}`), a);
-  // It survives a restart of the background page.
+  assert.equal(snap.activeGroupId, null);
+  assert.equal(f.tags.get(`${fresh.id}:${GROUP}`), null, "its tabs stay without a group");
+  assert.equal(f.records.find((tab) => tab.id === fresh.id).hidden, false);
+  // A restart of the background page keeps it that way.
   const restarted = f.service();
-  const other = await f.api.tabs.create({ windowId: 6, active: true });
-  restarted.invalidate({ type: "tab", tabId: other.id });
-  assert.equal((await restarted.dispatch({ type: "snapshot" }, 6)).activeGroupId, a);
+  assert.equal((await restarted.dispatch({ type: "snapshot" }, 5)).activeGroupId, null);
+});
+
+test("picking a group in a window without a group hides its tabs and closes a lone empty tab", async () => {
+  const f = fixture();
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
+  const a = snap.groups.find((g) => g.title === "A").id;
+  snap = await service.dispatch({ type: "createGroup", title: "B" }, 1);
+  const b = snap.groups.find((g) => g.title === "B").id;
+  await service.refresh();
+  const blank = await f.api.tabs.create({ windowId: 5, active: true, url: "about:newtab" });
+  service.invalidate({ type: "tab", tabId: blank.id });
+  await service.refresh();
+  await service.dispatch({ type: "activateGroup", groupId: a }, 5);
+  assert.equal(f.records.some((tab) => tab.id === blank.id), false, "the empty tab is closed");
+
+  const link = await f.api.tabs.create({ windowId: 6, active: true, url: "https://example.com/link" });
+  const blank2 = await f.api.tabs.create({ windowId: 6, active: false, url: "about:newtab" });
+  service.invalidate({ type: "window", windowId: 6 });
+  await service.refresh();
+  snap = await service.dispatch({ type: "activateGroup", groupId: b }, 6);
+  assert.equal(f.records.find((tab) => tab.id === link.id).hidden, true, "tabs without a group are hidden, not closed");
+  assert.equal(f.records.find((tab) => tab.id === blank2.id).hidden, true);
+  assert.deepEqual(snap.tabs.filter((tab) => tab.groupId === null).map((tab) => tab.id).sort(), [blank2.id, link.id].sort());
+
+  // Opening a hidden tab without a group brings it into the group shown here.
+  snap = await service.dispatch({ type: "activateTab", tabId: link.id }, 1);
+  const opened = f.records.find((tab) => tab.id === link.id);
+  assert.equal(opened.windowId, 1);
+  assert.equal(opened.active, true);
+  assert.equal(f.tags.get(`${link.id}:${GROUP}`), "inbox");
 });
 
 test("Firefox changing a window's group (session restore) is picked up immediately", async () => {
@@ -265,4 +300,82 @@ test("a new tab that loads about:newtab after about:blank is treated like Ctrl+T
   await handled;
   assert.equal(f.records.some((item) => item.id === tab.id), false);
   assert.ok(f.records.some((item) => item.active && item.cookieStoreId === identity.cookieStoreId && item.url === "about:newtab"));
+});
+
+test("every window lists the tabs of all groups, except other windows' global pinned tabs", async () => {
+  const f = fixture();
+  const service = f.service();
+  const snap = await service.dispatch({ type: "snapshot" }, 2);
+  assert.deepEqual(snap.tabs.map((tab) => tab.id), [4, 1, 2]);
+});
+
+test("picking a group hidden in another window moves its tabs to the current window", async () => {
+  const f = fixture();
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
+  const a = snap.groups.find((g) => g.title === "A").id;
+  await service.dispatch({ type: "moveTab", tabId: 2, groupId: a }, 1);
+  assert.equal(f.records.find((tab) => tab.id === 2).hidden, true);
+
+  snap = await service.dispatch({ type: "activateGroup", groupId: a }, 2);
+  const moved = f.records.find((tab) => tab.id === 2);
+  assert.equal(moved.windowId, 2);
+  assert.equal(moved.hidden, false);
+  assert.equal(moved.active, true);
+  assert.equal(f.records.find((tab) => tab.id === 4).hidden, true);
+  assert.equal(snap.activeGroupId, a);
+  assert.equal(f.tags.get(`2:${GROUP}`), a, "the moved tab keeps its group");
+  assert.equal(f.windows.get(`1:${ACTIVE}`), "inbox", "the source window keeps its group");
+  await service.attached(2, 2);
+  assert.equal(f.tags.get(`2:${GROUP}`), a);
+});
+
+test("picking a group shown in another window focuses that window", async () => {
+  const f = fixture();
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
+  const a = snap.groups.find((g) => g.title === "A").id;
+  await service.dispatch({ type: "activateGroup", groupId: a }, 1);
+  const count = f.records.length;
+  assert.equal(f.windows.get(`2:${ACTIVE}`), "inbox");
+
+  await service.dispatch({ type: "activateGroup", groupId: a }, 2);
+  assert.equal(f.api.windows.focused, 1);
+  assert.equal(f.records.length, count, "no new tab is created");
+  assert.deepEqual(f.records.filter((tab) => tab.windowId === 2).map((tab) => tab.id), [4]);
+  assert.equal(f.windows.get(`2:${ACTIVE}`), "inbox");
+});
+
+test("a group opens in a new window and the old window is left without a group", async () => {
+  const f = fixture();
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
+  const a = snap.groups.find((g) => g.title === "A").id;
+  await service.dispatch({ type: "moveTab", tabId: 2, groupId: a }, 1);
+  await service.dispatch({ type: "activateTab", tabId: 2 }, 1);
+  const extra = await f.api.tabs.create({ windowId: 1, active: false, hidden: true, index: 3 });
+  f.tags.set(`${extra.id}:${GROUP}`, a);
+  service.invalidate({ type: "tab", tabId: extra.id });
+
+  snap = await service.dispatch({ type: "openGroupInNewWindow", groupId: a }, 1);
+  const moved = f.records.filter((tab) => tab.windowId === 3);
+  assert.deepEqual(moved.map((tab) => tab.id).sort(), [2, extra.id].sort());
+  assert.ok(moved.every((tab) => tab.hidden !== true));
+  assert.equal(f.records.find((tab) => tab.id === 2).active, true, "the selected tab stays selected");
+  assert.equal(f.windows.get(`3:${ACTIVE}`), a);
+  assert.equal(snap.activeGroupId, null);
+  const placeholder = f.records.filter((tab) => tab.windowId === 1 && !tab.hidden && !tab.pinned);
+  assert.equal(placeholder.length, 1, "an empty tab without a group keeps the window open");
+  assert.equal(f.tags.get(`${placeholder[0].id}:${GROUP}`), null);
+});
+
+test("an empty group opens in a new window with a tab of its own", async () => {
+  const f = fixture();
+  const service = f.service();
+  let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
+  const a = snap.groups.find((g) => g.title === "A").id;
+  await service.dispatch({ type: "openGroupInNewWindow", groupId: a }, 1);
+  const tab = f.records.find((item) => item.windowId === 3);
+  assert.equal(f.tags.get(`${tab.id}:${GROUP}`), a);
+  assert.equal(f.windows.get(`3:${ACTIVE}`), a);
 });

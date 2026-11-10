@@ -132,7 +132,9 @@ export function createGroupList(ctx) {
         }
     for (const [id, view] of groupViews)
       reorderChildren(view.children, children.get(id) || []);
-    reorderChildren(container, [...(children.get(null) || []), ...ctx.newGroup.nodes]);
+    // The "No group" card is in the panel only while there are tabs without a group.
+    const ungrouped = ctx.ungrouped.node.hidden ? [] : [ctx.ungrouped.node];
+    reorderChildren(container, [...ungrouped, ...(children.get(null) || []), ...ctx.newGroup.nodes]);
   }
 
   function render() {
@@ -155,6 +157,7 @@ export function createGroupList(ctx) {
       }
       update(view, group);
     }
+    ctx.ungrouped.update();
     layout();
     ctx.tabLists.render();
     mountMarkers();

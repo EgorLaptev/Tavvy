@@ -6,9 +6,13 @@ import { UNLINKED_CONTAINER_PREFIX } from "./containers.js";
 /** Builds the view model the popup renders for one window. */
 export function createSnapshots(ctx) {
   const { store } = ctx;
-  /** Per-window tab order, recomputed only when tab order changes. */
+  /** Tab order seen from each window, recomputed only when tab order changes. */
   const sortedWindows = new Map();
 
+  /**
+   * Groups are shared by all windows, so the popup lists the tabs of every window: the
+   * current window first. Global pinned tabs of other windows are not part of any group.
+   */
   function sortedTabIds(windowId, records) {
     const groupPinnedTabs = !!store.state.settings?.groupPinnedTabs;
     let sorted = sortedWindows.get(windowId);
@@ -17,8 +21,11 @@ export function createSnapshots(ctx) {
         version: ctx.scanOrderVersion,
         groupPinnedTabs,
         ids: records
-          .filter((tab) => tab.windowId === windowId)
-          .sort((a, b) => a.index - b.index)
+          .filter((tab) => tab.windowId === windowId || !tab.pinned || groupPinnedTabs)
+          .sort(
+            (a, b) =>
+              (b.windowId === windowId) - (a.windowId === windowId) || a.windowId - b.windowId || a.index - b.index,
+          )
           .map((tab) => tab.id),
       };
       sortedWindows.set(windowId, sorted);
@@ -53,7 +60,7 @@ export function createSnapshots(ctx) {
     const records = await ctx.scan();
     const tabs = sortedTabIds(windowId, records).map((id) => ctx.recordById(id)).filter(Boolean);
     const activeGroupId = await ctx.activeGroupId(windowId);
-    const activeGroup = findGroup(store.state.groups, activeGroupId);
+    const activeGroup = activeGroupId ? findGroup(store.state.groups, activeGroupId) : null;
     const activeSpaceId = (await ctx.emptySpaceId(windowId)) || groupSpaceId(activeGroup);
     await ctx.syncToolbar(windowId, activeGroup);
     return {

@@ -5,6 +5,12 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Show groups with their tabs in every Firefox window instead of only in the window where the tabs are. Picking a group whose tabs are hidden in another window moves them to the current window; picking a group shown in another window switches to that window.
+
+- Open new windows without a group, as in Simple Tab Groups, instead of in the most recently used group, so a group is never shown in two windows. Their tabs are listed under "No group"; when the window picks a group they are hidden, not closed, and a lone empty tab is closed. A tab torn off into its own window also loses its group.
+
+- Add "Open in new window" to the group menu: it moves all tabs of the group into a new window.
+
 ## 0.3.0 — Clever Chameleon — 2026-11-09
 
 - Fix dragging inside the new group field, a color picker label shown in Russian before first use, leftover drop highlights after a cancelled drag and a possible popup hang on damaged group data; limit the popup height setting to Firefox's 600 px maximum; bind drag handling only to new rows instead of on every scroll frame.

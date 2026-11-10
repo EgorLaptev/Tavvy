@@ -49,6 +49,8 @@ export function createWorkspaceStore(storage) {
     savedKnownRevision = -1;
 
   let lastActiveGroupId = null;
+  /** No workspace was stored yet: the windows open at installation join the default group. */
+  let firstRun = false;
 
   const ready = storage.get(WORKSPACE_KEY).then(async (data) => {
     const stored = data[WORKSPACE_KEY];
@@ -57,6 +59,7 @@ export function createWorkspaceStore(storage) {
     // Starting with defaults would let tabs be reassigned and the real data overwritten.
     if (!stored && Object.keys(known[KNOWN_KEY] || {}).length)
       throw new Error("Данные групп Tavvy не найдены. Восстановите резервную копию.");
+    firstRun = !stored;
     state = migrateWorkspace(stored ?? defaultState());
     if (known[KNOWN_KEY]) state.known = known[KNOWN_KEY];
     lastActiveGroupId = (await storage.get(LAST_ACTIVE_GROUP_KEY))[LAST_ACTIVE_GROUP_KEY] ?? null;
@@ -100,6 +103,13 @@ export function createWorkspaceStore(storage) {
         delete state.known[tabId];
         knownRevision++;
       }
+    },
+    get firstRun() {
+      return firstRun;
+    },
+    /** Called once every open window has been assigned. */
+    endFirstRun() {
+      firstRun = false;
     },
     get lastActiveGroupId() {
       return lastActiveGroupId;

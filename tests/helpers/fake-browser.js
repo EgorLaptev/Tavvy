@@ -109,8 +109,33 @@ export function fixture() {
           1,
         );
       },
-      move: async (id, { index }) => {
-        records.find((t) => t.id === id).index = index;
+      move: async (ids, { index, windowId }) => {
+        const moved = [];
+        for (const id of Array.isArray(ids) ? ids : [ids]) {
+          const tab = records.find((t) => t.id === id);
+          let position = index;
+          if (Number.isInteger(windowId) && windowId !== tab.windowId) {
+            Object.assign(tab, { windowId, active: false });
+            if (position < 0) position = Math.max(-1, ...records.filter((t) => t.windowId === windowId && t !== tab).map((t) => t.index)) + 1;
+          }
+          tab.index = position;
+          moved.push({ ...tab });
+        }
+        return Array.isArray(ids) ? moved : moved[0];
+      },
+    },
+    windows: {
+      focused: null,
+      create: async ({ tabId } = {}) => {
+        const id = Math.max(...records.map((tab) => tab.windowId)) + 1;
+        const tab = records.find((t) => t.id === tabId);
+        if (tab) Object.assign(tab, { windowId: id, index: 0, active: true, hidden: false });
+        else records.push({ id: next++, windowId: id, index: 0, active: true, title: "Новая вкладка", url: "about:newtab", pinned: false });
+        return { id, tabs: [{ ...records.at(tab ? records.indexOf(tab) : -1) }] };
+      },
+      update: async (id, options) => {
+        if (options.focused) api.windows.focused = id;
+        return { id };
       },
     },
   };

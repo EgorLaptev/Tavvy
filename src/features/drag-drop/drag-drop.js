@@ -10,12 +10,13 @@ const boundGroups = new WeakSet(),
  * Called after each render; the callbacks turn drops into workspace commands.
  */
 export function mountDragDrop(actions = {}) {
-  document.querySelectorAll(".group").forEach((group) => {
+  // The "No group" card lists tabs but is neither a drop target nor draggable.
+  document.querySelectorAll(".group:not(.ungrouped)").forEach((group) => {
     if (boundGroups.has(group)) return;
     boundGroups.add(group);
     bindGroupDropTarget(group, actions);
   });
-  document.querySelectorAll(".group-header").forEach((header) => {
+  document.querySelectorAll(".group:not(.ungrouped) > .group-controls > .group-header").forEach((header) => {
     if (boundHeaders.has(header)) return;
     boundHeaders.add(header);
     bindGroupHeader(header, actions);

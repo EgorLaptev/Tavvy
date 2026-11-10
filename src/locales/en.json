@@ -98,6 +98,7 @@
     "move_to_root": "Ungroup",
     "clear_group": "Clear group",
     "reload_group": "Reload group",
+    "open_in_new_window": "Open in new window",
     "move_to_container": "Move to container",
     "clear_confirm": "Close all tabs in this group?",
     "move_container_confirm": "Tabs will reopen in the selected container. Firefox pages and local files are kept as links. Page state and sign-in may be lost. Continue?",
@@ -107,6 +108,7 @@
     "new_group_action": "+ New group",
     "group_name": "Group name",
     "show_tabs": "Show tabs",
+    "ungrouped": "No group",
     "new_tab_in_group": "New tab",
     "group_color": "Group color",
     "colors": {

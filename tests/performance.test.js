@@ -12,9 +12,16 @@ for (const n of [100, 500, 1000])
     assert.equal(f.counts["sessions.getTabValue"] || 0, 0);
     assert.equal(f.counts["storage.set"] || 0, 0);
     await f.service.dispatch({ type: "activateGroup", groupId: "g1" }, 1);
-    assert.equal(f.counts["tabs.query"] || 0, 0);
+    // The group is hidden in the other windows: its tabs move here in one call, and only
+    // the windows involved are read again.
+    assert.equal(f.counts["tabs.move"] || 0, 1);
+    assert.ok((f.counts["tabs.query"] || 0) <= 5);
     assert.equal(f.counts["sessions.getTabValue"] || 0, 0);
     assert.ok((f.counts["tabs.show"] || 0) <= 1);
+    f.reset();
+    await f.service.dispatch({ type: "activateGroup", groupId: "inbox" }, 1);
+    assert.equal(f.counts["tabs.query"] || 0, 0);
+    assert.equal(f.counts["sessions.getTabValue"] || 0, 0);
   });
 test("event bursts coalesce and title events require no tab/session reads", async () => {
   const f = workload(1000);

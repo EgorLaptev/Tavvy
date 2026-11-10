@@ -26,7 +26,7 @@ test("switching groups manages real tabs in only one window and preserves pinned
   const f = fixture(),
     service = f.service();
   let snap = await service.dispatch({ type: "snapshot" }, 1);
-  assert.equal(snap.tabs.length, 3);
+  assert.deepEqual(snap.tabs.map((tab) => tab.id), [1, 2, 3, 4], "tabs of other windows are listed after this window's");
   snap = await service.dispatch({ type: "createGroup", title: "Работа" }, 1);
   const groupId = snap.groups[1].id;
   snap = await service.dispatch({ type: "activateGroup", groupId }, 1);
@@ -86,7 +86,7 @@ test("tab mute and unpin commands work for audible and group-pinned tabs", async
   assert.equal(snap.tabs.find((tab) => tab.id === 2).muted, true);
   snap = await service.dispatch({ type: "toggleTabMute", tabId: 2 }, 1);
   assert.equal(snap.tabs.find((tab) => tab.id === 2).muted, false);
-  await assert.rejects(service.dispatch({ type: "unpinTab", tabId: 4 }, 1));
+  await assert.rejects(service.dispatch({ type: "unpinTab", tabId: 99 }, 1));
   snap = await service.dispatch({ type: "saveSettings", settings: { ...snap.settings, groupPinnedTabs: true } }, 1);
   snap = await service.dispatch({ type: "createGroup", title: "Other" }, 1);
   const other = snap.groups[1].id;
@@ -199,6 +199,7 @@ test("nested visibility modes and disabling preserve groups and safely update op
 });
 test("grouped pinned tabs are restored across service restarts and when the setting is disabled", async () => {
   const f = fixture();
+  f.records.splice(3, 1); // One window only.
   let service = f.service();
   let snap = await service.dispatch({ type: "snapshot" }, 1);
   snap = await service.dispatch({ type: "saveSettings", settings: { ...snap.settings, groupPinnedTabs: true } }, 1);
@@ -294,18 +295,18 @@ test("cycles rejected; deleting a group keeps its tabs and reparents children", 
     service.dispatch({ type: "deleteGroup", groupId: "inbox" }, 1),
   );
 });
-test("commands are serialized and tab operations reject another window", async () => {
-  const service = fixture().service();
+test("commands are serialized and tab operations reach tabs of other windows", async () => {
+  const f = fixture();
+  const service = f.service();
   await Promise.all([
     service.dispatch({ type: "createGroup", title: "A" }, 1),
     service.dispatch({ type: "createGroup", title: "B" }, 1),
   ]);
   const snap = await service.dispatch({ type: "snapshot" }, 1);
   assert.equal(snap.groups.length, 3);
-  await assert.rejects(
-    service.dispatch({ type: "closeTab", tabId: 4 }, 1),
-    /другом окне/,
-  );
+  await service.dispatch({ type: "closeTab", tabId: 4 }, 1);
+  assert.equal(f.records.some((tab) => tab.id === 4), false);
+  await assert.rejects(service.dispatch({ type: "closeTab", tabId: 4 }, 1), /закрыта/);
 });
 
 test("STG import replaces groups and preserves empty groups, titles, colors and URLs", async () => {
@@ -933,7 +934,7 @@ test("pinning a tab respects grouped and global pinned-tab behavior", async () =
       assert.equal(tab.pinned, true);
       assert.equal(f.records.find((item) => item.id === 2).hidden, false);
     }
-    await assert.rejects(service.dispatch({ type: "pinTab", tabId: 4 }, 1), /другом окне/);
+    await assert.rejects(service.dispatch({ type: "pinTab", tabId: 99 }, 1), /закрыта/);
   }
 });
 

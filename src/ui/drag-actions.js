@@ -21,14 +21,18 @@ export function createDragActions(ctx) {
       }),
     onDeleteGroup: (node) =>
       ctx.run({ type: "deleteGroup", groupId: node.dataset.groupId }),
-    onMoveTab: (row, group) =>
-      ctx.run({
+    // Groups list tabs of every window; a position is only meaningful inside one window.
+    onMoveTab: (row, group) => {
+      // Dropped outside a group card (or on "No group"): put the row back.
+      if (!group?.dataset.groupId) return ctx.render();
+      const tab = ctx.viewIndex.tabs.get(Number(row.dataset.tabId));
+      const next = ctx.viewIndex.tabs.get(Number(row.nextElementSibling?.dataset.tabId));
+      return ctx.run({
         type: "moveTab",
         tabId: Number(row.dataset.tabId),
         groupId: group.dataset.groupId,
-        index:
-          ctx.viewIndex.tabs.get(Number(row.nextElementSibling?.dataset.tabId))
-            ?.index ?? -1,
-      }),
+        index: !next ? -1 : next.windowId === tab?.windowId ? next.index : undefined,
+      });
+    },
   };
 }

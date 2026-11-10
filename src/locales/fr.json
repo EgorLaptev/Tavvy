@@ -98,6 +98,7 @@
     "move_to_root": "Sortir du groupe",
     "clear_group": "Vider le groupe",
     "reload_group": "Actualiser le groupe",
+    "open_in_new_window": "Ouvrir dans une nouvelle fenêtre",
     "move_to_container": "Déplacer vers un conteneur",
     "clear_confirm": "Fermer tous les onglets de ce groupe ?",
     "move_container_confirm": "Les onglets seront rouverts dans le conteneur choisi. Les pages Firefox et les fichiers locaux sont conservés sous forme de liens. L’état des pages et les connexions peuvent être perdus. Continuer ?",
@@ -107,6 +108,7 @@
     "new_group_action": "+ Nouveau groupe",
     "group_name": "Nom du groupe",
     "show_tabs": "Afficher les onglets",
+    "ungrouped": "Sans groupe",
     "new_tab_in_group": "Nouvel onglet",
     "group_color": "Couleur du groupe",
     "colors": {

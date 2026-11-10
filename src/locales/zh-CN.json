@@ -98,6 +98,7 @@
     "move_to_root": "移出分组",
     "clear_group": "清空分组",
     "reload_group": "刷新分组",
+    "open_in_new_window": "在新窗口中打开",
     "move_to_container": "移至容器",
     "clear_confirm": "关闭此分组中的所有标签页？",
     "move_container_confirm": "标签页将在所选容器中重新打开。Firefox 页面和本地文件会以链接形式保留。页面状态和登录信息可能会丢失。是否继续？",
@@ -107,6 +108,7 @@
     "new_group_action": "+ 新建分组",
     "group_name": "分组名称",
     "show_tabs": "显示标签页",
+    "ungrouped": "未分组",
     "new_tab_in_group": "新建标签页",
     "group_color": "分组颜色",
     "colors": {

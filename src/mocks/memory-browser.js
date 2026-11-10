@@ -74,6 +74,15 @@ export function createMemoryBrowser({
       async getCurrent() {
         return { id: 1, incognito: false };
       },
+      async create({ tabId } = {}) {
+        const id = Math.max(1, ...[...records.values()].map((tab) => tab.windowId)) + 1;
+        const tab = records.get(tabId);
+        if (tab) Object.assign(tab, { windowId: id, index: 0, active: true });
+        return { id, tabs: tab ? [{ ...tab }] : [] };
+      },
+      async update(id) {
+        return { id };
+      },
     },
     runtime: {
       getURL: (path) => path,
@@ -154,14 +163,20 @@ export function createMemoryBrowser({
       async discard(id) {
         records.get(id).discarded = true;
       },
-      async move(id, { index }) {
-        const tab = records.get(id);
-        const ordered = [...records.values()]
-          .filter((item) => item.windowId === tab.windowId && item.id !== id)
-          .sort((a, b) => a.index - b.index);
-        ordered.splice(index < 0 ? ordered.length : index, 0, tab);
-        ordered.forEach((item, position) => (item.index = position));
-        return { ...tab };
+      async move(ids, { index, windowId }) {
+        const moved = [];
+        for (const id of Array.isArray(ids) ? ids : [ids]) {
+          const tab = records.get(id);
+          if (Number.isInteger(windowId) && windowId !== tab.windowId)
+            Object.assign(tab, { windowId, active: false });
+          const ordered = [...records.values()]
+            .filter((item) => item.windowId === tab.windowId && item.id !== id)
+            .sort((a, b) => a.index - b.index);
+          ordered.splice(index < 0 ? ordered.length : index, 0, tab);
+          ordered.forEach((item, position) => (item.index = position));
+          moved.push({ ...tab });
+        }
+        return Array.isArray(ids) ? moved : moved[0];
       },
     },
   };

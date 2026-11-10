@@ -98,6 +98,7 @@
     "move_to_root": "Sacar del grupo",
     "clear_group": "Vaciar grupo",
     "reload_group": "Recargar grupo",
+    "open_in_new_window": "Abrir en una ventana nueva",
     "move_to_container": "Mover al contenedor",
     "clear_confirm": "¿Cerrar todas las pestañas de este grupo?",
     "move_container_confirm": "Las pestañas se volverán a abrir en el contenedor seleccionado. Las páginas de Firefox y los archivos locales se conservarán como enlaces. Puede perderse el estado de las páginas y el inicio de sesión. ¿Continuar?",
@@ -107,6 +108,7 @@
     "new_group_action": "+ Nuevo grupo",
     "group_name": "Nombre del grupo",
     "show_tabs": "Mostrar pestañas",
+    "ungrouped": "Sin grupo",
     "new_tab_in_group": "Nueva pestaña",
     "group_color": "Color del grupo",
     "colors": {

@@ -117,6 +117,7 @@ export function createGroupCommands(ctx) {
     setGroupColor,
     moveGroup,
     deleteGroup,
-    activateGroup: (command, windowId) => ctx.activate(windowId, command.groupId),
+    activateGroup: (command, windowId) => ctx.switchTo(windowId, command.groupId),
+    openGroupInNewWindow: (command, windowId) => ctx.openInNewWindow(windowId, command.groupId),
   };
 }

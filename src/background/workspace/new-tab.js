@@ -77,6 +77,7 @@ export function createNewTabHandler(ctx) {
     await store.ready;
     if (await browserApi.sessions.getTabValue(tab.id, TAB_GROUP)) return;
     const groupId = await ctx.activeGroupId(tab.windowId);
+    if (!groupId) return;
     const group = findGroup(store.state.groups, groupId);
     if (groupSpaceId(group) === DEFAULT_SPACE_ID) return;
     const container = await ctx.tabOptionsForGroup(group);

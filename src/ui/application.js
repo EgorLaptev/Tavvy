@@ -16,6 +16,7 @@ import { createNewGroupForm } from "./new-group-form.js";
 import { createGroupList } from "./render/groups.js";
 import { createTabRows } from "./render/tabs.js";
 import { createTabLists } from "./render/tab-lists.js";
+import { createUngroupedList } from "./render/ungrouped.js";
 import { createDragActions } from "./drag-actions.js";
 import { createLiveUpdates } from "./live-updates.js";
 import { settingsOptions } from "./settings-bridge.js";
@@ -105,6 +106,7 @@ export async function mountApplication(api) {
   });
   ctx.newGroup = createNewGroupForm(ctx);
   ctx.tabRows = createTabRows(ctx);
+  ctx.ungrouped = createUngroupedList(ctx);
   ctx.groups = createGroupList(ctx);
   ctx.dragActions = createDragActions(ctx);
   ctx.tabLists = createTabLists(ctx);

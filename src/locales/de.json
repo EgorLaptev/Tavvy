@@ -98,6 +98,7 @@
     "move_to_root": "Aus Gruppe lösen",
     "clear_group": "Gruppe leeren",
     "reload_group": "Gruppe neu laden",
+    "open_in_new_window": "In neuem Fenster öffnen",
     "move_to_container": "In Container verschieben",
     "clear_confirm": "Alle Tabs dieser Gruppe schließen?",
     "move_container_confirm": "Tabs werden im ausgewählten Container neu geöffnet. Firefox-Seiten und lokale Dateien bleiben als Links erhalten. Seitenzustand und Anmeldungen können verloren gehen. Fortfahren?",
@@ -107,6 +108,7 @@
     "new_group_action": "+ Neue Gruppe",
     "group_name": "Gruppenname",
     "show_tabs": "Registerkarten anzeigen",
+    "ungrouped": "Ohne Gruppe",
     "new_tab_in_group": "Neuer Tab",
     "group_color": "Gruppenfarbe",
     "colors": {

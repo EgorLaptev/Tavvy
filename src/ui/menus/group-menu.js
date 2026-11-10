@@ -25,6 +25,7 @@ export function createGroupMenu(ctx) {
     menu.menu.replaceChildren();
     menu.addAction(t("groups.rename_group"), rename);
     menu.addAction(t("groups.reload_group"), () => ctx.run({ type: "reloadGroup", groupId: group.id }));
+    menu.addAction(t("groups.open_in_new_window"), () => ctx.run({ type: "openGroupInNewWindow", groupId: group.id }));
     if (ctx.snapshot.settings.nestedGroups !== false && group.id !== "inbox") addMoveToGroup(group);
     menu.addSubmenuTrigger(t("groups.move_to_container"), (trigger) => ctx.containerPicker.show(group.id, trigger), false, "group-context-move");
     menu.addAction(t("groups.clear_group"), () => { if (window.confirm(t("groups.clear_confirm"))) ctx.run({ type: "clearGroup", groupId: group.id }); }, false, "group-context-clear");

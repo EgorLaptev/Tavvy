@@ -17,7 +17,7 @@ export function createToolbarIcon(
     },
     async updateGroup(group) {
       const windowIds = [...applied.entries()]
-        .filter(([, value]) => value.group.id === group.id)
+        .filter(([, value]) => value.group?.id === group.id)
         .map(([windowId]) => windowId);
       await Promise.all(windowIds.map((windowId) => this.update(windowId, group)));
     },
@@ -30,7 +30,15 @@ export function createToolbarIcon(
         previous.map(([windowId, value]) => this.update(windowId, value.group)),
       );
     },
+    /** `group` is `null` for a window without a group: the plain Tavvy icon. */
     async update(windowId, group) {
+      if (!group) {
+        if (applied.get(windowId)?.signature === null) return;
+        await api.action.setIcon({ windowId, path: "icon.svg" });
+        await api.action.setTitle({ windowId, title: "Tavvy" });
+        applied.set(windowId, { signature: null, group: null });
+        return;
+      }
       const signature = JSON.stringify([
         group.id,
         group.color,

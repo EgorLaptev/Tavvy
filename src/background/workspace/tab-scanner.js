@@ -21,12 +21,17 @@ export function createTabScanner(ctx) {
     return pages.some((page) => url === page || url?.startsWith(page + "?") || url?.startsWith(page + "#"));
   }
 
-  /** Group for a tab without a valid tag (see `chooseGroupForNewTab`). */
+  /**
+   * Group for a tab without a valid tag (see `chooseGroupForNewTab`); `null` in a window
+   * without a group, where new tabs stay without a group.
+   */
   async function inferGroup(tab, windowGroups) {
     if (!windowGroups.has(tab.windowId)) windowGroups.set(tab.windowId, ctx.activeGroupId(tab.windowId));
+    const windowGroupId = await windowGroups.get(tab.windowId);
+    if (!windowGroupId) return null;
     return chooseGroupForNewTab({
       groups: store.state.groups,
-      windowGroupId: await windowGroups.get(tab.windowId),
+      windowGroupId,
       tabSpaceId: ctx.spaceIdForCookieStore(tab.cookieStoreId),
     });
   }
@@ -43,8 +48,9 @@ export function createTabScanner(ctx) {
     } catch {
       return null; // A tab can close while Firefox answers a query.
     }
-    if (!validGroups.has(groupId)) {
-      const untagged = groupId === undefined || groupId === null;
+    // A `null` tag marks a tab without a group; it keeps no group in every window.
+    if (!validGroups.has(groupId) && groupId !== null) {
+      const untagged = groupId === undefined;
       groupId = await inferGroup(tab, windowGroups);
       // A tag naming an unknown group is shown in the current group but never overwritten:
       // if the group list is ever incomplete, tabs must not be reassigned for good.

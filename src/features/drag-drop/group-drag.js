@@ -8,7 +8,7 @@ function groupAtPoint(x, y) {
   const hit = document.elementFromPoint(x, y);
   // A placeholder inside .subgroups belongs to its parent in the DOM, but
   // is empty space, just like a placeholder in the top-level list.
-  return hit?.closest(".group-placeholder") ? null : hit?.closest(".group");
+  return hit?.closest(".group-placeholder") ? null : hit?.closest(".group:not(.ungrouped)");
 }
 
 const animationDuration = () =>
@@ -78,7 +78,7 @@ function placeBeside(d, target, headerRect, clientY) {
   // A nested list can change the positions of groups outside either
   // immediate parent, so measure every visible group in the panel.
   const before = new Map();
-  for (const el of document.querySelectorAll(".groups .group")) {
+  for (const el of document.querySelectorAll(".groups .group:not(.ungrouped)")) {
     if (el === d.group || d.group.contains(el)) continue;
     const rect = el.getBoundingClientRect();
     if (rect.height) before.set(el, rect.top);

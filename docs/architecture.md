@@ -26,8 +26,10 @@ unchanged tab records when changing settings or switching groups.
 Groups have a UUID, `parentId`, `title`, `color` and an order in the array.
 Tabs are read with `tabs.query`; group membership uses `sessions.setTabValue`.
 The active group is stored per window with `sessions.setWindowValue`, so saved
-groups are not tied to Firefox's temporary tab IDs. Counts reflect actual tabs
-in the current window.
+groups are not tied to Firefox's temporary tab IDs. Groups are shared by all
+windows: the popup lists the tabs of every window (the current window first),
+so counts reflect all tabs of a group. Global pinned tabs of other windows are
+not listed.
 
 The main state contains `version`, `groups`, `archive`, `settings` and
 `imports`. Separate `known` records hold the latest descriptions of open tabs,
@@ -46,7 +48,9 @@ notify open popups; snapshot messages do not trigger another notification.
 `src/background/workspace/` adds its functions to a shared context:
 
 - `store.js` loads, migrates and saves `tavvy:workspace:v1`, `tavvy:known:v1`
-  and the most recently used group (`tavvy:last-active-group:v1`). It refuses
+  and the most recently used group (`tavvy:last-active-group:v1`, written for
+  older versions only). `firstRun` marks a workspace created in this session,
+  whose windows join the default group until the first refresh. It refuses
   to start when tab records exist but the workspace is missing, instead of
   starting from defaults and overwriting real data.
 - `window-state.js`, `containers.js`, `tab-scanner.js`, `visibility.js`,
@@ -58,7 +62,11 @@ notify open popups; snapshot messages do not trigger another notification.
 
 ## Tab assignment
 
-- A tab without a group joins the group shown in its window. Only a tab the
+- A window shows one group or no group (`null`; window value `""`). As in
+  Simple Tab Groups, a new window (Ctrl+N, a launch from another app) has no
+  group, and its tabs get a `null` tag: they have no group in any window. The
+  windows already open when Tavvy is installed join the default group instead.
+- A tab without a tag joins the group shown in its window. Only a tab the
   user opened in another Firefox container joins a group of that container.
   Tabs without a container, including Firefox pages and links from other apps,
   stay in the current group even when it uses a container.
@@ -68,10 +76,11 @@ notify open popups; snapshot messages do not trigger another notification.
   for Firefox and extension pages: Firefox reuses an open about:preferences or
   about:addons tab even when it is hidden, so such a page moves into the current
   group instead.
-- A tab dragged into another window joins that window's group. A window torn
-  off from another has no group yet and adopts its tab's group; a new window
-  (Ctrl+N, or a launch without session restore) starts in the most recently
-  used group. The choice is stored once in the window's session value.
+- A tab dragged into another window joins that window's group. A tab dragged
+  into a window without a group, including a window torn off for it, loses its
+  group, so a group is never shown in two windows. A window's choice is stored
+  once in its session value; an existing window from an older version adopts
+  the group of its selected tab.
 - Window session values are read live, never cached, because Firefox restores
   them itself during session restore.
 - New foreground tabs without an opener or container are reopened in the
@@ -87,12 +96,23 @@ notify open popups; snapshot messages do not trigger another notification.
 
 - Switching affects the current window. Pinned tabs are shared by default and
   can optionally be managed per group.
+- When a window without a group picks a group, its tabs without a group are
+  hidden, not closed (a lone empty tab is closed). The popup lists them in a
+  "No group" card; opening one shows it in its window if that window has no
+  group, otherwise brings it here and adds it to the group shown here.
+- Picking a group that has no tabs in the current window but is shown in another
+  window focuses that window. Otherwise the group's tabs hidden in other windows
+  are moved into the current window (one `tabs.move` call); windows that show the
+  group keep their tabs. Tabs that Tavvy moves keep their group (`attached`
+  ignores them).
+- "Open in new window" moves all tabs of a group into a new window. Windows that
+  showed the group are left without a group.
 - The destination tab is shown and activated before other tabs are hidden.
 - An empty group receives a new tab when activated.
 - Nested groups can show tabs from ancestors or descendants of the selected
   group. When nesting is disabled, only the selected group's tabs are shown;
   the stored hierarchy is preserved for later use.
-- Cycles and operations on tabs in another window are rejected.
+- Cycles are rejected. Tab commands accept tabs of any window.
 - Deleting a group closes its tabs by default; the setting can keep them. Children move to its parent.
 - If Firefox cannot hide some tabs, the UI displays the error.
 - After a failed command, the UI returns to the last confirmed snapshot.
@@ -200,7 +220,7 @@ language; the Default space label is translated.
 
 ## Verification
 
-Unit and integration tests cover the command queue, window isolation, pinned
+Unit and integration tests cover the command queue, groups across windows, pinned
 tabs, legacy backup compatibility, closure outside the UI, cycles and
 group deletion. `scripts/smoke-firefox.js` loads a temporary extension copy
 into a separate headless Firefox profile, tests real operations and UI, then

@@ -221,6 +221,14 @@ export function createTabIndex(browser, limit = 16) {
       },
       async move(id, options) {
         const result = await browser.tabs.move(id, options);
+        const ids = Array.isArray(id) ? id : [id];
+        const sources = ids.map((item) => tabs.get(item)?.windowId).filter((windowId) => windowId !== undefined);
+        if (Number.isInteger(options.windowId) && sources.some((windowId) => windowId !== options.windowId)) {
+          // Moved to another window: the windows involved are read again.
+          for (const windowId of [...sources, options.windowId]) dirtyWindows.add(windowId);
+          for (const item of ids) dirtyTabs.add(item);
+          return result;
+        }
         const old = tabs.get(id);
         if (old) {
           const ordered = [...tabs.values()]

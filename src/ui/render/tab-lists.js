@@ -19,6 +19,22 @@ export function createTabLists(ctx) {
   const { container } = ctx;
   let scrollFrame;
 
+  /** Puts the visible slice of `rows` into an expanded card. */
+  function fill(view, rows, bounds, used) {
+    const offset = bounds.top - view.inner.getBoundingClientRect().top;
+    const slice = virtualSlice(rows.length, offset, container.clientHeight);
+    const desired = [];
+    if (slice.start) desired.push(spacer(slice.before));
+    for (const tab of rows.slice(slice.start, slice.end)) {
+      desired.push(ctx.tabRows.rowFor(tab));
+      used.add(tab.id);
+    }
+    if (slice.end < rows.length) desired.push(spacer(slice.after));
+    if (!rows.length) desired.push(element("div", "empty", t("tabs.no_tabs")));
+    reorderChildren(view.inner, desired);
+    view.tabs.style.height = view.inner.scrollHeight + "px";
+  }
+
   function render() {
     if (ctx.disposed || !ctx.filterResult) return;
     const { snapshot, viewIndex, filterResult, opened, groupViews } = ctx;
@@ -40,20 +56,9 @@ export function createTabLists(ctx) {
         view.tabs.style.height = "0px";
         continue;
       }
-      const rows = filterResult.rows(group.id),
-        offset = bounds.top - view.inner.getBoundingClientRect().top;
-      const slice = virtualSlice(rows.length, offset, container.clientHeight);
-      const desired = [];
-      if (slice.start) desired.push(spacer(slice.before));
-      for (const tab of rows.slice(slice.start, slice.end)) {
-        desired.push(ctx.tabRows.rowFor(tab));
-        used.add(tab.id);
-      }
-      if (slice.end < rows.length) desired.push(spacer(slice.after));
-      if (!rows.length) desired.push(element("div", "empty", t("tabs.no_tabs")));
-      reorderChildren(view.inner, desired);
-      view.tabs.style.height = view.inner.scrollHeight + "px";
+      fill(view, filterResult.rows(group.id), bounds, used);
     }
+    ctx.ungrouped.render(bounds, used);
     ctx.tabRows.prune(used);
     // Bind drag handling only when cards or rows were created, not on every scroll frame.
     if (ctx.dragTargetsDirty) {
@@ -74,6 +79,7 @@ export function createTabLists(ctx) {
 
   return {
     render,
+    fill,
     dispose: () => cancelAnimationFrame(scrollFrame),
   };
 }

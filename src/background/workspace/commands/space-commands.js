@@ -65,7 +65,7 @@ export function createSpaceCommands(ctx) {
     }
     ctx.space(spaceId);
     const current = await ctx.activeGroupId(windowId);
-    await ctx.rememberGroupInSpace(windowId, groupSpaceId(findGroup(store.state.groups, current)), current);
+    if (current) await ctx.rememberGroupInSpace(windowId, groupSpaceId(findGroup(store.state.groups, current)), current);
     await selectSpace(windowId, spaceId);
   }
 
