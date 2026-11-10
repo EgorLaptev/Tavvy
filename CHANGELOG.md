@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+## 0.3.1 — Nomadic Narwhal — 2026-11-10
+
 - Show groups with their tabs in every Firefox window instead of only in the window where the tabs are. Picking a group whose tabs are hidden in another window moves them to the current window; picking a group shown in another window switches to that window.
 
 - Open new windows without a group, as in Simple Tab Groups, instead of in the most recently used group, so a group is never shown in two windows. Their tabs are listed under "No group"; when the window picks a group they are hidden, not closed, and a lone empty tab is closed. A tab torn off into its own window also loses its group.
