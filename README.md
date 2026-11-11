@@ -77,3 +77,5 @@ The Git hooks check Conventional Commit subjects, staged whitespace, tests, and 
 Run `npm run lint` to check JavaScript with ESLint and CSS with Stylelint. The pre-commit hook and CI run linting automatically. The pre-commit hook also checks formatting, runs tests and validates the Firefox extension.
 
 Run `npm run format` to format source files with Prettier, or `npm run format:check` to check formatting without changing files.
+
+Stylelint checks CSS validity, naming, values, selector complexity and property order. Existing selector, value and ordering violations are warnings pending cleanup.

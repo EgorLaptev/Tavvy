@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Expand CSS lint checks for naming, values, selectors and property order.
+
 - Add JavaScript and CSS linting to local checks and CI, plus a Prettier formatting check.
 
 ## 0.3.1 — Nomadic Narwhal — 2026-11-10
