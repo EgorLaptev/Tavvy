@@ -12,10 +12,10 @@ import { isInternalPage } from "./urls.js";
  * in the current group even if that group uses a container.
  */
 export function chooseGroupForNewTab({ groups, windowGroupId, tabSpaceId }) {
-  const windowSpaceId = groupSpaceId(findGroup(groups, windowGroupId));
-  if (tabSpaceId === windowSpaceId || tabSpaceId === DEFAULT_SPACE_ID)
-    return windowGroupId;
-  return groupsInSpace(groups, tabSpaceId)[0]?.id || windowGroupId;
+    const windowSpaceId = groupSpaceId(findGroup(groups, windowGroupId));
+    if (tabSpaceId === windowSpaceId || tabSpaceId === DEFAULT_SPACE_ID)
+        return windowGroupId;
+    return groupsInSpace(groups, tabSpaceId)[0]?.id || windowGroupId;
 }
 
 /**
@@ -27,13 +27,13 @@ export function chooseGroupForNewTab({ groups, windowGroupId, tabSpaceId }) {
  * - Otherwise the window follows the tab to its group.
  */
 export function resolveSelection({
-  currentGroupId,
-  visibleGroups,
-  selectedTab,
+    currentGroupId,
+    visibleGroups,
+    selectedTab,
 }) {
-  if (!selectedTab || visibleGroups.has(selectedTab.groupId))
-    return { groupId: currentGroupId };
-  if (isInternalPage(selectedTab.url))
-    return { groupId: currentGroupId, moveTabTo: currentGroupId };
-  return { groupId: selectedTab.groupId };
+    if (!selectedTab || visibleGroups.has(selectedTab.groupId))
+        return { groupId: currentGroupId };
+    if (isInternalPage(selectedTab.url))
+        return { groupId: currentGroupId, moveTabTo: currentGroupId };
+    return { groupId: selectedTab.groupId };
 }

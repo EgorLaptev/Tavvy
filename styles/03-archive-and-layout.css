@@ -1,842 +1,1040 @@
 .recent-button {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  padding: 10px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #484848;
-  cursor: pointer;
+    display: grid;
+    place-items: center;
+
+    width: 36px;
+    height: 36px;
+    padding: 10px;
+
+    color: #484848;
+
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
 }
+
 .recent-button:hover,
 .recent-button[aria-expanded="true"] {
-  background: #0a0a0a;
-  color: #aaa;
+    color: #aaa;
+
+    background: #0a0a0a;
 }
+
 .recent-button svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+    width: 16px;
+    height: 16px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
+
 .recent-list {
-  padding: 8px 14px;
-  color: #888;
-  font-size: 12px;
+    padding: 8px 14px;
+
+    color: #888;
+    font-size: 12px;
 }
+
 .recent-list div {
-  padding: 7px 0;
+    padding: 7px 0;
 }
+
 .recent-list[hidden] {
-  display: none;
+    display: none;
 }
 
 .groups[hidden] {
-  display: none;
+    display: none;
 }
+
 .recent-list {
-  padding: 0;
+    padding: 0;
 }
+
 .recent-list .recent-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    height: 34px;
+    padding: 0 14px;
+
+    border-radius: 10px;
 }
+
 .recent-row:hover {
-  background: #101010;
+    background: #101010;
 }
+
 .recent-row .tab-favicon {
-  display: grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  flex: none;
-  border-radius: 4px;
-  background: #292929;
-  color: #aaa;
-  font-size: 10px;
-  font-weight: 600;
+    display: grid;
+    flex: none;
+    place-items: center;
+
+    width: 16px;
+    height: 16px;
+
+    font-size: 10px;
+    font-weight: 600;
+    color: #aaa;
+
+    background: #292929;
+    border-radius: 4px;
 }
+
 .recent-title {
-  flex: 1;
-  min-width: 0;
+    flex: 1;
+
+    min-width: 0;
 }
+
 .recent-row time {
-  color: #666;
-  font-size: 11px;
-  white-space: nowrap;
+    color: #666;
+    font-size: 11px;
+    white-space: nowrap;
 }
 
 .restore-button {
-  display: grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  padding: 1px;
-  border: 0;
-  background: transparent;
-  color: #777;
-  opacity: 0;
-  transition:
-    opacity 0.15s ease,
-    color 0.15s ease;
-  cursor: pointer;
+    display: grid;
+    place-items: center;
+
+    width: 16px;
+    height: 16px;
+    padding: 1px;
+
+    color: #777;
+
+    background: transparent;
+    border: 0;
+    opacity: 0;
+    cursor: pointer;
+
+    transition:
+        opacity 0.15s ease,
+        color 0.15s ease;
 }
+
 .recent-row:hover .restore-button,
 .restore-button:focus-visible {
-  opacity: 1;
+    opacity: 1;
 }
+
 .restore-button:hover {
-  color: #eee;
+    color: #eee;
 }
+
 .restore-button svg {
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+    width: 14px;
+    height: 14px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .restore-button {
-  width: 0;
-  padding: 0;
-  overflow: hidden;
-  flex: none;
-  transform: translateX(6px);
-  transition:
-    width 0.2s ease,
-    opacity 0.2s ease,
-    transform 0.2s ease,
-    color 0.15s ease;
+    flex: none;
+
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+
+    transform: translateX(6px);
+    transition:
+        width 0.2s ease,
+        opacity 0.2s ease,
+        transform 0.2s ease,
+        color 0.15s ease;
 }
+
 .recent-row {
-  gap: 0 !important;
+    gap: 0 !important;
 }
+
 .recent-row .tab-favicon {
-  margin-right: 10px;
+    margin-right: 10px;
 }
+
 .recent-row time {
-  margin-left: 10px;
+    margin-left: 10px;
 }
+
 .recent-row:hover .restore-button,
 .recent-row:focus-within .restore-button {
-  width: 16px;
-  margin-left: 10px;
-  opacity: 1;
-  transform: translateX(0);
+    width: 16px;
+    margin-left: 10px;
+
+    opacity: 1;
+
+    transform: translateX(0);
 }
+
 .restore-button {
-  transition:
-    width 0.2s ease,
-    margin 0.2s ease,
-    opacity 0.2s ease,
-    transform 0.2s ease,
-    color 0.15s ease;
+    transition:
+        width 0.2s ease,
+        margin 0.2s ease,
+        opacity 0.2s ease,
+        transform 0.2s ease,
+        color 0.15s ease;
 }
 
 .restore-button:hover {
-  color: #398dff;
+    color: #398dff;
 }
+
 .archive-delete-button {
-  color: #777;
+    color: #777;
 }
+
 .archive-delete-button:hover {
-  color: #ff7070;
+    color: #ff7070;
 }
+
 .archive-delete-button::after {
-  inset: -6px -4px;
+    inset: -6px -4px;
 }
+
 .recent-row .restore-button:has(+ .archive-delete-button)::after {
-  inset: -6px -4px;
+    inset: -6px -4px;
 }
 
 .restore-button {
-  position: relative;
-  overflow: visible;
+    position: relative;
+
+    overflow: visible;
 }
+
 .restore-button::after {
-  content: "";
-  position: absolute;
-  inset: -6px -10px;
+    content: "";
+
+    position: absolute;
+    inset: -6px -10px;
 }
+
 .recent-row .restore-button::after {
-  inset: -6px -4px;
+    inset: -6px -4px;
 }
+
 .restore-button:not(:focus-visible) {
-  pointer-events: none;
+    pointer-events: none;
 }
+
 .recent-row:hover .restore-button,
 .recent-row:focus-within .restore-button {
-  pointer-events: auto;
+    pointer-events: auto;
 }
 
 .groups,
 .recent-list {
-  transition:
-    opacity 0.12s ease,
-    transform 0.12s ease;
+    transition:
+        opacity 0.12s ease,
+        transform 0.12s ease;
 }
+
 .view-leaving,
 .view-entering {
-  opacity: 0;
-  transform: translateY(4px);
+    opacity: 0;
+
+    transform: translateY(4px);
 }
+
 .recent-row {
-  overflow: hidden;
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease,
-    height 0.2s ease;
+    overflow: hidden;
+
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease,
+        height 0.2s ease;
 }
+
 .recent-list .recent-row.restoring {
-  opacity: 0;
-  transform: translateX(8px);
-  height: 0;
+    height: 0;
+
+    opacity: 0;
+
+    transform: translateX(8px);
 }
 @media (prefers-reduced-motion: reduce) {
-  .groups,
-  .recent-list,
-  .recent-row {
-    transition: none;
-  }
+    .groups,
+    .recent-list,
+    .recent-row {
+        transition: none;
+    }
 }
 
 .recent-button[hidden] {
-  display: none;
+    display: none;
 }
 
 .add-subgroup {
-  border: 0;
-  background: transparent;
-  color: #555;
-  font-size: 16px;
-  opacity: 0;
-  cursor: pointer;
-  padding: 0 8px;
-  transition:
-    opacity 0.15s,
-    color 0.15s;
+    padding: 0 8px;
+
+    font-size: 16px;
+    color: #555;
+
+    background: transparent;
+    border: 0;
+    opacity: 0;
+    cursor: pointer;
+
+    transition:
+        opacity 0.15s,
+        color 0.15s;
 }
+
 .group-controls:hover .add-subgroup,
 .add-subgroup:focus-visible {
-  opacity: 1;
+    opacity: 1;
 }
+
 .add-subgroup:hover {
-  color: #ddd;
+    color: #ddd;
 }
+
 .subgroups {
-  padding: 0 0 3px 20px;
+    padding: 0 0 3px 20px;
 }
+
 .subgroup {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  height: 34px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #ddd;
-  text-align: left;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    width: 100%;
+    height: 34px;
+    padding: 0 14px;
+
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    color: #ddd;
+
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
 }
+
 .subgroup:hover,
 .subgroup.active {
-  background: #101010;
+    background: #101010;
 }
+
 .subgroup span:nth-child(2) {
-  flex: 1;
+    flex: 1;
 }
 
 .bottom-bar[hidden],
 .archive-bar[hidden] {
-  display: none;
+    display: none;
 }
+
 .archive-bar {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
+    display: flex;
+    gap: 8px;
+
+    margin-top: 8px;
 }
+
 .archive-back,
 .archive-clear {
-  height: 36px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #666;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
+
+    height: 36px;
+
+    color: #666;
+
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
 }
+
 .archive-back {
-  flex: 1;
-  gap: 9px;
-  padding: 0 14px;
-  font: inherit;
-  font-size: 12px;
-  text-align: left;
+    flex: 1;
+    gap: 9px;
+
+    padding: 0 14px;
+
+    font: inherit;
+    font-size: 12px;
+    text-align: left;
 }
+
 .archive-clear {
-  position: relative;
-  justify-content: center;
-  width: 36px;
-  overflow: hidden;
+    position: relative;
+
+    justify-content: center;
+
+    width: 36px;
+    overflow: hidden;
 }
+
 .archive-back:hover,
 .archive-clear:hover {
-  background: #0a0a0a;
-  color: #bbb;
+    color: #bbb;
+
+    background: #0a0a0a;
 }
+
 .archive-back svg,
 .archive-clear svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  position: relative;
+    position: relative;
+
+    width: 16px;
+    height: 16px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
+
 .archive-clear::before {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 0;
-  background: #6b2920;
-  transition: height 0.15s;
+    content: "";
+
+    position: absolute;
+    inset: auto 0 0;
+
+    height: 0;
+
+    background: #6b2920;
+
+    transition: height 0.15s;
 }
+
 .archive-clear.holding::before {
-  height: 100%;
-  transition: height 1.2s linear;
+    height: 100%;
+
+    transition: height 1.2s linear;
 }
 
 .marker {
-  width: 8px;
-  height: 8px;
-  flex: none;
+    flex: none;
+
+    width: 8px;
+    height: 8px;
 }
+
 .group-header {
-  gap: 10px;
+    gap: 10px;
 }
 
 @keyframes blob-morph {
-  0%,
-  100% {
-    border-radius: 70% 30% 64% 36% / 35% 68% 32% 65%;
-  }
-  33% {
-    border-radius: 35% 65% 30% 70% / 68% 38% 62% 32%;
-  }
-  66% {
-    border-radius: 65% 35% 72% 28% / 30% 62% 38% 70%;
-  }
+    0%,
+    100% {
+        border-radius: 70% 30% 64% 36% / 35% 68% 32% 65%;
+    }
+
+    33% {
+        border-radius: 35% 65% 30% 70% / 68% 38% 62% 32%;
+    }
+
+    66% {
+        border-radius: 65% 35% 72% 28% / 30% 62% 38% 70%;
+    }
 }
+
 .group.active .marker {
-  animation: blob-morph 4s ease-in-out infinite;
+    animation: blob-morph 4s ease-in-out infinite;
 }
 
 @keyframes blob-morph-visible {
-  0%,
-  100% {
-    border-radius: 75% 25% 65% 35% / 30% 70% 30% 70%;
-    transform: scale(1.4) rotate(0deg);
-  }
-  33% {
-    border-radius: 30% 70% 35% 65% / 70% 30% 70% 30%;
-    transform: scale(1.6, 0.95) rotate(35deg);
-  }
-  66% {
-    border-radius: 65% 35% 25% 75% / 35% 65% 35% 65%;
-    transform: scale(1.05, 1.6) rotate(-25deg);
-  }
-}
-.group.active .marker {
-  animation: blob-morph-visible 3s ease-in-out infinite;
+    0%,
+    100% {
+        border-radius: 75% 25% 65% 35% / 30% 70% 30% 70%;
+
+        transform: scale(1.4) rotate(0deg);
+    }
+
+    33% {
+        border-radius: 30% 70% 35% 65% / 70% 30% 70% 30%;
+
+        transform: scale(1.6, 0.95) rotate(35deg);
+    }
+
+    66% {
+        border-radius: 65% 35% 25% 75% / 35% 65% 35% 65%;
+
+        transform: scale(1.05, 1.6) rotate(-25deg);
+    }
 }
 
 .group.active .marker {
-  width: 10px;
-  height: 10px;
-  animation: blob-morph-visible 2.4s ease-in-out infinite !important;
-  will-change: transform, border-radius;
+    animation: blob-morph-visible 3s ease-in-out infinite;
+}
+
+.group.active .marker {
+    width: 10px;
+    height: 10px;
+
+    animation: blob-morph-visible 2.4s ease-in-out infinite !important;
+    will-change: transform, border-radius;
 }
 
 @keyframes blob-subtle {
-  0%,
-  100% {
-    border-radius: 65% 35% 60% 40% / 40% 60% 40% 60%;
-    transform: scale(1.25) rotate(0deg);
-  }
-  50% {
-    border-radius: 40% 60% 35% 65% / 60% 40% 60% 40%;
-    transform: scale(1.35, 1.2) rotate(12deg);
-  }
+    0%,
+    100% {
+        border-radius: 65% 35% 60% 40% / 40% 60% 40% 60%;
+
+        transform: scale(1.25) rotate(0deg);
+    }
+
+    50% {
+        border-radius: 40% 60% 35% 65% / 60% 40% 60% 40%;
+
+        transform: scale(1.35, 1.2) rotate(12deg);
+    }
 }
+
 .group.active .marker {
-  animation: blob-subtle 4s ease-in-out infinite !important;
+    animation: blob-subtle 4s ease-in-out infinite !important;
 }
 
 @keyframes blob-medium {
-  0%,
-  100% {
-    border-radius: 70% 30% 64% 36% / 35% 65% 35% 65%;
-    transform: scale(1.3) rotate(0deg);
-  }
-  50% {
-    border-radius: 32% 68% 38% 62% / 68% 32% 62% 38%;
-    transform: scale(1.5, 1.15) rotate(22deg);
-  }
+    0%,
+    100% {
+        border-radius: 70% 30% 64% 36% / 35% 65% 35% 65%;
+
+        transform: scale(1.3) rotate(0deg);
+    }
+
+    50% {
+        border-radius: 32% 68% 38% 62% / 68% 32% 62% 38%;
+
+        transform: scale(1.5, 1.15) rotate(22deg);
+    }
 }
+
 .group.active .marker {
-  animation: blob-medium 3.5s ease-in-out infinite !important;
+    animation: blob-medium 3.5s ease-in-out infinite !important;
 }
 
 body {
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-start;
-  padding-right: 100px;
-}
-.popup {
-  align-self: flex-start;
-}
-@media (max-width: 600px) {
-  body {
-    padding-right: 0;
-  }
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+
+    padding-right: 100px;
 }
 
 .popup {
-  display: flex;
-  flex-direction: column;
-  max-height: min(300px, 100vh);
+    align-self: flex-start;
 }
+@media (max-width: 600px) {
+    body {
+        padding-right: 0;
+    }
+}
+
+.popup {
+    display: flex;
+    flex-direction: column;
+
+    max-height: min(300px, 100vh);
+}
+
 .groups,
 .recent-list {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: #333 transparent;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
 }
+
 .bottom-bar,
 .archive-bar {
-  flex: none;
+    flex: none;
 }
+
 .groups[hidden],
 .recent-list[hidden] {
-  display: none;
+    display: none;
 }
 
 .groups {
-  display: block;
+    display: block;
 }
+
 .groups > .group {
-  margin-bottom: 3px;
+    margin-bottom: 3px;
 }
+
 .groups > .group:last-child {
-  margin-bottom: 0;
+    margin-bottom: 0;
 }
+
 .groups[hidden] {
-  display: none;
+    display: none;
 }
 
 .groups,
 .recent-list {
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 12px,
-    #000 calc(100% - 12px),
-    transparent 100%
-  );
-  padding-top: 12px;
-  padding-bottom: 12px;
-  margin-top: -12px;
-  margin-bottom: -12px;
+    mask-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        #000 12px,
+        #000 calc(100% - 12px),
+        transparent 100%
+    );
+
+    padding-top: 12px;
+    padding-bottom: 12px;
+    margin-top: -12px;
+    margin-bottom: -12px;
 }
+
 .bottom-bar,
 .archive-bar {
-  position: relative;
-  margin-top: 20px;
+    position: relative;
+
+    margin-top: 20px;
 }
 
 .groups,
 .recent-list {
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    rgba(0, 0, 0, 0.25) 5px,
-    #000 22px,
-    #000 calc(100% - 22px),
-    rgba(0, 0, 0, 0.25) calc(100% - 5px),
-    transparent 100%
-  );
-  padding-top: 22px;
-  padding-bottom: 22px;
-  margin-top: -22px;
-  margin-bottom: -22px;
+    mask-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        rgba(0, 0, 0, 0.25) 5px,
+        #000 22px,
+        #000 calc(100% - 22px),
+        rgba(0, 0, 0, 0.25) calc(100% - 5px),
+        transparent 100%
+    );
+
+    padding-top: 22px;
+    padding-bottom: 22px;
+    margin-top: -22px;
+    margin-bottom: -22px;
 }
+
 .bottom-bar,
 .archive-bar {
-  margin-top: 30px;
+    margin-top: 30px;
 }
 
 .bottom-bar .recent-button {
-  width: 0;
-  padding: 0;
-  opacity: 0;
-  overflow: hidden;
-  pointer-events: none;
-  transition:
-    width 0.22s ease,
-    opacity 0.22s ease,
-    padding 0.22s ease,
-    background-color 0.15s,
-    color 0.15s;
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+
+    opacity: 0;
+
+    transition:
+        width 0.22s ease,
+        opacity 0.22s ease,
+        padding 0.22s ease,
+        background-color 0.15s,
+        color 0.15s;
+    pointer-events: none;
 }
+
 .bottom-bar .recent-button.is-visible {
-  width: 36px;
-  padding: 10px;
-  opacity: 1;
-  pointer-events: auto;
+    width: 36px;
+    padding: 10px;
+
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .popup {
-  transition: height 0.25s ease;
+    transition: height 0.25s ease;
 }
 
 .popup {
-  overflow: hidden;
+    overflow: hidden;
 }
+
 .groups,
 .recent-list {
-  flex: 1 1 auto;
-}
-.bottom-bar,
-.archive-bar {
-  margin-top: 30px;
+    flex: 1 1 auto;
 }
 
 .bottom-bar,
 .archive-bar {
-  margin-top: 14px;
+    margin-top: 30px;
+}
+
+.bottom-bar,
+.archive-bar {
+    margin-top: 14px;
 }
 
 .settings-button svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+    width: 16px;
+    height: 16px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .bottom-bar .settings-button {
-  overflow: visible;
-  padding: 0;
-  flex: 0 0 36px;
-}
-.settings-button svg {
-  display: block;
-  flex: none;
-  width: 16px;
-  height: 16px;
-  overflow: visible;
+    flex: 0 0 36px;
+
+    padding: 0;
+    overflow: visible;
 }
 
 .settings-button svg {
-  transition: transform 0.45s ease;
+    display: block;
+    flex: none;
+
+    width: 16px;
+    height: 16px;
+    overflow: visible;
 }
+
+.settings-button svg {
+    transition: transform 0.45s ease;
+}
+
 .settings-button:hover svg {
-  transform: rotate(90deg);
+    transform: rotate(90deg);
 }
 @media (prefers-reduced-motion: reduce) {
-  .settings-button svg {
-    transition: none;
-  }
+    .settings-button svg {
+        transition: none;
+    }
 }
 
 .settings-button svg {
-  fill: currentColor;
-  stroke: none;
-  transition: transform 0.5s ease !important;
+    fill: currentColor;
+    stroke: none;
+
+    transition: transform 0.5s ease !important;
 }
+
 .settings-button:hover svg {
-  transform: rotate(90deg);
+    transform: rotate(90deg);
 }
 
 .group-drag-source {
-  display: none !important;
+    display: none !important;
 }
+
 .group-placeholder {
-  border-radius: 12px;
-  background: #121212;
-  box-shadow: inset 0 0 0 1px #252525;
-  margin-bottom: 3px;
+    margin-bottom: 3px;
+
+    background: #121212;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px #252525;
 }
+
 .group-drag-ghost {
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 10000;
-  pointer-events: none;
-  background: #191919;
-  border: 1px solid #333;
-  border-radius: 12px;
-  box-shadow: 0 12px 30px #000b;
-  opacity: 0.96;
-  will-change: transform;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 10000;
+    pointer-events: none;
+
+    background: #191919;
+    border: 1px solid #333;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px #000b;
+    opacity: 0.96;
+    will-change: transform;
 }
+
 .group-dragging,
 .group-dragging * {
-  cursor: grabbing !important;
-  user-select: none;
+    cursor: grabbing !important;
+    user-select: none;
 }
+
 .group-nest-target > .group-controls {
-  background: #222;
-  box-shadow: inset 0 0 0 1px #444;
+    background: #222;
+    box-shadow: inset 0 0 0 1px #444;
 }
+
 .group-drag-ghost .group-header {
-  flex: 1;
+    flex: 1;
 }
+
 .group-drag-ghost .add-subgroup {
-  opacity: 0;
+    opacity: 0;
 }
 
 .group-placeholder {
-  background: transparent;
-  box-shadow: none;
+    background: transparent;
+    box-shadow: none;
 }
 
 .archive-clear.holding::before {
-  transition-duration: 0.8s;
+    transition-duration: 0.8s;
 }
 
 .archive-clear.holding::before {
-  transition-duration: 0.5s;
+    transition-duration: 0.5s;
 }
 
 .recent-button svg {
-  transition: transform 0.45s ease;
+    transition: transform 0.45s ease;
 }
+
 .recent-button:hover svg {
-  transform: rotate(-90deg);
+    transform: rotate(-90deg);
 }
 @media (prefers-reduced-motion: reduce) {
-  .recent-button svg {
-    transition: none;
-  }
+    .recent-button svg {
+        transition: none;
+    }
 }
 
 .recent-button:hover svg {
-  transform: none;
-}
-.recent-button .recent-ring {
-  transform-origin: 8px 8px;
-  transition: transform 0.45s ease;
-}
-.recent-button:hover .recent-ring {
-  transform: rotate(-90deg);
-}
-
-.recent-button:hover .recent-ring {
-  transform: rotate(-360deg);
+    transform: none;
 }
 
 .recent-button .recent-ring {
-  transform-origin: 8px 7.5px;
+    transform-origin: 8px 8px;
+    transition: transform 0.45s ease;
 }
 
 .recent-button:hover .recent-ring {
-  transform: rotate(-180deg);
+    transform: rotate(-90deg);
 }
 
 .recent-button:hover .recent-ring {
-  transform: rotate(-240deg);
+    transform: rotate(-360deg);
+}
+
+.recent-button .recent-ring {
+    transform-origin: 8px 7.5px;
+}
+
+.recent-button:hover .recent-ring {
+    transform: rotate(-180deg);
+}
+
+.recent-button:hover .recent-ring {
+    transform: rotate(-240deg);
 }
 
 .group-toggle .arrow {
-  transform: rotate(0deg);
-  transform-origin: center;
-  transition: transform 0.25s ease;
-  will-change: transform;
+    transform: rotate(0deg);
+    transform-origin: center;
+    transition: transform 0.25s ease;
+    will-change: transform;
 }
+
 .group-toggle[aria-expanded="true"] .arrow {
-  transform: rotate(90deg);
+    transform: rotate(90deg);
 }
 
 .group-trash {
-  position: relative;
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 0;
-  height: 36px;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #666;
-  opacity: 0;
-  overflow: hidden;
-  pointer-events: none;
-  transition:
-    width 0.2s,
-    opacity 0.2s;
+    position: relative;
+
+    display: grid;
+    flex: none;
+    place-items: center;
+
+    width: 0;
+    height: 36px;
+    padding: 0;
+    overflow: hidden;
+
+    color: #666;
+
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    opacity: 0;
+
+    transition:
+        width 0.2s,
+        opacity 0.2s;
+    pointer-events: none;
 }
+
 .group-trash.visible {
-  width: 36px;
-  opacity: 1;
-  pointer-events: auto;
+    width: 36px;
+
+    opacity: 1;
+    pointer-events: auto;
 }
+
 .group-trash::before {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 0;
-  background: #6b2920;
+    content: "";
+
+    position: absolute;
+    inset: auto 0 0;
+
+    height: 0;
+
+    background: #6b2920;
 }
+
 .group-trash.holding::before {
-  height: 100%;
-  transition: height 1s linear;
+    height: 100%;
+
+    transition: height 1s linear;
 }
+
 .group-trash svg {
-  position: relative;
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+    position: relative;
+
+    width: 16px;
+    height: 16px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
+
 .group-trash.holding {
-  color: #f66;
+    color: #f66;
 }
 
 .bottom-bar {
-  gap: 0;
+    gap: 0;
 }
+
 .bottom-bar .settings-button {
-  margin-left: 8px;
+    margin-left: 8px;
 }
+
 .bottom-bar .group-trash,
 .bottom-bar .recent-button {
-  margin-left: 0;
-  min-width: 0;
-  transition:
-    width 0.22s ease,
-    opacity 0.22s ease,
-    margin-left 0.22s ease,
-    padding 0.22s ease;
+    margin-left: 0;
+    min-width: 0;
+
+    transition:
+        width 0.22s ease,
+        opacity 0.22s ease,
+        margin-left 0.22s ease,
+        padding 0.22s ease;
 }
+
 .bottom-bar .group-trash.visible,
 .bottom-bar .recent-button.is-visible {
-  margin-left: 8px;
+    margin-left: 8px;
 }
 
 .group-trash svg {
-  fill: currentColor;
-  stroke: none;
+    fill: currentColor;
+    stroke: none;
 }
+
 .group-trash.holding::before {
-  transition-duration: 0.5s;
+    transition-duration: 0.5s;
 }
+
 .group-trash.ready {
-  color: #ff6868;
+    color: #ff6868;
 }
 
 .group.search-hidden {
-  display: none;
+    display: none;
 }
+
 .groups {
-  align-content: start;
+    align-content: start;
 }
 
 .group.search-hidden {
-  display: block;
-  max-height: 0;
-  margin: 0 !important;
-  opacity: 0;
-  overflow: hidden;
+    display: block;
+
+    max-height: 0;
+    margin: 0 !important;
+    overflow: hidden;
+
+    opacity: 0;
 }
+
 .groups {
-  align-content: start;
+    align-content: start;
 }
 
 @keyframes blob-active-strong {
-  0%,
-  100% {
-    border-radius: 72% 28% 65% 35% / 32% 68% 35% 65%;
-    transform: scale(1.35) rotate(0deg);
-  }
-  33% {
-    border-radius: 32% 68% 35% 65% / 68% 30% 70% 32%;
-    transform: scale(1.6, 1.15) rotate(28deg);
-  }
-  66% {
-    border-radius: 62% 38% 27% 73% / 35% 65% 30% 70%;
-    transform: scale(1.15, 1.6) rotate(-22deg);
-  }
+    0%,
+    100% {
+        border-radius: 72% 28% 65% 35% / 32% 68% 35% 65%;
+
+        transform: scale(1.35) rotate(0deg);
+    }
+
+    33% {
+        border-radius: 32% 68% 35% 65% / 68% 30% 70% 32%;
+
+        transform: scale(1.6, 1.15) rotate(28deg);
+    }
+
+    66% {
+        border-radius: 62% 38% 27% 73% / 35% 65% 30% 70%;
+
+        transform: scale(1.15, 1.6) rotate(-22deg);
+    }
 }
+
 .group.active .marker {
-  animation: blob-active-strong 3s ease-in-out infinite !important;
+    animation: blob-active-strong 3s ease-in-out infinite !important;
 }
 
 .marker {
-  width: 10px;
-  height: 10px;
-  scale: 0.8;
-  transition:
-    scale 0.3s ease,
-    transform 0.3s ease;
+    width: 10px;
+    height: 10px;
+    scale: 0.8;
+
+    transition:
+        scale 0.3s ease,
+        transform 0.3s ease;
 }
+
 .group.active .marker {
-  scale: 1;
-  transform-origin: center;
+    scale: 1;
+
+    transform-origin: center;
 }
+
 .group-header:hover .marker {
-  scale: 1;
+    scale: 1;
 }
+
 .group.active .group-header:hover .marker {
-  scale: 1;
+    scale: 1;
 }
 
 @keyframes blob-active-smooth {
-  0%,
-  100% {
-    border-radius: 72% 28% 65% 35% / 32% 68% 35% 65%;
-    transform: rotate(0deg);
-  }
-  33% {
-    border-radius: 32% 68% 35% 65% / 68% 30% 70% 32%;
-    transform: scale(1.15, 0.9) rotate(28deg);
-  }
-  66% {
-    border-radius: 62% 38% 27% 73% / 35% 65% 30% 70%;
-    transform: scale(0.9, 1.15) rotate(-22deg);
-  }
+    0%,
+    100% {
+        border-radius: 72% 28% 65% 35% / 32% 68% 35% 65%;
+
+        transform: rotate(0deg);
+    }
+
+    33% {
+        border-radius: 32% 68% 35% 65% / 68% 30% 70% 32%;
+
+        transform: scale(1.15, 0.9) rotate(28deg);
+    }
+
+    66% {
+        border-radius: 62% 38% 27% 73% / 35% 65% 30% 70%;
+
+        transform: scale(0.9, 1.15) rotate(-22deg);
+    }
 }
+
 .group.active .marker {
-  scale: 1.2;
-  animation: blob-active-smooth 3s ease-in-out infinite !important;
+    scale: 1.2;
+
+    animation: blob-active-smooth 3s ease-in-out infinite !important;
 }
+
 .group.active .group-header:hover .marker {
-  scale: 1.2;
+    scale: 1.2;
 }

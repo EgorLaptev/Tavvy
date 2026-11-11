@@ -9,35 +9,35 @@ await cp("build/firefox", dir, { recursive: true });
 let resolveReport;
 const report = new Promise((resolve) => (resolveReport = resolve));
 const server = createServer((req, res) => {
-  if (req.url === "/test-favicon.png") {
-    res.writeHead(200, {
-      "Content-Type": "image/png",
-      "Cache-Control": "no-store",
-    });
-    res.end(
-      Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
-        "base64",
-      ),
-    );
-    return;
-  }
-  if (req.method === "GET") {
-    res.writeHead(200, { "Content-Type": "text/html" });
-    res.end("<!doctype html><title>Tavvy smoke tab</title>Tab");
-    return;
-  }
-  let body = "";
-  req.on("data", (chunk) => (body += chunk));
-  req.on("end", () => {
-    res.writeHead(200, { "Access-Control-Allow-Origin": "*" });
-    res.end("ok");
-    try {
-      resolveReport(JSON.parse(body));
-    } catch {
-      resolveReport({ ok: false, error: body });
+    if (req.url === "/test-favicon.png") {
+        res.writeHead(200, {
+            "Content-Type": "image/png",
+            "Cache-Control": "no-store",
+        });
+        res.end(
+            Buffer.from(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
+                "base64",
+            ),
+        );
+        return;
     }
-  });
+    if (req.method === "GET") {
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end("<!doctype html><title>Tavvy smoke tab</title>Tab");
+        return;
+    }
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+        res.writeHead(200, { "Access-Control-Allow-Origin": "*" });
+        res.end("ok");
+        try {
+            resolveReport(JSON.parse(body));
+        } catch {
+            resolveReport({ ok: false, error: body });
+        }
+    });
 });
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const port = server.address().port;
@@ -48,23 +48,23 @@ manifest.permissions.push("cookies");
 delete manifest.optional_permissions;
 // The smoke harness reports its result to a local test server.
 manifest.content_security_policy.extension_pages =
-  manifest.content_security_policy.extension_pages.replace(
-    "connect-src 'none'",
-    "connect-src http://127.0.0.1:*",
-  );
+    manifest.content_security_policy.extension_pages.replace(
+        "connect-src 'none'",
+        "connect-src http://127.0.0.1:*",
+    );
 await writeFile(`${dir}/manifest.json`, JSON.stringify(manifest));
 await writeFile(
-  `${dir}/background.js`,
-  (await readFile(`${dir}/background.js`, "utf8")) +
-    '\nbrowser.runtime.onInstalled.addListener(() => browser.tabs.create({url:browser.runtime.getURL("smoke.html")}));',
+    `${dir}/background.js`,
+    (await readFile(`${dir}/background.js`, "utf8")) +
+        '\nbrowser.runtime.onInstalled.addListener(() => browser.tabs.create({url:browser.runtime.getURL("smoke.html")}));',
 );
 await writeFile(
-  `${dir}/smoke.html`,
-  '<!doctype html><meta charset="utf-8"><script src="smoke.js"></script>',
+    `${dir}/smoke.html`,
+    '<!doctype html><meta charset="utf-8"><script src="smoke.js"></script>',
 );
 await build({
-  stdin: {
-    contents: `
+    stdin: {
+        contents: `
 (async () => {
  const results=[];
  function check(value,label){if(!value)throw new Error(label);results.push(label);}
@@ -344,53 +344,53 @@ await build({
  await fetch('http://127.0.0.1:${port}',{method:'POST',body:JSON.stringify({ok:true,results})});
  }catch(error){await fetch('http://127.0.0.1:${port}',{method:'POST',body:JSON.stringify({ok:false,error:error.message,stack:error.stack,results})});}
 })();`,
-    resolveDir: process.cwd(),
-  },
-  outfile: `${dir}/smoke.js`,
-  bundle: true,
+        resolveDir: process.cwd(),
+    },
+    outfile: `${dir}/smoke.js`,
+    bundle: true,
 });
 await writeFile(
-  `${dir}/stress.html`,
-  '<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="popup.css"><body><script src="stress.js"></script>',
+    `${dir}/stress.html`,
+    '<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="popup.css"><body><script src="stress.js"></script>',
 );
 // Reuse the application shell so stress checks run the production renderer in Firefox.
 const shell = (await readFile(`${dir}/popup.html`, "utf8")).replace(
-  "popup.js",
-  "stress.js",
+    "popup.js",
+    "stress.js",
 );
 await writeFile(`${dir}/stress.html`, shell);
 await build({
-  entryPoints: ["tests/browser/stress-page.js"],
-  bundle: true,
-  outfile: `${dir}/stress.js`,
-  target: "firefox140",
+    entryPoints: ["tests/browser/stress-page.js"],
+    bundle: true,
+    outfile: `${dir}/stress.js`,
+    target: "firefox140",
 });
 const args = [
-  "node_modules/web-ext/bin/web-ext.js",
-  "run",
-  "--source-dir",
-  dir,
-  "--arg=-headless",
-  "--pref=privacy.userContext.enabled=true",
-  "--no-input",
-  "--no-reload",
-  "--start-url",
-  "about:blank",
+    "node_modules/web-ext/bin/web-ext.js",
+    "run",
+    "--source-dir",
+    dir,
+    "--arg=-headless",
+    "--pref=privacy.userContext.enabled=true",
+    "--no-input",
+    "--no-reload",
+    "--start-url",
+    "about:blank",
 ];
 if (process.env.FIREFOX_BINARY)
-  args.push("--firefox", process.env.FIREFOX_BINARY);
+    args.push("--firefox", process.env.FIREFOX_BINARY);
 const child = spawn(process.execPath, args, {
-  stdio: ["ignore", "pipe", "pipe"],
-  windowsHide: true,
+    stdio: ["ignore", "pipe", "pipe"],
+    windowsHide: true,
 });
 child.stdout.on("data", (chunk) => process.stdout.write(chunk));
 child.stderr.on("data", (chunk) => process.stderr.write(chunk));
 const timeout = setTimeout(
-  () => resolveReport({ ok: false, error: "Firefox smoke timed out" }),
-  55000,
+    () => resolveReport({ ok: false, error: "Firefox smoke timed out" }),
+    55000,
 );
 child.on("error", (error) =>
-  resolveReport({ ok: false, error: error.message }),
+    resolveReport({ ok: false, error: error.message }),
 );
 const result = await report;
 clearTimeout(timeout);
@@ -398,9 +398,9 @@ console.log(JSON.stringify(result, null, 2));
 server.close();
 // Terminate only this isolated runner and its temporary-profile Firefox children.
 if (process.platform === "win32")
-  spawn("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
-    windowsHide: true,
-    stdio: "ignore",
-  });
+    spawn("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
+        windowsHide: true,
+        stdio: "ignore",
+    });
 else child.kill("SIGINT");
 process.exitCode = result.ok ? 0 : 1;

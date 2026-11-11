@@ -32,116 +32,117 @@ import { translateStatic } from "../locales/index.js";
  * the DOM and listener order noted below.
  */
 export async function mountApplication(api) {
-  if (api.isDemo) document.documentElement.classList.add("preview-mode");
-  document.documentElement.classList.add("extension-mode");
-  const windowInfo = await api.windows.getCurrent();
-  const windowId = windowInfo.id;
-  if (windowInfo.incognito)
-    throw new Error("Приватные окна пока не поддерживаются");
-  const popup = document.querySelector(".popup");
-  await showCompatibilityNotice(api, popup, windowId);
+    if (api.isDemo) document.documentElement.classList.add("preview-mode");
+    document.documentElement.classList.add("extension-mode");
+    const windowInfo = await api.windows.getCurrent();
+    const windowId = windowInfo.id;
+    if (windowInfo.incognito)
+        throw new Error("Приватные окна пока не поддерживаются");
+    const popup = document.querySelector(".popup");
+    await showCompatibilityNotice(api, popup, windowId);
 
-  const ctx = {
-    api,
-    windowId,
-    container: document.querySelector(".groups"),
-    search: document.querySelector(".search input"),
-    disposed: false,
-    snapshot: null,
-    viewIndex: null,
-    filterResult: null,
-    opened: new Set(api.isDemo ? api.previewExpandedGroupIds || [] : []),
-    groupViews: new Map(),
-    /** Set when cards or rows are created; the list then binds drag handling to them. */
-    dragTargetsDirty: true,
-    tabViews: new Map(),
-    spaceIconUrl: (name) =>
-      api.spaceIconUrl?.(name) || `resource://usercontext-content/${name}.svg`,
-    render: () => ctx.groups.render(),
-  };
+    const ctx = {
+        api,
+        windowId,
+        container: document.querySelector(".groups"),
+        search: document.querySelector(".search input"),
+        disposed: false,
+        snapshot: null,
+        viewIndex: null,
+        filterResult: null,
+        opened: new Set(api.isDemo ? api.previewExpandedGroupIds || [] : []),
+        groupViews: new Map(),
+        /** Set when cards or rows are created; the list then binds drag handling to them. */
+        dragTargetsDirty: true,
+        tabViews: new Map(),
+        spaceIconUrl: (name) =>
+            api.spaceIconUrl?.(name) ||
+            `resource://usercontext-content/${name}.svg`,
+        render: () => ctx.groups.render(),
+    };
 
-  // Menus first: their document listeners must precede the palette's, and the palette's
-  // scroll listener must precede the virtualization's.
-  ctx.menu = createContextMenu(ctx);
-  ctx.containerPicker = createContainerPicker(ctx);
-  ctx.groupMenu = createGroupMenu(ctx);
-  ctx.tabMenu = createTabMenu(ctx);
-  ctx.palette = createColorPalette(ctx);
-  ctx.container.addEventListener("scroll", () => ctx.palette.close(), {
-    passive: true,
-  });
-  ctx.status = element("div", "extension-status");
-  ctx.status.setAttribute("role", "status");
-  popup.prepend(ctx.status);
+    // Menus first: their document listeners must precede the palette's, and the palette's
+    // scroll listener must precede the virtualization's.
+    ctx.menu = createContextMenu(ctx);
+    ctx.containerPicker = createContainerPicker(ctx);
+    ctx.groupMenu = createGroupMenu(ctx);
+    ctx.tabMenu = createTabMenu(ctx);
+    ctx.palette = createColorPalette(ctx);
+    ctx.container.addEventListener("scroll", () => ctx.palette.close(), {
+        passive: true,
+    });
+    ctx.status = element("div", "extension-status");
+    ctx.status.setAttribute("role", "status");
+    popup.prepend(ctx.status);
 
-  const state = createViewState(ctx);
-  ctx.beforeCommand = state.beforeCommand;
-  ctx.applyResponse = state.applyResponse;
-  ctx.client = createCommandClient(ctx);
-  ctx.run = ctx.client.run;
-  state.setSnapshot(await ctx.client.request({ type: "snapshot" }));
+    const state = createViewState(ctx);
+    ctx.beforeCommand = state.beforeCommand;
+    ctx.applyResponse = state.applyResponse;
+    ctx.client = createCommandClient(ctx);
+    ctx.run = ctx.client.run;
+    state.setSnapshot(await ctx.client.request({ type: "snapshot" }));
 
-  const settingsPage =
-    document.documentElement.classList.contains("settings-page");
-  const navigation = mountNavigation({
-    settingsPage,
-    onOpenSettings:
-      !api.isDemo && !settingsPage && api.runtime.openOptionsPage
-        ? () =>
-            api.runtime
-              .openOptionsPage()
-              .then(() => window.close())
-              .catch((error) => {
-                ctx.status.textContent = error.message;
-              })
-        : undefined,
-  });
-  const disposeScrollbar = mountCompactScrollbar(popup);
-  // Settings set the UI language, so everything translated below is created after this.
-  mountSettings({
-    ...navigation,
-    ...settingsOptions(ctx, {
-      onLanguageChange: () => {
-        ctx.newGroup.translate();
-        ctx.palette.translate();
-        ctx.groups.reset();
-        ctx.render();
-      },
-    }),
-  });
+    const settingsPage =
+        document.documentElement.classList.contains("settings-page");
+    const navigation = mountNavigation({
+        settingsPage,
+        onOpenSettings:
+            !api.isDemo && !settingsPage && api.runtime.openOptionsPage
+                ? () =>
+                      api.runtime
+                          .openOptionsPage()
+                          .then(() => window.close())
+                          .catch((error) => {
+                              ctx.status.textContent = error.message;
+                          })
+                : undefined,
+    });
+    const disposeScrollbar = mountCompactScrollbar(popup);
+    // Settings set the UI language, so everything translated below is created after this.
+    mountSettings({
+        ...navigation,
+        ...settingsOptions(ctx, {
+            onLanguageChange: () => {
+                ctx.newGroup.translate();
+                ctx.palette.translate();
+                ctx.groups.reset();
+                ctx.render();
+            },
+        }),
+    });
 
-  let searchTimer;
-  ctx.search.addEventListener("input", () => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => animatePanelChange(ctx.render), 180);
-  });
-  ctx.newGroup = createNewGroupForm(ctx);
-  ctx.tabRows = createTabRows(ctx);
-  ctx.ungrouped = createUngroupedList(ctx);
-  ctx.groups = createGroupList(ctx);
-  ctx.dragActions = createDragActions(ctx);
-  ctx.tabLists = createTabLists(ctx);
-  const liveUpdates = createLiveUpdates(ctx);
+    let searchTimer;
+    ctx.search.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => animatePanelChange(ctx.render), 180);
+    });
+    ctx.newGroup = createNewGroupForm(ctx);
+    ctx.tabRows = createTabRows(ctx);
+    ctx.ungrouped = createUngroupedList(ctx);
+    ctx.groups = createGroupList(ctx);
+    ctx.dragActions = createDragActions(ctx);
+    ctx.tabLists = createTabLists(ctx);
+    const liveUpdates = createLiveUpdates(ctx);
 
-  window.addEventListener(
-    "pagehide",
-    () => {
-      ctx.disposed = true;
-      disposeScrollbar();
-      ctx.palette.dispose();
-      ctx.menu.dispose();
-      disposeDragState();
-      ctx.snapshot = null;
-      ctx.viewIndex = null;
-      ctx.filterResult = null;
-      clearTimeout(searchTimer);
-      liveUpdates.dispose();
-      ctx.tabLists.dispose();
-      ctx.groupViews.clear();
-      ctx.tabViews.clear();
-    },
-    { once: true },
-  );
-  translateStatic(popup);
-  ctx.render();
+    window.addEventListener(
+        "pagehide",
+        () => {
+            ctx.disposed = true;
+            disposeScrollbar();
+            ctx.palette.dispose();
+            ctx.menu.dispose();
+            disposeDragState();
+            ctx.snapshot = null;
+            ctx.viewIndex = null;
+            ctx.filterResult = null;
+            clearTimeout(searchTimer);
+            liveUpdates.dispose();
+            ctx.tabLists.dispose();
+            ctx.groupViews.clear();
+            ctx.tabViews.clear();
+        },
+        { once: true },
+    );
+    translateStatic(popup);
+    ctx.render();
 }

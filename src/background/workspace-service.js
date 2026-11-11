@@ -23,117 +23,134 @@ import { createSettingsCommands } from "./workspace/commands/settings-commands.j
  * so later modules can call earlier ones and the order of wiring stays explicit.
  */
 export function createWorkspaceService(
-  browserApi,
-  newId = () => crypto.randomUUID(),
-  toolbar = null,
-) {
-  const index = createTabIndex(browserApi);
-  const api = index.api;
-  const store = createWorkspaceStore(api.storage.local);
-  let revision = 0;
-
-  const ctx = {
     browserApi,
-    api,
-    index,
-    store,
-    toolbar,
-    newId,
-    queue: createSerialQueue(() => store.ready.then(() => index.sync())),
-    get revision() {
-      return revision;
-    },
-    bumpRevision: () => revision++,
-    group: (groupId) => findGroup(store.state.groups, groupId),
-    /** A window without a group (`null`) shows only tabs without a group. */
-    visibleGroups: (groupId) =>
-      groupId
-        ? visibleGroupIds(store.state.groups, groupId, store.state.settings)
-        : new Set([null]),
-    async closeTab(tabId) {
-      await api.tabs.remove(tabId);
-      store.forget(tabId);
-    },
-    async syncToolbar(windowId, group) {
-      await toolbar
-        ?.setDynamic?.(store.state.settings?.dynamicIcon !== false)
-        .catch(console.error);
-      await toolbar
-        ?.setStyle?.(store.state.settings?.markerStyle)
-        .catch(console.error);
-      if (windowId !== undefined)
-        await toolbar?.update(windowId, group).catch(console.error);
-    },
-    async applyVisibilityToAllWindows() {
-      for (const windowId of new Set(
-        (await ctx.scan()).map((tab) => tab.windowId),
-      ))
-        await ctx.applyVisibility(windowId, await ctx.activeGroupId(windowId));
-    },
-  };
-  for (const create of [
-    createContainers,
-    createWindowState,
-    createTabScanner,
-    createVisibility,
-    createActivation,
-    createSnapshots,
-    createReconciler,
-    createNewTabHandler,
-  ])
-    Object.defineProperties(ctx, Object.getOwnPropertyDescriptors(create(ctx)));
+    newId = () => crypto.randomUUID(),
+    toolbar = null,
+) {
+    const index = createTabIndex(browserApi);
+    const api = index.api;
+    const store = createWorkspaceStore(api.storage.local);
+    let revision = 0;
 
-  const handlers = {
-    snapshot: (command, windowId) => ctx.snapshot(windowId),
-    ...createGroupCommands(ctx),
-    ...createTabCommands(ctx),
-    ...createSpaceCommands(ctx),
-    ...createBackupCommands(ctx),
-    ...createSettingsCommands(ctx),
-  };
+    const ctx = {
+        browserApi,
+        api,
+        index,
+        store,
+        toolbar,
+        newId,
+        queue: createSerialQueue(() => store.ready.then(() => index.sync())),
+        get revision() {
+            return revision;
+        },
+        bumpRevision: () => revision++,
+        group: (groupId) => findGroup(store.state.groups, groupId),
+        /** A window without a group (`null`) shows only tabs without a group. */
+        visibleGroups: (groupId) =>
+            groupId
+                ? visibleGroupIds(
+                      store.state.groups,
+                      groupId,
+                      store.state.settings,
+                  )
+                : new Set([null]),
+        async closeTab(tabId) {
+            await api.tabs.remove(tabId);
+            store.forget(tabId);
+        },
+        async syncToolbar(windowId, group) {
+            await toolbar
+                ?.setDynamic?.(store.state.settings?.dynamicIcon !== false)
+                .catch(console.error);
+            await toolbar
+                ?.setStyle?.(store.state.settings?.markerStyle)
+                .catch(console.error);
+            if (windowId !== undefined)
+                await toolbar?.update(windowId, group).catch(console.error);
+        },
+        async applyVisibilityToAllWindows() {
+            for (const windowId of new Set(
+                (await ctx.scan()).map((tab) => tab.windowId),
+            ))
+                await ctx.applyVisibility(
+                    windowId,
+                    await ctx.activeGroupId(windowId),
+                );
+        },
+    };
+    for (const create of [
+        createContainers,
+        createWindowState,
+        createTabScanner,
+        createVisibility,
+        createActivation,
+        createSnapshots,
+        createReconciler,
+        createNewTabHandler,
+    ])
+        Object.defineProperties(
+            ctx,
+            Object.getOwnPropertyDescriptors(create(ctx)),
+        );
 
-  async function execute(command, windowId) {
-    if (!Number.isInteger(windowId)) throw new Error("Не указано окно Firefox");
-    const handler = Object.hasOwn(handlers, command.type)
-      ? handlers[command.type]
-      : null;
-    if (!handler) throw new Error("Неизвестная команда");
-    return (await handler(command, windowId)) ?? ctx.snapshot(windowId);
-  }
+    const handlers = {
+        snapshot: (command, windowId) => ctx.snapshot(windowId),
+        ...createGroupCommands(ctx),
+        ...createTabCommands(ctx),
+        ...createSpaceCommands(ctx),
+        ...createBackupCommands(ctx),
+        ...createSettingsCommands(ctx),
+    };
 
-  return {
-    invalidate(event) {
-      index.mark(event);
-      if (event.type === "windowRemoved") ctx.forgetWindow(event.windowId);
-    },
-    dispatch: (command, windowId) =>
-      ctx.queue(async () => {
-        try {
-          const result = await execute(command, windowId);
-          if (command.type === "exportBackup") return structuredClone(result);
-          if (command.type !== "snapshot") {
-            revision++;
-            ctx.markObserved();
-            await store.save();
-          }
-          return structuredClone({
-            ...result,
-            revision,
-            viewVersion:
-              index.version + ":" + revision + ":" + ctx.identitiesVersion,
-          });
-        } catch (error) {
-          await store.save();
-          throw error;
-        }
-      }),
-    get needsRefresh() {
-      return index.dirty;
-    },
-    created: ctx.created,
-    updated: ctx.updated,
-    removed: ctx.removed,
-    attached: ctx.attached,
-    refresh: ctx.refresh,
-  };
+    async function execute(command, windowId) {
+        if (!Number.isInteger(windowId))
+            throw new Error("Не указано окно Firefox");
+        const handler = Object.hasOwn(handlers, command.type)
+            ? handlers[command.type]
+            : null;
+        if (!handler) throw new Error("Неизвестная команда");
+        return (await handler(command, windowId)) ?? ctx.snapshot(windowId);
+    }
+
+    return {
+        invalidate(event) {
+            index.mark(event);
+            if (event.type === "windowRemoved")
+                ctx.forgetWindow(event.windowId);
+        },
+        dispatch: (command, windowId) =>
+            ctx.queue(async () => {
+                try {
+                    const result = await execute(command, windowId);
+                    if (command.type === "exportBackup")
+                        return structuredClone(result);
+                    if (command.type !== "snapshot") {
+                        revision++;
+                        ctx.markObserved();
+                        await store.save();
+                    }
+                    return structuredClone({
+                        ...result,
+                        revision,
+                        viewVersion:
+                            index.version +
+                            ":" +
+                            revision +
+                            ":" +
+                            ctx.identitiesVersion,
+                    });
+                } catch (error) {
+                    await store.save();
+                    throw error;
+                }
+            }),
+        get needsRefresh() {
+            return index.dirty;
+        },
+        created: ctx.created,
+        updated: ctx.updated,
+        removed: ctx.removed,
+        attached: ctx.attached,
+        refresh: ctx.refresh,
+    };
 }

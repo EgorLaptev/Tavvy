@@ -5,24 +5,24 @@ import { dragInProgress } from "./dom.js";
  * Bursts are debounced, and refreshes wait while something is being dragged.
  */
 export function createLiveUpdates(ctx) {
-  const { api } = ctx;
-  let refreshTimer;
-  const onMessage = (message) => {
-    if (message?.channel !== "tavvy" || message.type !== "changed") return;
-    clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(function refresh() {
-      if (dragInProgress()) {
-        refreshTimer = setTimeout(refresh, 150);
-        return;
-      }
-      ctx.run({ type: "snapshot" });
-    }, 100);
-  };
-  api.runtime.onMessage.addListener(onMessage);
-  return {
-    dispose() {
-      clearTimeout(refreshTimer);
-      api.runtime.onMessage.removeListener?.(onMessage);
-    },
-  };
+    const { api } = ctx;
+    let refreshTimer;
+    const onMessage = (message) => {
+        if (message?.channel !== "tavvy" || message.type !== "changed") return;
+        clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(function refresh() {
+            if (dragInProgress()) {
+                refreshTimer = setTimeout(refresh, 150);
+                return;
+            }
+            ctx.run({ type: "snapshot" });
+        }, 100);
+    };
+    api.runtime.onMessage.addListener(onMessage);
+    return {
+        dispose() {
+            clearTimeout(refreshTimer);
+            api.runtime.onMessage.removeListener?.(onMessage);
+        },
+    };
 }

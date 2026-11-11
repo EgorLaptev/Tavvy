@@ -1,15 +1,19 @@
 @import "./index.css";
+
 body {
-  background: #181818;
+    background: #181818;
 }
 /* Preview uses the same renderer but keeps its page background and offset. */
 html.extension-mode.preview-mode body {
-  display: flex;
-  padding-right: 100px !important;
-  background: #181818 !important;
-  min-height: 100vh;
+    display: flex;
+
+    min-height: 100vh;
+    padding-right: 100px !important;
+
+    background: #181818 !important;
 }
+
 .preview-mode .popup {
-  border: 1px solid #171717;
-  border-radius: 18px;
+    border: 1px solid #171717;
+    border-radius: 18px;
 }
