@@ -18,7 +18,8 @@
     "benchmark": "npm run build:firefox && node scripts/benchmark.js",
     "lint": "npm run lint:js && npm run lint:css",
     "lint:js": "eslint .",
-    "lint:css": "stylelint \"styles/**/*.css\""
+    "lint:css": "stylelint \"styles/**/*.css\"",
+    "format:check": "prettier --check src styles scripts tests index.html"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

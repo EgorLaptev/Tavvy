@@ -75,3 +75,5 @@ The Git hooks check Conventional Commit subjects, staged whitespace, tests, and 
 [GNU General Public License v3.0 only](LICENSE) · Copyright © 2026 Egor Laptev
 
 Run `npm run lint` to check JavaScript with ESLint and CSS with Stylelint. The pre-commit hook and CI run it automatically.
+
+Run `npm run format` to format source files with Prettier, or `npm run format:check` to check formatting without changing files.
