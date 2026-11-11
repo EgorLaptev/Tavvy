@@ -8,6 +8,7 @@ import { createTabScanner } from "./workspace/tab-scanner.js";
 import { createVisibility } from "./workspace/visibility.js";
 import { createActivation } from "./workspace/activation.js";
 import { createSnapshots } from "./workspace/snapshot.js";
+import { createClosedWindows } from "./workspace/closed-windows.js";
 import { createReconciler } from "./workspace/reconciler.js";
 import { createNewTabHandler } from "./workspace/new-tab.js";
 import { createGroupCommands } from "./workspace/commands/group-commands.js";
@@ -86,6 +87,7 @@ export function createWorkspaceService(
         createVisibility,
         createActivation,
         createSnapshots,
+        createClosedWindows,
         createReconciler,
         createNewTabHandler,
     ])

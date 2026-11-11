@@ -694,3 +694,120 @@ test("an empty group opens in a new window with a tab of its own", async () => {
     assert.equal(f.tags.get(`${tab.id}:${GROUP}`), a);
     assert.equal(f.windows.get(`3:${ACTIVE}`), a);
 });
+
+/** Firefox closes window `windowId` with all its tabs, hidden ones included. */
+async function closeWindowInFirefox(f, service, windowId) {
+    for (const tab of f.records.filter((item) => item.windowId === windowId)) {
+        f.records.splice(f.records.indexOf(tab), 1);
+        service.invalidate({ type: "removed", tabId: tab.id, windowId });
+        await service.removed(tab.id, true);
+    }
+
+    service.invalidate({ type: "windowRemoved", windowId });
+    await service.refresh();
+}
+
+test("grouped tabs of a closed window are recreated in a remaining window, as in Simple Tab Groups", async () => {
+    const f = fixture();
+    const service = f.service();
+    let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
+    const a = snap.groups.find((g) => g.title === "A").id;
+
+    await service.dispatch({ type: "moveTab", tabId: 2, groupId: a }, 1);
+    await service.dispatch({ type: "activateGroup", groupId: "inbox" }, 1);
+    await service.refresh();
+    assert.equal(f.records.find((tab) => tab.id === 2).hidden, true);
+
+    await closeWindowInFirefox(f, service, 1);
+
+    const restored = f.records.find((tab) => tab.url === "https://mozilla.org");
+
+    assert.ok(restored, "the hidden tab of group A is not lost");
+    assert.equal(restored.windowId, 2);
+    assert.equal(restored.discarded, true);
+    assert.equal(f.tags.get(`${restored.id}:${GROUP}`), a);
+    assert.equal(restored.hidden, true, "group A is not shown in window 2");
+
+    const inbox = f.records.find((tab) => tab.url === "https://example.com");
+
+    assert.equal(f.tags.get(`${inbox.id}:${GROUP}`), "inbox");
+    assert.ok(
+        !f.records.some((tab) => tab.url === "https://example.org"),
+        "global pinned tabs are not groups' tabs",
+    );
+    snap = await service.dispatch({ type: "snapshot" }, 2);
+    assert.equal(snap.tabs.filter((tab) => tab.groupId === a).length, 1);
+    assert.deepEqual(f.values["tavvy:tabs-to-restore:v1"], []);
+});
+
+test("tabs of a window closed in a previous session are restored once, skipping tabs Firefox restored", async () => {
+    const f = fixture();
+
+    f.values["tavvy:workspace:v1"] = {
+        version: 1,
+        groups: [
+            { id: "inbox", title: "Inbox", parentId: null },
+            { id: "a", title: "A", parentId: null },
+        ],
+        settings: {},
+    };
+    f.values["tavvy:tabs-to-restore:v1"] = [
+        {
+            windowId: 1,
+            groupId: "a",
+            url: "https://mozilla.org",
+            title: "Вторая",
+            faviconUrl: "",
+        },
+        {
+            windowId: 1,
+            groupId: "a",
+            url: "https://lost.example",
+            title: "Lost",
+            faviconUrl: "",
+        },
+        {
+            windowId: 1,
+            groupId: "gone",
+            url: "https://deleted.example",
+            title: "Deleted",
+            faviconUrl: "",
+        },
+    ];
+    f.tags.set(`2:${GROUP}`, "a");
+    f.windows.set(`1:${ACTIVE}`, "inbox");
+    f.windows.set(`2:${ACTIVE}`, "inbox");
+
+    const service = f.service();
+
+    await service.refresh();
+    assert.ok(
+        !f.records.some((tab) => tab.url === "https://lost.example"),
+        "waits for Firefox's own session restore",
+    );
+
+    const now = Date.now;
+
+    Date.now = () => now() + 60_000;
+
+    try {
+        service.invalidate({ type: "window", windowId: 1 });
+        await service.refresh();
+    } finally {
+        Date.now = now;
+    }
+
+    assert.equal(
+        f.records.filter((tab) => tab.url === "https://mozilla.org").length,
+        1,
+        "no duplicate of a restored tab",
+    );
+
+    const lost = f.records.find((tab) => tab.url === "https://lost.example");
+
+    assert.ok(lost);
+    assert.equal(f.tags.get(`${lost.id}:${GROUP}`), "a");
+    assert.equal(lost.hidden, true);
+    assert.ok(!f.records.some((tab) => tab.url === "https://deleted.example"));
+    assert.deepEqual(f.values["tavvy:tabs-to-restore:v1"], []);
+});

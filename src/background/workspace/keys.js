@@ -3,6 +3,8 @@ export const WORKSPACE_KEY = "tavvy:workspace:v1";
 export const KNOWN_KEY = "tavvy:known:v1";
 /** The group used most recently in any window (kept for older versions; no longer read). */
 export const LAST_ACTIVE_GROUP_KEY = "tavvy:last-active-group:v1";
+/** Grouped tabs of closed windows waiting to be recreated (see closed-windows.js). */
+export const TABS_TO_RESTORE_KEY = "tavvy:tabs-to-restore:v1";
 
 // sessions.setTabValue keys
 export const TAB_GROUP = "tavvy:group";

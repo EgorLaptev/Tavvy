@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Keep the tabs of a closed window, as in Simple Tab Groups. Closing a window used to close the hidden tabs of every group in it, so groups became empty, and Firefox restores only the last closed window at the next start. Grouped tabs of a closed window are now reopened unloaded in a remaining window (hidden unless their group is shown there), or at the next Firefox start if no window was left; tabs that Firefox restored itself are not duplicated.
+
 - Expand CSS lint checks for naming, values, selectors and property groups separated by blank lines.
 
 - Add JavaScript and CSS linting to local checks and CI, plus a Prettier formatting check.

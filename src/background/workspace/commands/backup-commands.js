@@ -165,6 +165,9 @@ export function createBackupCommands(ctx) {
             plan.spaces,
         );
         const previous = await existingTabs();
+
+        await ctx.forgetClosedTabs();
+
         const ids = new Map(
             plan.groups.map((g) => [
                 g.id,
@@ -259,6 +262,7 @@ export function createBackupCommands(ctx) {
             state.archive = [];
             state.imports = {};
             job = { groupIds: {}, completed: [], complete: false };
+            await ctx.forgetClosedTabs();
             state.imports[fingerprint] = job;
 
             for (const source of plan.groups) {

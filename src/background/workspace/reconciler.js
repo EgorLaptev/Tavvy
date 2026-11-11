@@ -98,7 +98,10 @@ export function createReconciler(ctx) {
         if (refreshPending) return refreshPending;
         refreshPending = ctx
             .queue(async () => {
-                const records = await ctx.scan();
+                let records = await ctx.scan();
+
+                if (await ctx.restoreClosedTabs(records))
+                    records = await ctx.scan();
 
                 await ctx.syncToolbar();
 
@@ -128,7 +131,10 @@ export function createReconciler(ctx) {
         return refreshPending;
     }
 
-    /** Records closed tabs in batches; one storage write per burst of closures. */
+    /**
+     * Records closed tabs in batches; one storage write per burst of closures. Grouped tabs
+     * closed with their window are kept for `restoreClosedTabs`.
+     */
     function removed(tabId, isWindowClosing) {
         index.mark({ type: "removed", tabId });
         pendingRemovals.set(tabId, isWindowClosing);
@@ -136,17 +142,24 @@ export function createReconciler(ctx) {
         removing = ctx
             .queue(async () => {
                 while (pendingRemovals.size) {
-                    const batch = [...pendingRemovals.keys()];
+                    const batch = [...pendingRemovals];
 
                     pendingRemovals.clear();
 
-                    for (const id of batch) {
+                    let kept = false;
+
+                    for (const [id, closing] of batch) {
+                        if (closing && (await ctx.keepClosedTab(id)))
+                            kept = true;
+
                         store.forget(id);
                         index.forgetRemoved(id);
                     }
 
                     ctx.bumpRevision();
-                    await store.save();
+                    await store.save(
+                        kept ? ctx.closedTabsChanges() : undefined,
+                    );
                 }
             })
             .finally(() => {

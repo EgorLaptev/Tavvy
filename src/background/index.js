@@ -1,5 +1,6 @@
 import { createToolbarIcon } from "./toolbar-icon.js";
 import { createWorkspaceService } from "./workspace-service.js";
+import { STARTUP_RESTORE_DELAY_MS } from "./workspace/closed-windows.js";
 import { createRestoreManager } from "./restore.js";
 import { createBackupManager } from "./backup.js";
 import { mountTabContextMenu } from "./tab-context-menu.js";
@@ -152,6 +153,8 @@ browser.windows.onRemoved.addListener((windowId) =>
     whenEnabled(() => {
         toolbar.forget(windowId);
         workspace().invalidate({ type: "windowRemoved", windowId });
+        // Recreates the grouped tabs of the closed window in a remaining one.
+        scheduleRefresh();
     }),
 );
 
@@ -242,6 +245,8 @@ browser.tabs.onActivated.addListener((info) =>
 function startIfEnabled() {
     return whenEnabled(() => {
         scheduleRefresh();
+        // Tabs of windows closed in an earlier session are restored once Firefox has restored its own.
+        setTimeout(scheduleRefresh, STARTUP_RESTORE_DELAY_MS + 100);
 
         return backupManager.schedule();
     });

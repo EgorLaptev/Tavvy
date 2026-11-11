@@ -88,13 +88,14 @@ export function createWorkspaceStore(storage) {
         savedKnownRevision = known[KNOWN_KEY] ? knownRevision : -1;
     });
 
-    async function save() {
+    /** `extra` storage keys are written in the same `storage.set` call. */
+    async function save(extra) {
         const persisted = { ...state };
 
         delete persisted.known;
 
         const nextState = JSON.stringify(persisted);
-        const changes = {};
+        const changes = { ...extra };
 
         if (nextState !== savedState) changes[WORKSPACE_KEY] = persisted;
 

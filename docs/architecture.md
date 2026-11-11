@@ -76,6 +76,15 @@ notify open popups; snapshot messages do not trigger another notification.
   for Firefox and extension pages: Firefox reuses an open about:preferences or
   about:addons tab even when it is hidden, so such a page moves into the current
   group instead.
+- Closing a window closes all its tabs, hidden ones included. As in Simple Tab
+  Groups, the grouped tabs of a closed window (`tabs.onRemoved` with
+  `isWindowClosing`) are saved from their `known` records to
+  `tavvy:tabs-to-restore:v1` and recreated unloaded in a remaining window: the
+  window showing their group, else the last focused one. With no window left,
+  they are recreated at the next start, after a delay that lets Firefox finish
+  its own session restore; a saved tab is skipped when an open tab of the same
+  group has the same address. Blank tabs, tabs without a group and global
+  pinned tabs are not kept. Imports discard the saved tabs.
 - A tab dragged into another window joins that window's group. A tab dragged
   into a window without a group, including a window torn off for it, loses its
   group, so a group is never shown in two windows. A window's choice is stored
