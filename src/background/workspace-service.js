@@ -22,7 +22,11 @@ import { createSettingsCommands } from "./workspace/commands/settings-commands.j
  * Modules share one context object (`ctx`). Each `createX(ctx)` adds its functions to it,
  * so later modules can call earlier ones and the order of wiring stays explicit.
  */
-export function createWorkspaceService(browserApi, newId = () => crypto.randomUUID(), toolbar = null) {
+export function createWorkspaceService(
+  browserApi,
+  newId = () => crypto.randomUUID(),
+  toolbar = null,
+) {
   const index = createTabIndex(browserApi);
   const api = index.api;
   const store = createWorkspaceStore(api.storage.local);
@@ -42,18 +46,28 @@ export function createWorkspaceService(browserApi, newId = () => crypto.randomUU
     bumpRevision: () => revision++,
     group: (groupId) => findGroup(store.state.groups, groupId),
     /** A window without a group (`null`) shows only tabs without a group. */
-    visibleGroups: (groupId) => (groupId ? visibleGroupIds(store.state.groups, groupId, store.state.settings) : new Set([null])),
+    visibleGroups: (groupId) =>
+      groupId
+        ? visibleGroupIds(store.state.groups, groupId, store.state.settings)
+        : new Set([null]),
     async closeTab(tabId) {
       await api.tabs.remove(tabId);
       store.forget(tabId);
     },
     async syncToolbar(windowId, group) {
-      await toolbar?.setDynamic?.(store.state.settings?.dynamicIcon !== false).catch(console.error);
-      await toolbar?.setStyle?.(store.state.settings?.markerStyle).catch(console.error);
-      if (windowId !== undefined) await toolbar?.update(windowId, group).catch(console.error);
+      await toolbar
+        ?.setDynamic?.(store.state.settings?.dynamicIcon !== false)
+        .catch(console.error);
+      await toolbar
+        ?.setStyle?.(store.state.settings?.markerStyle)
+        .catch(console.error);
+      if (windowId !== undefined)
+        await toolbar?.update(windowId, group).catch(console.error);
     },
     async applyVisibilityToAllWindows() {
-      for (const windowId of new Set((await ctx.scan()).map((tab) => tab.windowId)))
+      for (const windowId of new Set(
+        (await ctx.scan()).map((tab) => tab.windowId),
+      ))
         await ctx.applyVisibility(windowId, await ctx.activeGroupId(windowId));
     },
   };
@@ -80,7 +94,9 @@ export function createWorkspaceService(browserApi, newId = () => crypto.randomUU
 
   async function execute(command, windowId) {
     if (!Number.isInteger(windowId)) throw new Error("Не указано окно Firefox");
-    const handler = Object.hasOwn(handlers, command.type) ? handlers[command.type] : null;
+    const handler = Object.hasOwn(handlers, command.type)
+      ? handlers[command.type]
+      : null;
     if (!handler) throw new Error("Неизвестная команда");
     return (await handler(command, windowId)) ?? ctx.snapshot(windowId);
   }
@@ -103,7 +119,8 @@ export function createWorkspaceService(browserApi, newId = () => crypto.randomUU
           return structuredClone({
             ...result,
             revision,
-            viewVersion: index.version + ":" + revision + ":" + ctx.identitiesVersion,
+            viewVersion:
+              index.version + ":" + revision + ":" + ctx.identitiesVersion,
           });
         } catch (error) {
           await store.save();

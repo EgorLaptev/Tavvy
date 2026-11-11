@@ -7,31 +7,83 @@ function fixture(isEnabled = async () => true) {
   const handlers = {};
   const items = new Map();
   const calls = [];
-  const event = (name) => ({ addListener(listener) { handlers[name] = listener; } });
+  const event = (name) => ({
+    addListener(listener) {
+      handlers[name] = listener;
+    },
+  });
   const menus = {
-    async removeAll() { items.clear(); },
-    create(item) { items.set(item.id, item); },
-    async remove(id) { items.delete(id); },
-    async update(id, values) { Object.assign(items.get(id), values); },
-    async refresh() { calls.push("refresh"); },
-    onShown: event("shown"), onHidden: event("hidden"), onClicked: event("clicked"),
+    async removeAll() {
+      items.clear();
+    },
+    create(item) {
+      items.set(item.id, item);
+    },
+    async remove(id) {
+      items.delete(id);
+    },
+    async update(id, values) {
+      Object.assign(items.get(id), values);
+    },
+    async refresh() {
+      calls.push("refresh");
+    },
+    onShown: event("shown"),
+    onHidden: event("hidden"),
+    onClicked: event("clicked"),
   };
-  const state = { groups: [{ id: "inbox", title: "Основная", color: "#398dff" }, { id: "work", title: "Work & More", color: "#f15d63" }], settings: { language: "ru", groupPinnedTabs: false, markerStyle: "square" } };
-  const service = { async dispatch(command, windowId) { calls.push({ command, windowId }); return state; } };
+  const state = {
+    groups: [
+      { id: "inbox", title: "Основная", color: "#398dff" },
+      { id: "work", title: "Work & More", color: "#f15d63" },
+    ],
+    settings: { language: "ru", groupPinnedTabs: false, markerStyle: "square" },
+  };
+  const service = {
+    async dispatch(command, windowId) {
+      calls.push({ command, windowId });
+      return state;
+    },
+  };
   const canvases = [];
   const createCanvas = () => {
     const drawing = [];
     const context = {
-      save() {}, restore() {}, translate() {}, rotate() {}, beginPath() {}, moveTo() {}, lineTo() {}, bezierCurveTo() {}, closePath() {}, stroke() {},
-      fill() { drawing.push({ color: this.fillStyle }); },
-      measureText() { return { width: 0 }; },
-      fillText(text) { drawing.push({ text, color: this.fillStyle }); },
+      save() {},
+      restore() {},
+      translate() {},
+      rotate() {},
+      beginPath() {},
+      moveTo() {},
+      lineTo() {},
+      bezierCurveTo() {},
+      closePath() {},
+      stroke() {},
+      fill() {
+        drawing.push({ color: this.fillStyle });
+      },
+      measureText() {
+        return { width: 0 };
+      },
+      fillText(text) {
+        drawing.push({ text, color: this.fillStyle });
+      },
     };
-    const canvas = { drawing, getContext: () => context, toDataURL: () => `data:image/png,${canvases.length}` };
+    const canvas = {
+      drawing,
+      getContext: () => context,
+      toDataURL: () => `data:image/png,${canvases.length}`,
+    };
     canvases.push(canvas);
     return canvas;
   };
-  const menu = mountTabContextMenu({ menus }, service, () => calls.push("notify"), createCanvas, isEnabled);
+  const menu = mountTabContextMenu(
+    { menus },
+    service,
+    () => calls.push("notify"),
+    createCanvas,
+    isEnabled,
+  );
   return { handlers, items, calls, state, canvases, menu };
 }
 
@@ -47,7 +99,18 @@ test("tab context menu follows groups and moves the clicked tab in its window", 
   assert.equal(canvases[1].drawing[0].color, "#f15d63");
   handlers.clicked({ menuItemId: "tavvy-move-tab-1" }, tab);
   await tick();
-  assert.deepEqual(calls.find((entry) => entry.command?.type === "moveTab"), { command: { type: "moveTab", tabId: 17, groupId: "work", keepActiveGroup: true }, windowId: 3 });
+  assert.deepEqual(
+    calls.find((entry) => entry.command?.type === "moveTab"),
+    {
+      command: {
+        type: "moveTab",
+        tabId: 17,
+        groupId: "work",
+        keepActiveGroup: true,
+      },
+      windowId: 3,
+    },
+  );
   assert.ok(calls.includes("notify"));
   state.groups.splice(1, 1);
   handlers.shown({ contexts: ["tab"] }, tab);
@@ -73,7 +136,12 @@ test("a closed menu is not rebuilt after its snapshot arrives", async () => {
 
 test("tab destinations only include groups in the tab's container", async () => {
   const { handlers, items, state } = fixture();
-  state.groups.push({ id: "private", title: "Private", color: "#00aa88", spaceId: "space-1" });
+  state.groups.push({
+    id: "private",
+    title: "Private",
+    color: "#00aa88",
+    spaceId: "space-1",
+  });
   state.tabs = [{ id: 17, groupId: "private" }];
   handlers.shown({ contexts: ["tab"] }, { id: 17, windowId: 3, pinned: false });
   await tick();
@@ -83,7 +151,8 @@ test("tab destinations only include groups in the tab's container", async () => 
 
 test("menu markers follow the chosen style, including letters and no marker", async () => {
   const { handlers, state, canvases } = fixture();
-  const show = () => handlers.shown({ contexts: ["tab"] }, { id: 1, windowId: 1 });
+  const show = () =>
+    handlers.shown({ contexts: ["tab"] }, { id: 1, windowId: 1 });
   state.settings.markerStyle = "letters2";
   show();
   await tick();
@@ -91,9 +160,11 @@ test("menu markers follow the chosen style, including letters and no marker", as
   state.settings.markerStyle = "none";
   show();
   await tick();
-  assert.deepEqual(canvases.slice(-2).map((canvas) => canvas.drawing), [[], []]);
+  assert.deepEqual(
+    canvases.slice(-2).map((canvas) => canvas.drawing),
+    [[], []],
+  );
 });
-
 
 test("context menu stays inactive before onboarding and becomes available afterward", async () => {
   let enabled = false;

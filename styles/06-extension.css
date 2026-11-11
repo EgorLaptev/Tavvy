@@ -1,5 +1,7 @@
 /* Native browser popups own their placement; preview offsets do not apply here. */
-.popup.showing-compatibility-notice > :not(.compatibility-notice) { display: none !important; }
+.popup.showing-compatibility-notice > :not(.compatibility-notice) {
+  display: none !important;
+}
 .compatibility-notice {
   display: flex;
   flex-direction: column;
@@ -10,8 +12,18 @@
   min-height: 0;
   padding: 28px 24px 20px;
 }
-.compatibility-notice h1 { margin: 0; font-size: 15px; font-weight: 500; }
-.compatibility-notice p { max-width: 320px; margin: 0; font-size: 12px; line-height: 1.6; color: #888; }
+.compatibility-notice h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+.compatibility-notice p {
+  max-width: 320px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #888;
+}
 .compatibility-notice-actions {
   display: flex;
   gap: 6px;
@@ -27,8 +39,13 @@
   font: inherit;
   cursor: pointer;
 }
-.compatibility-notice button:hover { background: #242424; }
-.compatibility-notice button:disabled { opacity: .6; cursor: wait; }
+.compatibility-notice button:hover {
+  background: #242424;
+}
+.compatibility-notice button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
 .compatibility-notice-language {
   position: relative;
   display: grid;
@@ -39,11 +56,32 @@
   color: #aaa;
   background: #1b1b1b;
 }
-.compatibility-notice-language:hover { background: #242424; }
-.compatibility-notice-language svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.compatibility-notice-language select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-.compatibility-notice .compatibility-notice-error { color: #ef716b; }
-.compatibility-notice-error:empty { display: none; }
+.compatibility-notice-language:hover {
+  background: #242424;
+}
+.compatibility-notice-language svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.compatibility-notice-language select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.compatibility-notice .compatibility-notice-error {
+  color: #ef716b;
+}
+.compatibility-notice-error:empty {
+  display: none;
+}
 html.extension-mode,
 html.extension-mode body {
   margin: 0;
@@ -93,19 +131,63 @@ html.extension-mode body {
 .extension-mode .tab-favicon {
   object-fit: contain;
 }
-.tab-statuses { display: flex; flex: none; align-items: center; color: #777; }
-.tab-statuses:empty { display: none; }
-.tab-status-icon { display: grid; place-items: center; flex: none; width: 14px; height: 14px; padding: 0; border: 0; background: transparent; color: inherit; }
-.tab-status-icon + .tab-status-icon { margin-left: 5px; }
-button.tab-status-icon { cursor: pointer; }
-button.tab-status-icon:hover { color: #ddd; }
-.tab-status-icon[data-status="muted"], button.tab-status-icon[data-status="muted"]:hover { color: #ef5350; }
-.tab-status-icon svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
-.tabs .tabs-inner > .tab-row { gap: 0; }
-.tab-row .tab-favicon { margin-right: 10px; }
-.tab-statuses:not(:empty) { margin-left: 10px; }
-.tab-row .tab-statuses:not(:empty) { margin-right: 10px; }
-.group-statuses:not(:empty) { margin: 0 6px; }
+.tab-statuses {
+  display: flex;
+  flex: none;
+  align-items: center;
+  color: #777;
+}
+.tab-statuses:empty {
+  display: none;
+}
+.tab-status-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+.tab-status-icon + .tab-status-icon {
+  margin-left: 5px;
+}
+button.tab-status-icon {
+  cursor: pointer;
+}
+button.tab-status-icon:hover {
+  color: #ddd;
+}
+.tab-status-icon[data-status="muted"],
+button.tab-status-icon[data-status="muted"]:hover {
+  color: #ef5350;
+}
+.tab-status-icon svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tabs .tabs-inner > .tab-row {
+  gap: 0;
+}
+.tab-row .tab-favicon {
+  margin-right: 10px;
+}
+.tab-statuses:not(:empty) {
+  margin-left: 10px;
+}
+.tab-row .tab-statuses:not(:empty) {
+  margin-right: 10px;
+}
+.group-statuses:not(:empty) {
+  margin: 0 6px;
+}
 .extension-mode .restore-button svg {
   fill: none;
   stroke: currentColor;
@@ -165,8 +247,24 @@ button.tab-status-icon:hover { color: #ddd; }
   padding-inline: 10px;
 }
 .extension-mode .group > .group-controls,
-.extension-mode .new-group-form > .group-controls { position: relative; }
-.group-rename-input { position: absolute; top: 0; height: 100%; z-index: 2; min-width: 0; padding: 0; border: 0; outline: 0; background: transparent; color: inherit; font-family: inherit; font-size: 13px; font-weight: 500; }
+.extension-mode .new-group-form > .group-controls {
+  position: relative;
+}
+.group-rename-input {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  z-index: 2;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+}
 .extension-mode .group-color-input {
   position: absolute;
   left: 5px;
@@ -184,7 +282,9 @@ button.tab-status-icon:hover { color: #ddd; }
   outline: 2px solid #888;
   outline-offset: 3px;
 }
-.group-color-palette[hidden] { display: none; }
+.group-color-palette[hidden] {
+  display: none;
+}
 .group-color-palette {
   position: fixed;
   z-index: 50;
@@ -216,8 +316,12 @@ button.tab-status-icon:hover { color: #ddd; }
   rotate: var(--swatch-rotation, 0deg);
   background: var(--swatch-color);
 }
-.group-color-swatch[data-color="#000000"]::before { box-shadow: 0 0 0 1px #666; }
-.group-color-swatch[data-color="#ffffff"]::before { box-shadow: 0 0 0 1px #888; }
+.group-color-swatch[data-color="#000000"]::before {
+  box-shadow: 0 0 0 1px #666;
+}
+.group-color-swatch[data-color="#ffffff"]::before {
+  box-shadow: 0 0 0 1px #888;
+}
 html[data-marker-style="circle"] .group-color-swatch::before {
   border-radius: 50%;
   rotate: 0deg;
@@ -245,14 +349,34 @@ html[data-marker-style="letters2"] .group-color-swatch::before {
   font-size: 8px;
   font-weight: 700;
 }
-html[data-marker-style="letters2"] .group-color-swatch::before { content: var(--swatch-label2, "AB"); font-size: 11px; }
-html:is([data-marker-style="letters"], [data-marker-style="letters2"]) .group-color-swatch:is([data-color="#000000"], [data-color="#ffffff"])::before { box-shadow: none; -webkit-text-stroke: 0.3px #888; }
+html[data-marker-style="letters2"] .group-color-swatch::before {
+  content: var(--swatch-label2, "AB");
+  font-size: 11px;
+}
+html:is([data-marker-style="letters"], [data-marker-style="letters2"])
+  .group-color-swatch:is(
+    [data-color="#000000"],
+    [data-color="#ffffff"]
+  )::before {
+  box-shadow: none;
+  -webkit-text-stroke: 0.3px #888;
+}
 .group-color-swatch:hover,
-.group-color-swatch[aria-pressed="true"] { background: #ffffff20; }
-.group-color-swatch:focus-visible { outline: 2px solid #aaa; outline-offset: -2px; }
-.light-theme .group-color-palette { background: #f5f5f5; border-color: #ddd; }
+.group-color-swatch[aria-pressed="true"] {
+  background: #ffffff20;
+}
+.group-color-swatch:focus-visible {
+  outline: 2px solid #aaa;
+  outline-offset: -2px;
+}
+.light-theme .group-color-palette {
+  background: #f5f5f5;
+  border-color: #ddd;
+}
 .light-theme .group-color-swatch:hover,
-.light-theme .group-color-swatch[aria-pressed="true"] { background: #00000018; }
+.light-theme .group-color-swatch[aria-pressed="true"] {
+  background: #00000018;
+}
 .extension-mode .group-toggle {
   padding-right: 10px;
 }
@@ -304,52 +428,176 @@ html:is([data-marker-style="letters"], [data-marker-style="letters2"]) .group-co
   overflow: visible;
 }
 
-.extension-mode :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view) {
+.extension-mode
+  :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view) {
   scrollbar-width: auto;
   scrollbar-color: auto;
 }
-.extension-mode :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view)::-webkit-scrollbar {
+.extension-mode
+  :is(
+    .groups,
+    .recent-list,
+    .settings-view,
+    .theme-view,
+    .backup-view
+  )::-webkit-scrollbar {
   width: 2px;
 }
-.extension-mode :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view)::-webkit-scrollbar-track {
+.extension-mode
+  :is(
+    .groups,
+    .recent-list,
+    .settings-view,
+    .theme-view,
+    .backup-view
+  )::-webkit-scrollbar-track {
   background: transparent;
 }
-.extension-mode :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view)::-webkit-scrollbar-thumb {
+.extension-mode
+  :is(
+    .groups,
+    .recent-list,
+    .settings-view,
+    .theme-view,
+    .backup-view
+  )::-webkit-scrollbar-thumb {
   border-radius: 10px;
   background: #202020;
 }
-.extension-mode.light-theme :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view)::-webkit-scrollbar-thumb {
+.extension-mode.light-theme
+  :is(
+    .groups,
+    .recent-list,
+    .settings-view,
+    .theme-view,
+    .backup-view
+  )::-webkit-scrollbar-thumb {
   background-color: #d0d0d0;
 }
-.extension-mode .popup.has-compact-scrollbar { position: relative; }
-.has-compact-scrollbar :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view) { scrollbar-width: none; }
-.has-compact-scrollbar :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view)::-webkit-scrollbar { display: none; }
-.compact-scrollbar[hidden] { display: none; }
-.compact-scrollbar { position: absolute; z-index: 10; width: 12px; touch-action: none; cursor: pointer; }
-.compact-scrollbar-thumb { width: 2px; height: 56px; margin-left: 5px; border-radius: 8px; background: #282828; pointer-events: auto; }
-.light-theme .compact-scrollbar-thumb { background: #bdbdbd; }
+.extension-mode .popup.has-compact-scrollbar {
+  position: relative;
+}
+.has-compact-scrollbar
+  :is(.groups, .recent-list, .settings-view, .theme-view, .backup-view) {
+  scrollbar-width: none;
+}
+.has-compact-scrollbar
+  :is(
+    .groups,
+    .recent-list,
+    .settings-view,
+    .theme-view,
+    .backup-view
+  )::-webkit-scrollbar {
+  display: none;
+}
+.compact-scrollbar[hidden] {
+  display: none;
+}
+.compact-scrollbar {
+  position: absolute;
+  z-index: 10;
+  width: 12px;
+  touch-action: none;
+  cursor: pointer;
+}
+.compact-scrollbar-thumb {
+  width: 2px;
+  height: 56px;
+  margin-left: 5px;
+  border-radius: 8px;
+  background: #282828;
+  pointer-events: auto;
+}
+.light-theme .compact-scrollbar-thumb {
+  background: #bdbdbd;
+}
 
 /* Let Firefox draw its own popup background in the standard theme. */
 .extension-mode.standard-theme .popup,
 .extension-mode.standard-theme .group,
-.extension-mode.standard-theme .create { background: transparent; }
-.extension-mode.standard-theme .group.active { background: rgb(255 255 255 / 0.06); }
-.extension-mode.standard-theme.light-theme .group.active { background: rgb(0 0 0 / 0.06); }
+.extension-mode.standard-theme .create {
+  background: transparent;
+}
+.extension-mode.standard-theme .group.active {
+  background: rgb(255 255 255 / 0.06);
+}
+.extension-mode.standard-theme.light-theme .group.active {
+  background: rgb(0 0 0 / 0.06);
+}
 
 /* Settings are a full browser tab; popup size controls affect only the popup. */
-html.settings-page, html.settings-page body { min-height: 100%; background: #000; }
-html.settings-page.dark-theme, html.settings-page.dark-theme body { background: #08090b; }
-html.settings-page.light-theme, html.settings-page.light-theme body { background: #f5f5f5; }
-.settings-page .popup { width: min(720px, 100%); max-width: 100%; height: auto; max-height: none; min-height: 100vh; margin: 0 auto; padding: 32px 24px; background: transparent; }
-.settings-page .popup .spaces-bar { display: none; }
-.settings-page .settings-view:not([hidden]), .settings-page .theme-view:not([hidden]), .settings-page .backup-view:not([hidden]) { flex: none; overflow: visible; }
-.settings-page .settings-bar { margin-top: auto; padding-top: 20px; }
-.settings-page .settings-back[hidden] { display: none; }
-
+html.settings-page,
+html.settings-page body {
+  min-height: 100%;
+  background: #000;
+}
+html.settings-page.dark-theme,
+html.settings-page.dark-theme body {
+  background: #08090b;
+}
+html.settings-page.light-theme,
+html.settings-page.light-theme body {
+  background: #f5f5f5;
+}
+.settings-page .popup {
+  width: min(720px, 100%);
+  max-width: 100%;
+  height: auto;
+  max-height: none;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 32px 24px;
+  background: transparent;
+}
+.settings-page .popup .spaces-bar {
+  display: none;
+}
+.settings-page .settings-view:not([hidden]),
+.settings-page .theme-view:not([hidden]),
+.settings-page .backup-view:not([hidden]) {
+  flex: none;
+  overflow: visible;
+}
+.settings-page .settings-bar {
+  margin-top: auto;
+  padding-top: 20px;
+}
+.settings-page .settings-back[hidden] {
+  display: none;
+}
 
 /* Settings use two balanced columns when the page is wide enough. */
-html.settings-page body { display: block; margin: 0; padding: 0 !important; }
-html.settings-page .popup { width: 100%; max-width: none; margin: 0; padding: 20px 16px; }
-html.settings-page .settings-view:not([hidden]) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; }
-html.settings-page .settings-column { display: grid; align-content: start; gap: 16px; min-width: 0; }
-@media (max-width: 800px) { html.settings-page .popup { min-height: 100vh; padding: 12px; } html.settings-page .settings-view:not([hidden]) { grid-template-columns: minmax(0, 1fr); gap: 12px; } }
+html.settings-page body {
+  display: block;
+  margin: 0;
+  padding: 0 !important;
+}
+html.settings-page .popup {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 20px 16px;
+}
+html.settings-page .settings-view:not([hidden]) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 12px;
+}
+html.settings-page .settings-column {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+}
+@media (max-width: 800px) {
+  html.settings-page .popup {
+    min-height: 100vh;
+    padding: 12px;
+  }
+  html.settings-page .settings-view:not([hidden]) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}

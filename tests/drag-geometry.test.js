@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { dragStarted, insideRect, nearHeaderEdge, reorderThreshold } from "../src/features/drag-drop/geometry.js";
+import {
+  dragStarted,
+  insideRect,
+  nearHeaderEdge,
+  reorderThreshold,
+} from "../src/features/drag-drop/geometry.js";
 
 const point = (clientX, clientY) => ({ clientX, clientY });
 const header = { left: 0, right: 200, top: 100, bottom: 140, height: 40 };

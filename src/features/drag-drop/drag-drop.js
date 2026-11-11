@@ -16,11 +16,15 @@ export function mountDragDrop(actions = {}) {
     boundGroups.add(group);
     bindGroupDropTarget(group, actions);
   });
-  document.querySelectorAll(".group:not(.ungrouped) > .group-controls > .group-header").forEach((header) => {
-    if (boundHeaders.has(header)) return;
-    boundHeaders.add(header);
-    bindGroupHeader(header, actions);
-  });
+  document
+    .querySelectorAll(
+      ".group:not(.ungrouped) > .group-controls > .group-header",
+    )
+    .forEach((header) => {
+      if (boundHeaders.has(header)) return;
+      boundHeaders.add(header);
+      bindGroupHeader(header, actions);
+    });
   document.querySelectorAll(".tab-row").forEach((row) => {
     if (boundRows.has(row)) return;
     boundRows.add(row);

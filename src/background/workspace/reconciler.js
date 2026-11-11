@@ -1,4 +1,7 @@
-import { chooseGroupForNewTab, resolveSelection } from "../../domain/tab-assignment.js";
+import {
+  chooseGroupForNewTab,
+  resolveSelection,
+} from "../../domain/tab-assignment.js";
 import { TAB_GROUP } from "./keys.js";
 
 /**
@@ -13,18 +16,37 @@ export function createReconciler(ctx) {
   let removing;
 
   async function reconcileWindow(windowId, records) {
-    const selectedTab = records.find((tab) => tab.windowId === windowId && tab.active && !tab.pinned);
+    const selectedTab = records.find(
+      (tab) => tab.windowId === windowId && tab.active && !tab.pinned,
+    );
     const storedGroupId = await ctx.storedGroupId(windowId);
-    const currentGroupId = storedGroupId !== undefined ? storedGroupId : await ctx.activeGroupId(windowId);
-    const decision = resolveSelection({ currentGroupId, visibleGroups: ctx.visibleGroups(currentGroupId), selectedTab });
+    const currentGroupId =
+      storedGroupId !== undefined
+        ? storedGroupId
+        : await ctx.activeGroupId(windowId);
+    const decision = resolveSelection({
+      currentGroupId,
+      visibleGroups: ctx.visibleGroups(currentGroupId),
+      selectedTab,
+    });
     if (decision.moveTabTo) {
-      await api.sessions.setTabValue(selectedTab.id, TAB_GROUP, decision.moveTabTo);
+      await api.sessions.setTabValue(
+        selectedTab.id,
+        TAB_GROUP,
+        decision.moveTabTo,
+      );
       records = await ctx.scan();
     }
     // Remember a switch the user made in Firefox (not the first group of a brand-new window).
-    await ctx.setActiveGroupId(windowId, decision.groupId, storedGroupId !== undefined && decision.groupId !== storedGroupId);
+    await ctx.setActiveGroupId(
+      windowId,
+      decision.groupId,
+      storedGroupId !== undefined && decision.groupId !== storedGroupId,
+    );
     await ctx.applyVisibility(windowId, decision.groupId, records);
-    await ctx.toolbar?.update(windowId, decision.groupId ? ctx.group(decision.groupId) : null).catch(console.error);
+    await ctx.toolbar
+      ?.update(windowId, decision.groupId ? ctx.group(decision.groupId) : null)
+      .catch(console.error);
   }
 
   /**
@@ -37,10 +59,16 @@ export function createReconciler(ctx) {
     if (ctx.relocatingTabs.delete(tabId)) return Promise.resolve();
     return ctx.queue(async () => {
       const tab = await browserApi.tabs.get(tabId).catch(() => null);
-      if (!tab || tab.incognito || (tab.pinned && !store.state.settings?.groupPinnedTabs)) return;
+      if (
+        !tab ||
+        tab.incognito ||
+        (tab.pinned && !store.state.settings?.groupPinnedTabs)
+      )
+        return;
       const windowGroupId = await ctx.storedGroupId(windowId);
       if (!windowGroupId) {
-        if (windowGroupId === undefined) await ctx.setActiveGroupId(windowId, null);
+        if (windowGroupId === undefined)
+          await ctx.setActiveGroupId(windowId, null);
         await api.sessions.setTabValue(tabId, TAB_GROUP, null);
         return;
       }
@@ -62,7 +90,9 @@ export function createReconciler(ctx) {
         await ctx.syncToolbar();
         for (const windowId of new Set(records.map((tab) => tab.windowId))) {
           // One window failing (e.g. a tab Firefox refuses to hide) must not block the others.
-          await reconcileWindow(windowId, records).catch((error) => console.error("Tavvy window", windowId, error));
+          await reconcileWindow(windowId, records).catch((error) =>
+            console.error("Tavvy window", windowId, error),
+          );
         }
         store.endFirstRun();
         const changed = index.version !== observedVersion;

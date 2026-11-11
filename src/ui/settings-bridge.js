@@ -11,23 +11,34 @@ export function settingsOptions(ctx, { onLanguageChange }) {
     appVersion: api.runtime.getManifest?.().version ?? api.appVersion,
     onLanguageChange,
     cachePopupSize: !demo,
-    onBackup: demo ? null : async () => {
-      const result = await client.send({ type: "backupNow" });
-      if (!result?.ok) throw new Error(result?.error || "Ошибка резервного копирования");
-    },
-    onBackupStatus: demo ? null : async () => {
-      const result = await client.send({ type: "backupStatus" });
-      if (!result?.ok) throw new Error(result?.error || "Ошибка состояния");
-      return result.status;
-    },
+    onBackup: demo
+      ? null
+      : async () => {
+          const result = await client.send({ type: "backupNow" });
+          if (!result?.ok)
+            throw new Error(result?.error || "Ошибка резервного копирования");
+        },
+    onBackupStatus: demo
+      ? null
+      : async () => {
+          const result = await client.send({ type: "backupStatus" });
+          if (!result?.ok) throw new Error(result?.error || "Ошибка состояния");
+          return result.status;
+        },
     onImportGroups: (backup) => ctx.run({ type: "importStg", backup }),
-    onRestoreBackup: demo ? null : async (backup) => {
-      const type = backup?.format === "tavvy-backup" ? "importBackup" : "importStg";
-      const result = await client.send({ type, backup });
-      if (!result?.ok) throw new Error(translateText(result?.error || "Фоновый процесс недоступен"));
-      await ctx.run({ type: "snapshot" });
-      return result.snapshot;
-    },
+    onRestoreBackup: demo
+      ? null
+      : async (backup) => {
+          const type =
+            backup?.format === "tavvy-backup" ? "importBackup" : "importStg";
+          const result = await client.send({ type, backup });
+          if (!result?.ok)
+            throw new Error(
+              translateText(result?.error || "Фоновый процесс недоступен"),
+            );
+          await ctx.run({ type: "snapshot" });
+          return result.snapshot;
+        },
     onOpenImport: demo
       ? undefined
       : () =>

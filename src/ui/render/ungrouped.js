@@ -20,7 +20,9 @@ export function createUngroupedList(ctx) {
     }),
   );
   toggle.append(icon("m6 4 4 4-4 4", "arrow"));
-  const header = button(t("groups.ungrouped"), "group-header", title, () => toggle.click());
+  const header = button(t("groups.ungrouped"), "group-header", title, () =>
+    toggle.click(),
+  );
   controls.append(header, toggle);
   const tabs = element("div", "tabs is-closed"),
     inner = element("div", "tabs-inner");

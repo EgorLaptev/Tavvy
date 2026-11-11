@@ -13,13 +13,17 @@ export function createToolbarIcon(
       dynamic = enabled;
       const previous = [...applied.entries()];
       applied.clear();
-      await Promise.all(previous.map(([windowId, value]) => this.update(windowId, value.group)));
+      await Promise.all(
+        previous.map(([windowId, value]) => this.update(windowId, value.group)),
+      );
     },
     async updateGroup(group) {
       const windowIds = [...applied.entries()]
         .filter(([, value]) => value.group?.id === group.id)
         .map(([windowId]) => windowId);
-      await Promise.all(windowIds.map((windowId) => this.update(windowId, group)));
+      await Promise.all(
+        windowIds.map((windowId) => this.update(windowId, group)),
+      );
     },
     async setStyle(style) {
       if (markerStyle === style) return;
@@ -53,7 +57,14 @@ export function createToolbarIcon(
           const canvas = createCanvas();
           canvas.width = canvas.height = size;
           const ctx = canvas.getContext("2d");
-          drawMarker(ctx, group.id, group.color, size, markerStyle, group.title);
+          drawMarker(
+            ctx,
+            group.id,
+            group.color,
+            size,
+            markerStyle,
+            group.title,
+          );
           imageData[size] = ctx.getImageData(0, 0, size, size);
         }
         await api.action.setIcon({ windowId, imageData });

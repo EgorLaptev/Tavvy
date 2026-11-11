@@ -18,7 +18,9 @@ export function createNewGroupForm(ctx) {
       const shape = groupMarker("new-group");
       draftMarker.style.borderRadius = shape.borderRadius;
       draftMarker.style.rotate = `${shape.rotation}deg`;
-      draftMarker.style.background = draftMarkerColor(ctx.snapshot.groups.length);
+      draftMarker.style.background = draftMarkerColor(
+        ctx.snapshot.groups.length,
+      );
       input.focus();
       form.scrollIntoView?.({ block: "nearest" });
     },
@@ -35,7 +37,10 @@ export function createNewGroupForm(ctx) {
   draftHeader.append(draftMarker, input);
   const draftToggle = element("div", "group-toggle");
   draftToggle.setAttribute("aria-hidden", "true");
-  draftToggle.append(element("span", "count", "0"), icon("m6 4 4 4-4 4", "arrow"));
+  draftToggle.append(
+    element("span", "count", "0"),
+    icon("m6 4 4 4-4 4", "arrow"),
+  );
   draftControls.append(draftHeader, draftToggle);
   form.append(draftControls);
   function cancelDraft() {

@@ -1,6 +1,8 @@
 /** Snapshots without `viewVersion` (older backgrounds) always need a new index. */
 export function snapshotChanged(previous, next) {
-  return next.viewVersion !== undefined ? next.viewVersion !== previous.viewVersion : true;
+  return next.viewVersion !== undefined
+    ? next.viewVersion !== previous.viewVersion
+    : true;
 }
 export function buildViewIndex(snapshot) {
   const groups = new Map(snapshot.groups.map((group) => [group.id, group]));
@@ -17,14 +19,22 @@ export function buildViewIndex(snapshot) {
   const groupStatus = new Map(snapshot.groups.map((group) => [group.id, 0]));
   const children = new Map(snapshot.groups.map((group) => [group.id, 0]));
   for (const group of snapshot.groups)
-    if (children.has(group.parentId)) children.set(group.parentId, children.get(group.parentId) + 1);
+    if (children.has(group.parentId))
+      children.set(group.parentId, children.get(group.parentId) + 1);
   for (const tab of snapshot.tabs) {
-    const bits = (tab.audible && !tab.muted ? 1 : 0) | (tab.sharingState?.screen ? 2 : 0) | (tab.sharingState?.microphone ? 4 : 0);
-    if (bits && groupStatus.has(tab.groupId)) groupStatus.set(tab.groupId, groupStatus.get(tab.groupId) | bits);
+    const bits =
+      (tab.audible && !tab.muted ? 1 : 0) |
+      (tab.sharingState?.screen ? 2 : 0) |
+      (tab.sharingState?.microphone ? 4 : 0);
+    if (bits && groupStatus.has(tab.groupId))
+      groupStatus.set(tab.groupId, groupStatus.get(tab.groupId) | bits);
   }
-  const pending = snapshot.groups.filter((group) => !children.get(group.id)).map((group) => group.id);
+  const pending = snapshot.groups
+    .filter((group) => !children.get(group.id))
+    .map((group) => group.id);
   for (let i = 0; i < pending.length; i++) {
-    const id = pending[i], parent = groups.get(id)?.parentId;
+    const id = pending[i],
+      parent = groups.get(id)?.parentId;
     if (!children.has(parent)) continue;
     groupStatus.set(parent, groupStatus.get(parent) | groupStatus.get(id));
     children.set(parent, children.get(parent) - 1);
@@ -51,7 +61,9 @@ export function buildViewIndex(snapshot) {
       for (const id of matchedTabs) matching.add(tabs.get(id).groupId);
       const filtering = Boolean(query && matching.size);
       const visible = filtering ? new Set(matching) : new Set(groups.keys());
-      for (const id of snapshot.settings?.nestedGroups === false ? [] : [...visible]) {
+      for (const id of snapshot.settings?.nestedGroups === false
+        ? []
+        : [...visible]) {
         let parent = groups.get(id)?.parentId;
         const visited = new Set();
         while (parent && !visited.has(parent)) {
@@ -102,7 +114,17 @@ export const TAB_ROW_HEIGHT = 30;
  * The visible slice of a group's rows and the spacer heights above and below it.
  * Groups up to 120 rows are rendered whole (see `windowRange`).
  */
-export function virtualSlice(count, offset, viewport, rowHeight = TAB_ROW_HEIGHT) {
+export function virtualSlice(
+  count,
+  offset,
+  viewport,
+  rowHeight = TAB_ROW_HEIGHT,
+) {
   const { start, end } = windowRange(count, offset, viewport, rowHeight);
-  return { start, end, before: start * rowHeight, after: (count - end) * rowHeight };
+  return {
+    start,
+    end,
+    before: start * rowHeight,
+    after: (count - end) * rowHeight,
+  };
 }

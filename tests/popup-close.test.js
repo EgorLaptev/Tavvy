@@ -32,7 +32,12 @@ for (const succeeds of [true, false])
       },
     };
     window.browser = {
-      storage: { local: { get: async () => ({ "tavvy:tab-manager-notice:v1": true }), set: async () => {} } },
+      storage: {
+        local: {
+          get: async () => ({ "tavvy:tab-manager-notice:v1": true }),
+          set: async () => {},
+        },
+      },
       windows: { getCurrent: async () => ({ id: 1 }) },
       runtime: {
         getURL: (path) => path,
@@ -61,16 +66,41 @@ for (const succeeds of [true, false])
 
 for (const succeeds of [true, false])
   test(`popup ${succeeds ? "closes" : "stays open"} when opening settings ${succeeds ? "succeeds" : "fails"}`, async () => {
-    const dom = new JSDOM(await readFile("build/firefox/popup.html", "utf8"), { url: "http://localhost", runScripts: "outside-only", pretendToBeVisual: true });
+    const dom = new JSDOM(await readFile("build/firefox/popup.html", "utf8"), {
+      url: "http://localhost",
+      runScripts: "outside-only",
+      pretendToBeVisual: true,
+    });
     const { window } = dom;
     let closed = 0;
-    window.close = () => { closed++; };
+    window.close = () => {
+      closed++;
+    };
     window.matchMedia = () => ({ matches: false, addEventListener() {} });
-    const snapshot = { groups: [{ id: "inbox", title: "Main", color: "#398dff", parentId: null }], tabs: [], activeGroupId: "inbox", settings: { theme: "Чёрная", animations: true, width: 440, height: 300 } };
+    const snapshot = {
+      groups: [
+        { id: "inbox", title: "Main", color: "#398dff", parentId: null },
+      ],
+      tabs: [],
+      activeGroupId: "inbox",
+      settings: { theme: "Чёрная", animations: true, width: 440, height: 300 },
+    };
     window.browser = {
-      storage: { local: { get: async () => ({ "tavvy:tab-manager-notice:v1": true }), set: async () => {} } },
+      storage: {
+        local: {
+          get: async () => ({ "tavvy:tab-manager-notice:v1": true }),
+          set: async () => {},
+        },
+      },
       windows: { getCurrent: async () => ({ id: 1 }) },
-      runtime: { getURL: (path) => path, onMessage: { addListener() {} }, sendMessage: async () => ({ ok: true, snapshot }), openOptionsPage: async () => { if (!succeeds) throw new Error("Settings unavailable"); } },
+      runtime: {
+        getURL: (path) => path,
+        onMessage: { addListener() {} },
+        sendMessage: async () => ({ ok: true, snapshot }),
+        openOptionsPage: async () => {
+          if (!succeeds) throw new Error("Settings unavailable");
+        },
+      },
       tabs: { create: async () => {} },
     };
     window.eval(await readFile("build/test/popup.js", "utf8"));
@@ -78,7 +108,11 @@ for (const succeeds of [true, false])
     window.document.querySelector(".settings-button").click();
     await wait();
     assert.equal(closed, succeeds ? 1 : 0);
-    if (!succeeds) assert.equal(window.document.querySelector(".extension-status").textContent, "Settings unavailable");
+    if (!succeeds)
+      assert.equal(
+        window.document.querySelector(".extension-status").textContent,
+        "Settings unavailable",
+      );
     dom.window.close = () => {};
   });
 
@@ -91,17 +125,39 @@ test("tabs without a group are listed in a separate card and open on click", asy
   const { window } = dom;
   window.close = () => {};
   window.matchMedia = () => ({ matches: false, addEventListener() {} });
-  const tab = (id, groupId) => ({ id, windowId: 1, groupId, title: "Tab " + id, url: "https://example.com/" + id, faviconUrl: "", pinned: false, index: id });
+  const tab = (id, groupId) => ({
+    id,
+    windowId: 1,
+    groupId,
+    title: "Tab " + id,
+    url: "https://example.com/" + id,
+    faviconUrl: "",
+    pinned: false,
+    index: id,
+  });
   const snapshot = {
-    groups: [{ id: "inbox", title: "Основная", color: "#398dff", parentId: null }],
+    groups: [
+      { id: "inbox", title: "Основная", color: "#398dff", parentId: null },
+    ],
     tabs: [tab(1, null), tab(2, null), tab(3, "inbox")],
     archive: [],
     activeGroupId: null,
-    settings: { theme: "Чёрная", animations: false, width: 440, height: 300, position: "right" },
+    settings: {
+      theme: "Чёрная",
+      animations: false,
+      width: 440,
+      height: 300,
+      position: "right",
+    },
   };
   const sent = [];
   window.browser = {
-    storage: { local: { get: async () => ({ "tavvy:tab-manager-notice:v1": true }), set: async () => {} } },
+    storage: {
+      local: {
+        get: async () => ({ "tavvy:tab-manager-notice:v1": true }),
+        set: async () => {},
+      },
+    },
     windows: { getCurrent: async () => ({ id: 1 }) },
     runtime: {
       getURL: (path) => path,
@@ -120,13 +176,26 @@ test("tabs without a group are listed in a separate card and open on click", asy
   assert.ok(card, "the card is the first one in the panel");
   assert.equal(doc.querySelector(".groups").firstElementChild, card);
   assert.equal(card.querySelector(".count").textContent, "2");
-  assert.equal(card.classList.contains("active"), true, "the window shows no group");
-  assert.equal(doc.querySelector('[data-group-id="inbox"]').classList.contains("active"), false);
+  assert.equal(
+    card.classList.contains("active"),
+    true,
+    "the window shows no group",
+  );
+  assert.equal(
+    doc.querySelector('[data-group-id="inbox"]').classList.contains("active"),
+    false,
+  );
   card.querySelector(".group-header").click();
   await wait();
   const rows = card.querySelectorAll(".tab-row");
-  assert.deepEqual([...rows].map((row) => row.dataset.tabId), ["1", "2"]);
+  assert.deepEqual(
+    [...rows].map((row) => row.dataset.tabId),
+    ["1", "2"],
+  );
   rows[1].click();
   await wait();
-  assert.equal(JSON.stringify(sent.at(-1)), JSON.stringify({ type: "activateTab", tabId: 2 }));
+  assert.equal(
+    JSON.stringify(sent.at(-1)),
+    JSON.stringify({ type: "activateTab", tabId: 2 }),
+  );
 });

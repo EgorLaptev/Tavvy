@@ -14,7 +14,9 @@ export function parseStgBackup(input) {
     if (
       !value ||
       typeof value.url !== "string" ||
-      !/^(https?:\/\/|file:\/\/|moz-extension:\/\/[0-9a-f-]{36}\/(?:[^\s]*)$|about:blank$|about:newtab$|about:[a-z0-9-]+(?:[?#][^\s]*)?$)/i.test(value.url)
+      !/^(https?:\/\/|file:\/\/|moz-extension:\/\/[0-9a-f-]{36}\/(?:[^\s]*)$|about:blank$|about:newtab$|about:[a-z0-9-]+(?:[?#][^\s]*)?$)/i.test(
+        value.url,
+      )
     )
       throw new Error("В бэкапе есть неподдерживаемая ссылка");
     if (++total > 10000) throw new Error("Слишком много вкладок");
@@ -67,7 +69,9 @@ export function parseStgBackup(input) {
     groups,
     pinnedTabs,
     tabCount: total,
-    browserPages: [...groups.flatMap((g) => g.tabs), ...pinnedTabs].filter((t) => /^(?:about:(?!blank$|newtab$)|moz-extension:\/\/)/i.test(t.url)).length,
+    browserPages: [...groups.flatMap((g) => g.tabs), ...pinnedTabs].filter(
+      (t) => /^(?:about:(?!blank$|newtab$)|moz-extension:\/\/)/i.test(t.url),
+    ).length,
     localFiles: groups
       .flatMap((g) => g.tabs)
       .filter((t) => t.url.startsWith("file:")).length,

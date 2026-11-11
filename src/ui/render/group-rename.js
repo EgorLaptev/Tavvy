@@ -27,13 +27,20 @@ export function startGroupRename(ctx, view, groupId) {
     const next = field.value.trim();
     field.remove();
     title.style.visibility = "";
-    if (save && next && next !== original) ctx.run({ type: "renameGroup", groupId, title: next });
+    if (save && next && next !== original)
+      ctx.run({ type: "renameGroup", groupId, title: next });
   }
   field.addEventListener("click", (e) => e.stopPropagation());
   field.addEventListener("pointerdown", (e) => e.stopPropagation());
   field.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); finish(true); }
-    if (e.key === "Escape") { e.preventDefault(); finish(false); }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      finish(true);
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      finish(false);
+    }
   });
   field.addEventListener("blur", () => finish(true));
   field.focus();

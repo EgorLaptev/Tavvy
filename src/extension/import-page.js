@@ -1,14 +1,23 @@
 import { mountPageTheme } from "./page-theme.js";
 import { parseStgBackup } from "../domain/stg-import.js";
 import { normalizeSettings } from "../domain/settings.js";
-import { setLanguage, t, format, translateStatic, translateText } from "../locales/index.js";
+import {
+  setLanguage,
+  t,
+  format,
+  translateStatic,
+  translateText,
+} from "../locales/index.js";
 mountPageTheme(browser);
 setLanguage("en");
 translateStatic(document.documentElement);
-browser.storage.local.get("tavvy:workspace:v1").then((data) => {
-  setLanguage(data["tavvy:workspace:v1"]?.settings?.language);
-  translateStatic(document.documentElement);
-}).catch(() => {});
+browser.storage.local
+  .get("tavvy:workspace:v1")
+  .then((data) => {
+    setLanguage(data["tavvy:workspace:v1"]?.settings?.language);
+    translateStatic(document.documentElement);
+  })
+  .catch(() => {});
 const input = document.querySelector("input[type=file]");
 const status = document.querySelector("#status");
 const retry = document.querySelector("#retry");
@@ -35,8 +44,9 @@ async function command(payload) {
   });
   if (!result?.ok)
     throw new Error(
-      translateText(result?.error ||
-        "Нет ответа фонового процесса. Перезагрузите Tavvy в about:debugging.",
+      translateText(
+        result?.error ||
+          "Нет ответа фонового процесса. Перезагрузите Tavvy в about:debugging.",
       ),
     );
   return result.snapshot;
@@ -53,10 +63,15 @@ async function importFile() {
     const data = JSON.parse((await file.text()).replace(/^\uFEFF/, ""));
     if (data.format === "tavvy-backup") {
       await command({ type: "importBackup", backup: data });
-      status.textContent = t("import_page.backup_restored") + (data.version === 2 ? " " + t("spaces.restored_sign_in") : "");
+      status.textContent =
+        t("import_page.backup_restored") +
+        (data.version === 2 ? " " + t("spaces.restored_sign_in") : "");
     } else if (Array.isArray(data.groups)) {
       const plan = parseStgBackup(data);
-      status.textContent = format("import_page.import_in_progress", {groups: plan.groups.length, tabs: plan.tabCount});
+      status.textContent = format("import_page.import_in_progress", {
+        groups: plan.groups.length,
+        tabs: plan.tabCount,
+      });
       const snapshot = await command({ type: "importStg", backup: data });
       const report = snapshot.importReport;
       if (!report)
@@ -65,18 +80,29 @@ async function importFile() {
         );
       status.textContent = report.alreadyImported
         ? t("import_page.backup_already_imported_no_duplicates")
-        : format("import_page.import_complete", {groups: report.groups, tabs: report.tabs, pinned: report.pinnedTabs});
+        : format("import_page.import_complete", {
+            groups: report.groups,
+            tabs: report.tabs,
+            pinned: report.pinnedTabs,
+          });
       if (report.browserPages)
-        status.textContent += format("import_page.import_browser_pages_result", {count: report.browserPages});
+        status.textContent += format(
+          "import_page.import_browser_pages_result",
+          { count: report.browserPages },
+        );
       if (report.localFiles)
-        status.textContent += format("import_page.import_local_files_result", {count: report.localFiles});
+        status.textContent += format("import_page.import_local_files_result", {
+          count: report.localFiles,
+        });
     } else {
       if (
         data.version !== 1 ||
         !data.settings ||
         typeof data.settings.animations !== "boolean"
       )
-        throw new Error(t("import_page.this_is_not_an_stg_backup_or_tavvy_settings_file"));
+        throw new Error(
+          t("import_page.this_is_not_an_stg_backup_or_tavvy_settings_file"),
+        );
       await command({
         type: "saveSettings",
         settings: normalizeSettings(data.settings),
@@ -86,7 +112,9 @@ async function importFile() {
     done.hidden = false;
   } catch (error) {
     status.dataset.error = "true";
-    status.textContent = format("import_page.import_failed_error", {error: translateText(error.message)});
+    status.textContent = format("import_page.import_failed_error", {
+      error: translateText(error.message),
+    });
     retry.hidden = false;
   } finally {
     busy = false;

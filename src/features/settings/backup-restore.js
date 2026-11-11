@@ -4,9 +4,21 @@ import { t, format, translateText } from "../../locales/index.js";
 /** Result line after restoring a Simple Tab Groups backup. */
 function importResult(report) {
   if (!report) throw new Error(t("import_page.import_result_missing"));
-  let text = report.alreadyImported ? t("import_page.backup_already_imported_no_duplicates") : format("import_page.import_complete", { groups: report.groups, tabs: report.tabs, pinned: report.pinnedTabs });
-  if (report.browserPages) text += format("import_page.import_browser_pages_result", { count: report.browserPages });
-  if (report.localFiles) text += format("import_page.import_local_files_result", { count: report.localFiles });
+  let text = report.alreadyImported
+    ? t("import_page.backup_already_imported_no_duplicates")
+    : format("import_page.import_complete", {
+        groups: report.groups,
+        tabs: report.tabs,
+        pinned: report.pinnedTabs,
+      });
+  if (report.browserPages)
+    text += format("import_page.import_browser_pages_result", {
+      count: report.browserPages,
+    });
+  if (report.localFiles)
+    text += format("import_page.import_local_files_result", {
+      count: report.localFiles,
+    });
   return text;
 }
 
@@ -15,7 +27,13 @@ function importResult(report) {
  * backup file, preview its contents, then restore it. `waitForSave()` resolves once pending
  * settings are saved; `onSettingsRestored(settings)` applies settings from a Tavvy backup.
  */
-export function mountBackupRestore({ listen, importButton, onRestoreBackup, waitForSave, onSettingsRestored }) {
+export function mountBackupRestore({
+  listen,
+  importButton,
+  onRestoreBackup,
+  waitForSave,
+  onSettingsRestored,
+}) {
   const area = document.createElement("div");
   area.className = "backup-restore";
   // A literal template keeps the static markup visible to the add-on linter.
@@ -32,24 +50,42 @@ export function mountBackupRestore({ listen, importButton, onRestoreBackup, wait
   const extra = area.querySelector(".backup-file-extra");
   const groups = area.querySelector(".backup-file-groups");
   const more = area.querySelector(".backup-file-more");
-  let selectedData = null, selectionId = 0;
+  let selectedData = null,
+    selectionId = 0;
 
   function showPreview(preview) {
-    counts.textContent = format("settings.backup.preview_counts", { groups: preview.groups.length, tabs: preview.tabs, pinned: preview.pinned });
+    counts.textContent = format("settings.backup.preview_counts", {
+      groups: preview.groups.length,
+      tabs: preview.tabs,
+      pinned: preview.pinned,
+    });
     const details = [];
-    if (preview.spaces) details.push(format("settings.backup.preview_spaces", { count: preview.spaces }));
-    if (preview.legacy) details.push(format("settings.backup.preview_legacy", { count: preview.legacy }));
+    if (preview.spaces)
+      details.push(
+        format("settings.backup.preview_spaces", { count: preview.spaces }),
+      );
+    if (preview.legacy)
+      details.push(
+        format("settings.backup.preview_legacy", { count: preview.legacy }),
+      );
     extra.textContent = details.join(" · ");
-    groups.replaceChildren(...preview.groups.slice(0, 30).map((group) => {
-      const row = document.createElement("li");
-      const name = document.createElement("span");
-      name.textContent = group.title;
-      const count = document.createElement("span");
-      count.textContent = String(group.tabs);
-      row.append(name, count);
-      return row;
-    }));
-    more.textContent = preview.groups.length > 30 ? format("settings.backup.preview_more", { count: preview.groups.length - 30 }) : "";
+    groups.replaceChildren(
+      ...preview.groups.slice(0, 30).map((group) => {
+        const row = document.createElement("li");
+        const name = document.createElement("span");
+        name.textContent = group.title;
+        const count = document.createElement("span");
+        count.textContent = String(group.tabs);
+        row.append(name, count);
+        return row;
+      }),
+    );
+    more.textContent =
+      preview.groups.length > 30
+        ? format("settings.backup.preview_more", {
+            count: preview.groups.length - 30,
+          })
+        : "";
     summary.hidden = false;
   }
 
@@ -73,16 +109,22 @@ export function mountBackupRestore({ listen, importButton, onRestoreBackup, wait
     } catch (error) {
       if (current !== selectionId) return;
       result.dataset.error = "true";
-      result.textContent = format("import_page.import_failed_error", { error: translateText(error.message) });
+      result.textContent = format("import_page.import_failed_error", {
+        error: translateText(error.message),
+      });
     }
   }
   listen(picker, "change", () => selectFile(picker.files?.[0]));
-  for (const name of ["dragenter", "dragover"]) listen(zone, name, (event) => {
-    event.preventDefault();
-    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
-    zone.classList.add("is-dragging");
+  for (const name of ["dragenter", "dragover"])
+    listen(zone, name, (event) => {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+      zone.classList.add("is-dragging");
+    });
+  listen(zone, "dragleave", (event) => {
+    if (!zone.contains(event.relatedTarget))
+      zone.classList.remove("is-dragging");
   });
-  listen(zone, "dragleave", (event) => { if (!zone.contains(event.relatedTarget)) zone.classList.remove("is-dragging"); });
   listen(zone, "drop", (event) => {
     event.preventDefault();
     zone.classList.remove("is-dragging");
@@ -105,7 +147,9 @@ export function mountBackupRestore({ listen, importButton, onRestoreBackup, wait
       } else result.textContent = importResult(restored.importReport);
     } catch (error) {
       result.dataset.error = "true";
-      result.textContent = format("import_page.import_failed_error", { error: translateText(error.message) });
+      result.textContent = format("import_page.import_failed_error", {
+        error: translateText(error.message),
+      });
     } finally {
       submit.disabled = !selectedData;
       picker.disabled = false;

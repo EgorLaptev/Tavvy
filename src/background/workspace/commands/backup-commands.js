@@ -1,9 +1,19 @@
 import { normalizeSettings } from "../../../domain/settings.js";
 import { parseTavvyBackup } from "../../../domain/tavvy-backup.js";
 import { parseStgBackup, stgFingerprint } from "../../../domain/stg-import.js";
-import { INBOX_ID, defaultInbox, findGroup, hasGroup } from "../../../domain/group-tree.js";
+import {
+  INBOX_ID,
+  defaultInbox,
+  findGroup,
+  hasGroup,
+} from "../../../domain/group-tree.js";
 import { DEFAULT_SPACE_ID, spaceIcon } from "../../../domain/spaces.js";
-import { BACKUP_SAFE_URL, needsPlaceholder, placeholderUrl, readPlaceholder } from "../../../domain/urls.js";
+import {
+  BACKUP_SAFE_URL,
+  needsPlaceholder,
+  placeholderUrl,
+  readPlaceholder,
+} from "../../../domain/urls.js";
 import { TAB_GROUP, TAB_IMPORT_MARKER, TAB_IMPORT_METADATA } from "../keys.js";
 
 const MAX_ARCHIVE = 200;
@@ -14,7 +24,9 @@ export function createBackupCommands(ctx) {
 
   /** Opens a saved URL; pages an extension cannot open get a placeholder. */
   function restorableUrl(url, title) {
-    return needsPlaceholder(url) ? placeholderUrl(api.runtime.getURL("local-file.html"), url, title) : url;
+    return needsPlaceholder(url)
+      ? placeholderUrl(api.runtime.getURL("local-file.html"), url, title)
+      : url;
   }
 
   async function exportBackup() {
@@ -35,7 +47,13 @@ export function createBackupCommands(ctx) {
       createdAt: new Date().toISOString(),
       groups: structuredClone(state.groups),
       ...(withSpaces
-        ? { spaces: state.spaces.map(({ id, name, icon }) => ({ id, name, ...(icon ? { icon: spaceIcon(icon) } : {}) })) }
+        ? {
+            spaces: state.spaces.map(({ id, name, icon }) => ({
+              id,
+              name,
+              ...(icon ? { icon: spaceIcon(icon) } : {}),
+            })),
+          }
         : {}),
       tabs: records.map(serialize).filter(safe),
       archive: state.archive.map(serialize).filter(safe),
@@ -48,17 +66,32 @@ export function createBackupCommands(ctx) {
     const mapping = new Map([[DEFAULT_SPACE_ID, DEFAULT_SPACE_ID]]);
     const restored = [];
     if (!spaces?.length) return { mapping, restored };
-    if (!browserApi.contextualIdentities || !(await browserApi.permissions?.contains({ permissions: ["cookies"] })))
-      throw new Error("Для восстановления пространств необходимо разрешение на контейнеры Firefox");
+    if (
+      !browserApi.contextualIdentities ||
+      !(await browserApi.permissions?.contains({ permissions: ["cookies"] }))
+    )
+      throw new Error(
+        "Для восстановления пространств необходимо разрешение на контейнеры Firefox",
+      );
     const identities = await browserApi.contextualIdentities.query({});
     const used = new Set();
     for (const item of spaces) {
-      const matches = identities.filter((identity) => identity.name === item.name && !used.has(identity.cookieStoreId));
+      const matches = identities.filter(
+        (identity) =>
+          identity.name === item.name && !used.has(identity.cookieStoreId),
+      );
       if (matches.length !== 1)
-        throw new Error("Для восстановления пространства нужен один существующий контейнер Firefox с тем же именем");
+        throw new Error(
+          "Для восстановления пространства нужен один существующий контейнер Firefox с тем же именем",
+        );
       used.add(matches[0].cookieStoreId);
       const spaceId = ctx.newId();
-      restored.push({ id: spaceId, name: item.name, cookieStoreId: matches[0].cookieStoreId, ...(item.icon ? { icon: item.icon } : {}) });
+      restored.push({
+        id: spaceId,
+        name: item.name,
+        cookieStoreId: matches[0].cookieStoreId,
+        ...(item.icon ? { icon: item.icon } : {}),
+      });
       mapping.set(item.id, spaceId);
     }
     return { mapping, restored };
@@ -67,7 +100,9 @@ export function createBackupCommands(ctx) {
   /** Tabs an import replaces: everything except Tavvy's own pages (placeholders are ordinary tabs). */
   async function existingTabs() {
     const ownPages = api.runtime.getURL("");
-    return (await ctx.scan()).filter((tab) => !tab.url.startsWith(ownPages) || readPlaceholder(tab.url));
+    return (await ctx.scan()).filter(
+      (tab) => !tab.url.startsWith(ownPages) || readPlaceholder(tab.url),
+    );
   }
 
   /**
@@ -75,13 +110,22 @@ export function createBackupCommands(ctx) {
    * before (pinned ones included — the backup brings its own) are closed in every window. Each window is first switched to a group with a
    * tab of its own, so Firefox never closes a window whose last tab goes away.
    */
-  async function replacePreviousTabs(previous, importWindowId, importGroupId, importTabId) {
+  async function replacePreviousTabs(
+    previous,
+    importWindowId,
+    importGroupId,
+    importTabId,
+  ) {
     const previousIds = new Set(previous.map((tab) => tab.id));
-    const windows = new Set([importWindowId, ...previous.map((tab) => tab.windowId)]);
+    const windows = new Set([
+      importWindowId,
+      ...previous.map((tab) => tab.windowId),
+    ]);
     for (const windowId of windows) {
       const groupId = windowId === importWindowId ? importGroupId : INBOX_ID;
       const preferred = windowId === importWindowId ? importTabId : null;
-      const tabId = preferred ?? (await ctx.createTabInGroup(windowId, groupId)).id;
+      const tabId =
+        preferred ?? (await ctx.createTabInGroup(windowId, groupId)).id;
       await ctx.activate(windowId, groupId, tabId);
     }
     for (const tabId of previousIds) await ctx.closeTab(tabId).catch(() => {});
@@ -90,14 +134,23 @@ export function createBackupCommands(ctx) {
   /** The group to show after an import and one of its tabs (if any were imported). */
   function firstImported(created) {
     const first = created.find((entry) => !entry.pinned);
-    return first ? { groupId: first.groupId, tabId: first.tabId } : { groupId: INBOX_ID, tabId: null };
+    return first
+      ? { groupId: first.groupId, tabId: first.tabId }
+      : { groupId: INBOX_ID, tabId: null };
   }
 
   async function importBackup(command, windowId) {
     const plan = parseTavvyBackup(command.backup);
-    const { mapping: spaceMapping, restored } = await matchBackupSpaces(plan.spaces);
+    const { mapping: spaceMapping, restored } = await matchBackupSpaces(
+      plan.spaces,
+    );
     const previous = await existingTabs();
-    const ids = new Map(plan.groups.map((g) => [g.id, g.id === INBOX_ID ? INBOX_ID : ctx.newId()]));
+    const ids = new Map(
+      plan.groups.map((g) => [
+        g.id,
+        g.id === INBOX_ID ? INBOX_ID : ctx.newId(),
+      ]),
+    );
     const state = store.state;
     state.spaces = restored;
     state.groups = plan.groups.map((g) => ({
@@ -121,14 +174,24 @@ export function createBackupCommands(ctx) {
         pinned: entry.pinned,
         ...(await ctx.tabOptionsForGroup(findGroup(state.groups, groupId))),
         ...(url === "about:newtab" ? {} : { url }),
-        ...(!entry.pinned && !url.startsWith("about:") ? { discarded: true, title: entry.title } : {}),
+        ...(!entry.pinned && !url.startsWith("about:")
+          ? { discarded: true, title: entry.title }
+          : {}),
       });
       await api.sessions.setTabValue(tab.id, TAB_GROUP, groupId);
-      await api.sessions.setTabValue(tab.id, TAB_IMPORT_METADATA, { title: entry.title });
+      await api.sessions.setTabValue(tab.id, TAB_IMPORT_METADATA, {
+        title: entry.title,
+      });
       created.push({ tabId: tab.id, groupId, pinned: entry.pinned });
     }
     for (const entry of plan.archive)
-      state.archive.push({ id: ctx.newId(), groupId: ids.get(entry.groupId), title: entry.title, url: entry.url, closedAt: entry.closedAt });
+      state.archive.push({
+        id: ctx.newId(),
+        groupId: ids.get(entry.groupId),
+        title: entry.title,
+        url: entry.url,
+        closedAt: entry.closedAt,
+      });
     state.archive = state.archive.slice(0, MAX_ARCHIVE);
     state.settings = plan.settings;
     await store.save();
@@ -146,7 +209,8 @@ export function createBackupCommands(ctx) {
     if (job?.complete) job = null;
     const resuming = !!job;
     if (!job) {
-      const inbox = state.groups.find((group) => group.id === INBOX_ID) || defaultInbox();
+      const inbox =
+        state.groups.find((group) => group.id === INBOX_ID) || defaultInbox();
       delete inbox.spaceId;
       state.groups = [inbox];
       state.spaces = [];
@@ -155,7 +219,13 @@ export function createBackupCommands(ctx) {
       job = { groupIds: {}, completed: [], complete: false };
       state.imports[fingerprint] = job;
       for (const source of plan.groups) {
-        const target = { id: ctx.newId(), title: source.title, color: source.color, parentId: null, stgSourceId: source.sourceId };
+        const target = {
+          id: ctx.newId(),
+          title: source.title,
+          color: source.color,
+          parentId: null,
+          stgSourceId: source.sourceId,
+        };
         state.groups.push(target);
         job.groupIds[source.sourceId] = target.id;
       }
@@ -167,7 +237,12 @@ export function createBackupCommands(ctx) {
     // Tabs from an interrupted run of this import carry its marker and are reused.
     for (const tab of await existingTabs()) {
       const marker = await api.sessions.getTabValue(tab.id, TAB_IMPORT_MARKER);
-      if (resuming && typeof marker === "string" && marker.startsWith(fingerprint + ":")) existingByMarker.set(marker, tab);
+      if (
+        resuming &&
+        typeof marker === "string" &&
+        marker.startsWith(fingerprint + ":")
+      )
+        existingByMarker.set(marker, tab);
       else previous.push(tab);
     }
     const created = [];
@@ -182,13 +257,18 @@ export function createBackupCommands(ctx) {
           windowId,
           active: false,
           pinned,
-          ...(!pinned && url !== "about:newtab" && url !== "about:blank" ? { discarded: true, title: record.title } : {}),
+          ...(!pinned && url !== "about:newtab" && url !== "about:blank"
+            ? { discarded: true, title: record.title }
+            : {}),
           ...(url === "about:newtab" ? {} : { url }),
         });
         await api.sessions.setTabValue(tab.id, TAB_IMPORT_MARKER, marker);
       }
       await api.sessions.setTabValue(tab.id, TAB_GROUP, groupId);
-      await api.sessions.setTabValue(tab.id, TAB_IMPORT_METADATA, { title: record.title, faviconUrl: record.faviconUrl });
+      await api.sessions.setTabValue(tab.id, TAB_IMPORT_METADATA, {
+        title: record.title,
+        faviconUrl: record.faviconUrl,
+      });
       // Keep the import window usable meanwhile: imported tabs stay hidden until the end.
       if (!pinned) await api.tabs.hide([tab.id]);
       created.push({ tabId: tab.id, groupId, pinned });
@@ -199,9 +279,19 @@ export function createBackupCommands(ctx) {
 
     for (const source of plan.groups)
       for (let index = 0; index < source.tabs.length; index++)
-        await importTab(source.tabs[index], `${source.sourceId}:${index}`, job.groupIds[source.sourceId], false);
+        await importTab(
+          source.tabs[index],
+          `${source.sourceId}:${index}`,
+          job.groupIds[source.sourceId],
+          false,
+        );
     for (let index = 0; index < plan.pinnedTabs.length; index++)
-      await importTab(plan.pinnedTabs[index], `pinned:${index}`, INBOX_ID, true);
+      await importTab(
+        plan.pinnedTabs[index],
+        `pinned:${index}`,
+        INBOX_ID,
+        true,
+      );
     job.complete = true;
     job.report = {
       groups: plan.groups.length,

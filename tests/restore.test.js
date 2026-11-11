@@ -2,10 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createRestoreManager } from "../src/background/restore.js";
 
-const backup = { version: "5", groups: [{ title: "Group", tabs: [{ url: "https://example.org" }] }] };
+const backup = {
+  version: "5",
+  groups: [{ title: "Group", tabs: [{ url: "https://example.org" }] }],
+};
 function fixture({ failBackup = false, failImport = false } = {}) {
   const calls = [];
-  const browser = { tabs: { remove: async (ids) => calls.push(["remove", ids]) } };
+  const browser = {
+    tabs: { remove: async (ids) => calls.push(["remove", ids]) },
+  };
   const service = {
     dispatch: async (command) => {
       calls.push([command.type]);
@@ -36,13 +41,18 @@ test("a failed backup prevents the import from changing anything", async () => {
 
 test("a failed import is reported", async () => {
   const { restore } = fixture({ failImport: true });
-  await assert.rejects(restore({ type: "importStg", backup }, 7), /import failed/);
+  await assert.rejects(
+    restore({ type: "importStg", backup }, 7),
+    /import failed/,
+  );
 });
 
 test("invalid backup is rejected before saving or modifying tabs", async () => {
   const { restore, calls } = fixture();
   await assert.rejects(restore({ type: "importStg", backup: {} }, 7));
-  await assert.rejects(restore({ type: "importBackup", backup: { format: "tavvy-backup" } }, 7));
+  await assert.rejects(
+    restore({ type: "importBackup", backup: { format: "tavvy-backup" } }, 7),
+  );
   assert.deepEqual(calls, []);
 });
 
@@ -58,7 +68,9 @@ test("restores run one after another", async () => {
       return {};
     },
   };
-  const restore = createRestoreManager({}, service, { download: async () => {} });
+  const restore = createRestoreManager({}, service, {
+    download: async () => {},
+  });
   const first = restore({ type: "importStg", backup, id: 1 }, 1);
   const second = restore({ type: "importStg", backup, id: 2 }, 1);
   await new Promise((resolve) => setTimeout(resolve, 10));

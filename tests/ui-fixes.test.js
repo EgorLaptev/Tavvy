@@ -35,21 +35,29 @@ test("popup height never exceeds what Firefox can show", () => {
 });
 
 test("pressing inside the new-group draft does not start a group drag", async () => {
-  const { bindGroupHeader, disposeGroupDrag } = await import("../src/features/drag-drop/group-drag.js");
-  await withDom('<div class="group-draft"><div class="group-header"><input></div></div>', (window) => {
-    const header = window.document.querySelector(".group-header");
-    let captured = false;
-    header.setPointerCapture = () => (captured = true);
-    bindGroupHeader(header, {});
-    const event = new window.MouseEvent("pointerdown", { bubbles: true, button: 0 });
-    window.document.querySelector("input").dispatchEvent(event);
-    assert.equal(captured, false);
-    disposeGroupDrag();
-  });
+  const { bindGroupHeader, disposeGroupDrag } =
+    await import("../src/features/drag-drop/group-drag.js");
+  await withDom(
+    '<div class="group-draft"><div class="group-header"><input></div></div>',
+    (window) => {
+      const header = window.document.querySelector(".group-header");
+      let captured = false;
+      header.setPointerCapture = () => (captured = true);
+      bindGroupHeader(header, {});
+      const event = new window.MouseEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+      });
+      window.document.querySelector("input").dispatchEvent(event);
+      assert.equal(captured, false);
+      disposeGroupDrag();
+    },
+  );
 });
 
 test("cancelling a drag clears the drop highlight", async () => {
-  const { disposeTabDrag } = await import("../src/features/drag-drop/tab-drag.js");
+  const { disposeTabDrag } =
+    await import("../src/features/drag-drop/tab-drag.js");
   withDom('<div class="group drop-target"></div>', (window) => {
     disposeTabDrag();
     assert.equal(window.document.querySelector(".drop-target"), null);

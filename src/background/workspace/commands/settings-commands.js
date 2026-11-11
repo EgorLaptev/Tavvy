@@ -8,8 +8,13 @@ export function createSettingsCommands(ctx) {
   async function startGroupingPinnedTabs() {
     const windows = new Map();
     for (const tab of (await ctx.scan()).filter((item) => item.pinned)) {
-      if (!windows.has(tab.windowId)) windows.set(tab.windowId, await ctx.activeGroupId(tab.windowId));
-      await api.sessions.setTabValue(tab.id, TAB_GROUP, windows.get(tab.windowId));
+      if (!windows.has(tab.windowId))
+        windows.set(tab.windowId, await ctx.activeGroupId(tab.windowId));
+      await api.sessions.setTabValue(
+        tab.id,
+        TAB_GROUP,
+        windows.get(tab.windowId),
+      );
     }
   }
 
@@ -38,9 +43,12 @@ export function createSettingsCommands(ctx) {
     const records = await ctx.scan();
     for (const windowId of new Set(records.map((tab) => tab.windowId))) {
       const groupId = await ctx.activeGroupId(windowId);
-      const selected = records.find((tab) => tab.windowId === windowId && tab.active && !tab.pinned);
+      const selected = records.find(
+        (tab) => tab.windowId === windowId && tab.active && !tab.pinned,
+      );
       // Never hide the selected tab: re-activate the group so one of its own tabs is selected.
-      if (selected && !ctx.visibleGroups(groupId).has(selected.groupId)) await ctx.activate(windowId, groupId);
+      if (selected && !ctx.visibleGroups(groupId).has(selected.groupId))
+        await ctx.activate(windowId, groupId);
       else await ctx.applyVisibility(windowId, groupId);
     }
   }

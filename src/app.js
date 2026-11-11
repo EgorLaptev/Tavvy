@@ -29,13 +29,18 @@ const api = createMemoryBrowser({
   tabs,
   settings: {
     ...repository.read(),
-    ...(localStorage.getItem("tavvy:settings:v1") === null && localStorage.getItem("tavvy-mock-settings") === null ? { experimentalSpaces: true } : {}),
+    ...(localStorage.getItem("tavvy:settings:v1") === null &&
+    localStorage.getItem("tavvy-mock-settings") === null
+      ? { experimentalSpaces: true }
+      : {}),
   },
   containers: demoContainers,
   onSettings: (settings) => repository.write(settings),
 });
 api.appVersion = version;
-api.previewExpandedGroupIds = demoGroups.filter((group) => group.expanded).map((group) => group.id);
+api.previewExpandedGroupIds = demoGroups
+  .filter((group) => group.expanded)
+  .map((group) => group.id);
 api.spaceIconUrl = previewSpaceIcon;
 const activeIndex = demoGroups.findIndex((group) => group.active);
 if (activeIndex >= 0)

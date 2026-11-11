@@ -8,7 +8,11 @@ export function importReportMessage(report) {
   if (!report) return null;
   return report.alreadyImported
     ? t("import_page.this_backup_has_already_been_imported")
-    : format("import_page.import_summary", { groups: report.groups, tabs: report.tabs, pinned: report.pinnedTabs });
+    : format("import_page.import_summary", {
+        groups: report.groups,
+        tabs: report.tabs,
+        pinned: report.pinnedTabs,
+      });
 }
 
 /**
@@ -35,9 +39,14 @@ export function createViewState(ctx) {
     const { snapshot, viewIndex } = ctx;
     const nested = snapshot.settings.nestedGroups !== false;
     // A new tab is shown by expanding the path to its group.
-    if (command.type === "createTab") ctx.opened = pathToGroup(command.groupId, viewIndex.groups, nested);
+    if (command.type === "createTab")
+      ctx.opened = pathToGroup(command.groupId, viewIndex.groups, nested);
     if (closedGroup && !viewIndex.byGroup.get(closedGroup)?.length)
-      collapseSubtree(ctx.opened, closedGroup, (id) => viewIndex.groups.get(id)?.parentId);
+      collapseSubtree(
+        ctx.opened,
+        closedGroup,
+        (id) => viewIndex.groups.get(id)?.parentId,
+      );
     // Selecting a group switches the window; the popup closes like Firefox panels do.
     if (command.type === "activateGroup" && !ctx.api.isDemo) {
       window.close();

@@ -1,5 +1,21 @@
-export const SPACE_ICONS = ["fingerprint", "briefcase", "dollar", "cart", "circle", "gift", "vacation", "food", "fruit", "pet", "tree", "chill", "fence"];
-export function spaceIcon(icon) { return SPACE_ICONS.includes(icon) ? icon : "fingerprint"; }
+export const SPACE_ICONS = [
+  "fingerprint",
+  "briefcase",
+  "dollar",
+  "cart",
+  "circle",
+  "gift",
+  "vacation",
+  "food",
+  "fruit",
+  "pet",
+  "tree",
+  "chill",
+  "fence",
+];
+export function spaceIcon(icon) {
+  return SPACE_ICONS.includes(icon) ? icon : "fingerprint";
+}
 
 export const DEFAULT_SPACE_ID = "default";
 

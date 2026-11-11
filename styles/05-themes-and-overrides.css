@@ -96,8 +96,12 @@ html[data-marker-style="diamond"] .marker {
   border-radius: 20% !important;
   rotate: 45deg !important;
 }
-html[data-marker-style="none"] .group-header .marker { display: none; }
-html[data-marker-style="none"] .group-color-input { display: none; }
+html[data-marker-style="none"] .group-header .marker {
+  display: none;
+}
+html[data-marker-style="none"] .group-color-input {
+  display: none;
+}
 html[data-marker-style="letters"] .group-header .marker,
 html[data-marker-style="letters2"] .group-header .marker {
   width: 25px;
@@ -113,11 +117,19 @@ html[data-marker-style="letters2"] .group-header .marker {
   text-align: center;
   white-space: nowrap;
 }
-html[data-marker-style="letters"] .group-header .marker::after { content: attr(data-label); }
-html[data-marker-style="letters2"] .group-header .marker::after { content: attr(data-label2); }
-html[data-marker-style="letters2"] .group-header .marker { font-size: 11px; }
+html[data-marker-style="letters"] .group-header .marker::after {
+  content: attr(data-label);
+}
+html[data-marker-style="letters2"] .group-header .marker::after {
+  content: attr(data-label2);
+}
+html[data-marker-style="letters2"] .group-header .marker {
+  font-size: 11px;
+}
 html[data-marker-style="letters"] .group-color-input,
-html[data-marker-style="letters2"] .group-color-input { width: 35px; }
+html[data-marker-style="letters2"] .group-color-input {
+  width: 35px;
+}
 
 .animations-off .archive-clear::before,
 .animations-off .group-trash::before {

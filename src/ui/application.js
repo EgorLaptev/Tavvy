@@ -55,7 +55,8 @@ export async function mountApplication(api) {
     /** Set when cards or rows are created; the list then binds drag handling to them. */
     dragTargetsDirty: true,
     tabViews: new Map(),
-    spaceIconUrl: (name) => api.spaceIconUrl?.(name) || `resource://usercontext-content/${name}.svg`,
+    spaceIconUrl: (name) =>
+      api.spaceIconUrl?.(name) || `resource://usercontext-content/${name}.svg`,
     render: () => ctx.groups.render(),
   };
 
@@ -66,7 +67,9 @@ export async function mountApplication(api) {
   ctx.groupMenu = createGroupMenu(ctx);
   ctx.tabMenu = createTabMenu(ctx);
   ctx.palette = createColorPalette(ctx);
-  ctx.container.addEventListener("scroll", () => ctx.palette.close(), { passive: true });
+  ctx.container.addEventListener("scroll", () => ctx.palette.close(), {
+    passive: true,
+  });
   ctx.status = element("div", "extension-status");
   ctx.status.setAttribute("role", "status");
   popup.prepend(ctx.status);
@@ -78,12 +81,20 @@ export async function mountApplication(api) {
   ctx.run = ctx.client.run;
   state.setSnapshot(await ctx.client.request({ type: "snapshot" }));
 
-  const settingsPage = document.documentElement.classList.contains("settings-page");
+  const settingsPage =
+    document.documentElement.classList.contains("settings-page");
   const navigation = mountNavigation({
     settingsPage,
-    onOpenSettings: !api.isDemo && !settingsPage && api.runtime.openOptionsPage
-      ? () => api.runtime.openOptionsPage().then(() => window.close()).catch((error) => { ctx.status.textContent = error.message; })
-      : undefined,
+    onOpenSettings:
+      !api.isDemo && !settingsPage && api.runtime.openOptionsPage
+        ? () =>
+            api.runtime
+              .openOptionsPage()
+              .then(() => window.close())
+              .catch((error) => {
+                ctx.status.textContent = error.message;
+              })
+        : undefined,
   });
   const disposeScrollbar = mountCompactScrollbar(popup);
   // Settings set the UI language, so everything translated below is created after this.

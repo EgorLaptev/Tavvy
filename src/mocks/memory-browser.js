@@ -75,7 +75,8 @@ export function createMemoryBrowser({
         return { id: 1, incognito: false };
       },
       async create({ tabId } = {}) {
-        const id = Math.max(1, ...[...records.values()].map((tab) => tab.windowId)) + 1;
+        const id =
+          Math.max(1, ...[...records.values()].map((tab) => tab.windowId)) + 1;
         const tab = records.get(tabId);
         if (tab) Object.assign(tab, { windowId: id, index: 0, active: true });
         return { id, tabs: tab ? [{ ...tab }] : [] };
@@ -143,7 +144,8 @@ export function createMemoryBrowser({
           for (const item of records.values())
             if (item.windowId === tab.windowId) item.active = false;
         Object.assign(tab, options);
-        if (typeof options.muted === "boolean") tab.mutedInfo = { muted: options.muted };
+        if (typeof options.muted === "boolean")
+          tab.mutedInfo = { muted: options.muted };
         if (options.active) tab.discarded = false;
         return { ...tab };
       },
@@ -184,27 +186,45 @@ export function createMemoryBrowser({
     const identities = structuredClone(containers);
     let granted = settings.experimentalSpaces === true;
     api.permissions = {
-      async request() { granted = true; return true; },
-      async contains() { return granted; },
+      async request() {
+        granted = true;
+        return true;
+      },
+      async contains() {
+        return granted;
+      },
     };
     api.contextualIdentities = {
-      async query() { return structuredClone(identities); },
+      async query() {
+        return structuredClone(identities);
+      },
       async create({ name, color, icon }) {
         const used = new Set(identities.map((item) => item.cookieStoreId));
         let number = 1;
         while (used.has(`firefox-container-${number}`)) number++;
-        const identity = { name, color, icon, cookieStoreId: `firefox-container-${number}` };
+        const identity = {
+          name,
+          color,
+          icon,
+          cookieStoreId: `firefox-container-${number}`,
+        };
         identities.push(identity);
         return structuredClone(identity);
       },
       async get(cookieStoreId) {
-        const identity = identities.find((item) => item.cookieStoreId === cookieStoreId);
-        if (!identity) throw new Error(`Invalid contextual identity: ${cookieStoreId}`);
+        const identity = identities.find(
+          (item) => item.cookieStoreId === cookieStoreId,
+        );
+        if (!identity)
+          throw new Error(`Invalid contextual identity: ${cookieStoreId}`);
         return structuredClone(identity);
       },
       async update(cookieStoreId, details) {
-        const identity = identities.find((item) => item.cookieStoreId === cookieStoreId);
-        if (!identity) throw new Error(`Invalid contextual identity: ${cookieStoreId}`);
+        const identity = identities.find(
+          (item) => item.cookieStoreId === cookieStoreId,
+        );
+        if (!identity)
+          throw new Error(`Invalid contextual identity: ${cookieStoreId}`);
         Object.assign(identity, details);
         return structuredClone(identity);
       },

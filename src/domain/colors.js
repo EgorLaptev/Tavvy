@@ -19,5 +19,7 @@ export const DEFAULT_ACCENT_COLOR = GROUP_COLOR_PRESETS[0][1];
 
 export function normalizeAccentColor(value) {
   const color = typeof value === "string" ? value.toLowerCase() : "";
-  return GROUP_COLOR_PRESETS.some(([, preset]) => preset === color) ? color : DEFAULT_ACCENT_COLOR;
+  return GROUP_COLOR_PRESETS.some(([, preset]) => preset === color)
+    ? color
+    : DEFAULT_ACCENT_COLOR;
 }

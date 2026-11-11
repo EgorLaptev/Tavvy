@@ -34,8 +34,23 @@ function clamp(value, fallback, min, max) {
     : fallback;
 }
 export function validBackupFolder(value) {
-  if (typeof value !== "string" || !value || value.length > 180 || value.includes("\\")) return false;
-  return value.split("/").every((part) => part.length > 0 && part.length <= 80 && !/^[. ]|[. ]$/.test(part) && !/[<>:"|?*\x00-\x1f]/.test(part) && !/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part));
+  if (
+    typeof value !== "string" ||
+    !value ||
+    value.length > 180 ||
+    value.includes("\\")
+  )
+    return false;
+  return value
+    .split("/")
+    .every(
+      (part) =>
+        part.length > 0 &&
+        part.length <= 80 &&
+        !/^[. ]|[. ]$/.test(part) &&
+        !/[<>:"|?*\x00-\x1f]/.test(part) &&
+        !/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part),
+    );
 }
 /** Firefox never shows an extension popup taller than 600 px. */
 export const MAX_POPUP_HEIGHT = 600;
@@ -46,23 +61,46 @@ export function normalizeSettings(input) {
     theme: THEMES.includes(value.theme) ? value.theme : DEFAULT_SETTINGS.theme,
     // Preserve the retired setting in existing data and backups.
     accentColor: normalizeAccentColor(value.accentColor),
-    language: LANGUAGES.some(([code]) => code === value.language) ? value.language : "en",
-    dynamicIcon: typeof value.dynamicIcon === "boolean" ? value.dynamicIcon : true,
+    language: LANGUAGES.some(([code]) => code === value.language)
+      ? value.language
+      : "en",
+    dynamicIcon:
+      typeof value.dynamicIcon === "boolean" ? value.dynamicIcon : true,
     experimentalSpaces: value.experimentalSpaces === true,
-    archiveEnabled: typeof value.archiveEnabled === "boolean" ? value.archiveEnabled : true,
-    markerStyle: ["blob", "circle", "square", "diamond", "none", "letters", "letters2"].includes(
-      value.markerStyle,
-    )
+    archiveEnabled:
+      typeof value.archiveEnabled === "boolean" ? value.archiveEnabled : true,
+    markerStyle: [
+      "blob",
+      "circle",
+      "square",
+      "diamond",
+      "none",
+      "letters",
+      "letters2",
+    ].includes(value.markerStyle)
       ? value.markerStyle
       : DEFAULT_SETTINGS.markerStyle,
     animations: typeof value.animations === "boolean" ? value.animations : true,
     groupPinnedTabs: value.groupPinnedTabs === true,
     closeTabsOnGroupDelete: value.closeTabsOnGroupDelete !== false,
-    nestedGroups: typeof value.nestedGroups === "boolean" ? value.nestedGroups : true,
-    nestedTabsVisibility: value.nestedTabsVisibility === "children" ? "children" : "parents",
-    backupEnabled: typeof value.backupEnabled === "boolean" ? value.backupEnabled : true,
-    backupFrequency: ["hourly", "fourHours", "daily", "weekly", "monthly"].includes(value.backupFrequency) ? value.backupFrequency : DEFAULT_SETTINGS.backupFrequency,
-    backupFolder: validBackupFolder(value.backupFolder) ? value.backupFolder : "Tavvy",
+    nestedGroups:
+      typeof value.nestedGroups === "boolean" ? value.nestedGroups : true,
+    nestedTabsVisibility:
+      value.nestedTabsVisibility === "children" ? "children" : "parents",
+    backupEnabled:
+      typeof value.backupEnabled === "boolean" ? value.backupEnabled : true,
+    backupFrequency: [
+      "hourly",
+      "fourHours",
+      "daily",
+      "weekly",
+      "monthly",
+    ].includes(value.backupFrequency)
+      ? value.backupFrequency
+      : DEFAULT_SETTINGS.backupFrequency,
+    backupFolder: validBackupFolder(value.backupFolder)
+      ? value.backupFolder
+      : "Tavvy",
     discardInactiveTabs:
       typeof value.discardInactiveTabs === "boolean"
         ? value.discardInactiveTabs

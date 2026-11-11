@@ -2,9 +2,24 @@
 export const demoGroups = [
   { id: "inbox", name: "Getting started", color: "#668cff", active: true },
   { id: "group-ideas", name: "Ideas & inspiration", color: "#a879ed" },
-  { id: "group-projects", name: "Current projects", color: "#39b69a", expanded: true },
-  { id: "group-orbit", name: "Project Orbit", color: "#668cff", parentId: "group-projects" },
-  { id: "group-garden", name: "Studio Garden", color: "#a879ed", parentId: "group-projects" },
+  {
+    id: "group-projects",
+    name: "Current projects",
+    color: "#39b69a",
+    expanded: true,
+  },
+  {
+    id: "group-orbit",
+    name: "Project Orbit",
+    color: "#668cff",
+    parentId: "group-projects",
+  },
+  {
+    id: "group-garden",
+    name: "Studio Garden",
+    color: "#a879ed",
+    parentId: "group-projects",
+  },
   { id: "group-design", name: "Design resources", color: "#f18b77" },
   { id: "group-reading", name: "Reading list", color: "#e2b75b" },
   { id: "group-learning", name: "Learning", color: "#6caedf" },
@@ -50,7 +65,7 @@ export const examples = {
     page("A calmer way to work", "C", "#6c9e8a"),
     page("Stories worth saving", "S", "#c37889"),
   ],
-  "Learning": [
+  Learning: [
     page("A guide to the web", "W", "#668acf"),
     page("Creative coding notes", "C", "#a27bc7"),
   ],
@@ -58,13 +73,23 @@ export const examples = {
     page("Places to explore", "P", "#dc9970"),
     page("A lovely little café", "C", "#9fae6f"),
   ],
-  "Favorites": [
+  Favorites: [
     page("A favorite corner of the internet", "F", "#7d9fc3"),
     page("Music for a good day", "M", "#ad7eb5"),
   ],
 };
 
 export const demoContainers = [
-  { cookieStoreId: "firefox-container-1", name: "Work", color: "blue", icon: "briefcase" },
-  { cookieStoreId: "firefox-container-2", name: "Personal", color: "purple", icon: "fingerprint" },
+  {
+    cookieStoreId: "firefox-container-1",
+    name: "Work",
+    color: "blue",
+    icon: "briefcase",
+  },
+  {
+    cookieStoreId: "firefox-container-2",
+    name: "Personal",
+    color: "purple",
+    icon: "fingerprint",
+  },
 ];

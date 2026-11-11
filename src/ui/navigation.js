@@ -47,9 +47,12 @@ export function mountNavigation({ onOpenSettings, settingsPage = false } = {}) {
   if (settingsPage) {
     showSettings(true);
     const back = document.querySelector(".settings-back");
-    const updateBack = () => { back.hidden = themeView.hidden && languageView.hidden; };
+    const updateBack = () => {
+      back.hidden = themeView.hidden && languageView.hidden;
+    };
     const observer = new MutationObserver(updateBack);
-    for (const view of [themeView, languageView]) observer.observe(view, { attributes: true, attributeFilter: ["hidden"] });
+    for (const view of [themeView, languageView])
+      observer.observe(view, { attributes: true, attributeFilter: ["hidden"] });
     updateBack();
     const backupButton = document.querySelector(".backup-open");
     const backupSection = document.createElement("section");
@@ -64,9 +67,13 @@ export function mountNavigation({ onOpenSettings, settingsPage = false } = {}) {
     backupView.hidden = false;
     backupSection.id = "backup";
     settingsView.append(backupSection);
-    const windowSection = document.querySelector("#settings-window-title").closest(".settings-group");
+    const windowSection = document
+      .querySelector("#settings-window-title")
+      .closest(".settings-group");
     const appearanceSection = document.querySelector(".settings-appearance");
-    const generalSection = document.querySelector("#settings-tabs-title").closest(".settings-group");
+    const generalSection = document
+      .querySelector("#settings-tabs-title")
+      .closest(".settings-group");
     generalSection.id = "general";
     appearanceSection.id = "appearance";
     const leftColumn = document.createElement("div");
@@ -77,8 +84,17 @@ export function mountNavigation({ onOpenSettings, settingsPage = false } = {}) {
     settingsView.replaceChildren(leftColumn, rightColumn);
     const anchor = window.location.hash.slice(1);
     if (["general", "appearance", "backup"].includes(anchor))
-      requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView());
-    return { themeView, languageView, dispose: () => { observer.disconnect(); dispose(); } };
+      requestAnimationFrame(() =>
+        document.getElementById(anchor)?.scrollIntoView(),
+      );
+    return {
+      themeView,
+      languageView,
+      dispose: () => {
+        observer.disconnect();
+        dispose();
+      },
+    };
   }
   return { themeView, languageView, dispose };
 }

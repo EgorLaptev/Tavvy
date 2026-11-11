@@ -15,7 +15,9 @@ export function createTabRows(ctx) {
     row.addEventListener("click", () =>
       ctx.run({ type: "activateTab", tabId: tabId }),
     );
-    row.addEventListener("contextmenu", (event) => ctx.tabMenu.open(event, tabId));
+    row.addEventListener("contextmenu", (event) =>
+      ctx.tabMenu.open(event, tabId),
+    );
     return { row, label, statuses, title: null, icon: tab.faviconUrl };
   }
 

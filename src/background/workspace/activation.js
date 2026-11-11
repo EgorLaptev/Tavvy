@@ -12,7 +12,9 @@ export function createActivation(ctx) {
   /** Tabs that belong to a group (global pinned tabs stay in their window). */
   const ownedTabs = (records, groupId) =>
     records
-      .filter((tab) => tab.groupId === groupId && (!tab.pinned || groupPinned()))
+      .filter(
+        (tab) => tab.groupId === groupId && (!tab.pinned || groupPinned()),
+      )
       .sort((a, b) => a.windowId - b.windowId || a.index - b.index);
 
   /** Creates an inactive tab in the group's container and tags it (`null`: a tab without a group). */
@@ -21,7 +23,9 @@ export function createActivation(ctx) {
       windowId,
       active: false,
       ...options,
-      ...(groupId ? await ctx.tabOptionsForGroup(findGroup(store.state.groups, groupId)) : {}),
+      ...(groupId
+        ? await ctx.tabOptionsForGroup(findGroup(store.state.groups, groupId))
+        : {}),
     });
     await api.sessions.setTabValue(tab.id, TAB_GROUP, groupId);
     return tab;
@@ -36,23 +40,41 @@ export function createActivation(ctx) {
     await ctx.setEmptySpaceId(windowId, null);
     const previousGroupId = await ctx.activeGroupId(windowId);
     const groupPinned = !!store.state.settings?.groupPinnedTabs;
-    const records = (await ctx.scan()).filter((tab) => tab.windowId === windowId);
-    const tabs = records.filter((tab) => tab.groupId === groupId && (!tab.pinned || groupPinned));
-    const ungrouped = records.filter((tab) => tab.groupId === null && !tab.pinned);
-    const leftover = previousGroupId === null && groupId && ungrouped.length === 1 && isBlankUrl(ungrouped[0].url) ? ungrouped[0] : null;
+    const records = (await ctx.scan()).filter(
+      (tab) => tab.windowId === windowId,
+    );
+    const tabs = records.filter(
+      (tab) => tab.groupId === groupId && (!tab.pinned || groupPinned),
+    );
+    const ungrouped = records.filter(
+      (tab) => tab.groupId === null && !tab.pinned,
+    );
+    const leftover =
+      previousGroupId === null &&
+      groupId &&
+      ungrouped.length === 1 &&
+      isBlankUrl(ungrouped[0].url)
+        ? ungrouped[0]
+        : null;
     const target =
       tabs.find((tab) => tab.id === preferredTabId) ||
       tabs.find((tab) => tab.active) ||
       tabs[0] ||
       (await createTabInGroup(windowId, groupId));
     // Show and focus the destination before hiding anything, so the window never empties.
-    await api.tabs.show([...new Set([...tabs.map((tab) => tab.id), target.id])]);
+    await api.tabs.show([
+      ...new Set([...tabs.map((tab) => tab.id), target.id]),
+    ]);
     await api.tabs.update(target.id, { active: true });
     await ctx.setActiveGroupId(windowId, groupId, true);
     await ctx.rememberGroupInSpace(windowId, groupSpaceId(group), groupId);
-    if (leftover && leftover.id !== target.id) await ctx.closeTab(leftover.id).catch(() => {});
+    if (leftover && leftover.id !== target.id)
+      await ctx.closeTab(leftover.id).catch(() => {});
     await ctx.applyVisibility(windowId, groupId);
-    if (store.state.settings?.discardInactiveTabs && previousGroupId !== groupId)
+    if (
+      store.state.settings?.discardInactiveTabs &&
+      previousGroupId !== groupId
+    )
       await discardGroupTabs(windowId, previousGroupId);
   }
 
@@ -72,7 +94,10 @@ export function createActivation(ctx) {
       try {
         // Re-check live state: the tab may have changed while earlier tabs were discarded.
         const current = await api.tabs.get(candidate.id);
-        const currentGroup = await api.sessions.getTabValue(candidate.id, TAB_GROUP);
+        const currentGroup = await api.sessions.getTabValue(
+          candidate.id,
+          TAB_GROUP,
+        );
         if (
           currentGroup === groupId &&
           current.hidden &&
@@ -91,13 +116,18 @@ export function createActivation(ctx) {
   /** A window whose selected tab is about to leave first selects a tab of its own group. */
   async function releaseSelected(tabs, exceptWindowId) {
     for (const source of new Set(tabs.map((tab) => tab.windowId)))
-      if (source !== exceptWindowId && tabs.some((tab) => tab.windowId === source && tab.active))
+      if (
+        source !== exceptWindowId &&
+        tabs.some((tab) => tab.windowId === source && tab.active)
+      )
         await activate(source, await ctx.activeGroupId(source));
   }
 
   /** Moves tabs into `windowId` in their current order. */
   async function bringTabs(windowId, tabs) {
-    const ids = tabs.filter((tab) => tab.windowId !== windowId).map((tab) => tab.id);
+    const ids = tabs
+      .filter((tab) => tab.windowId !== windowId)
+      .map((tab) => tab.id);
     if (!ids.length) return;
     await releaseSelected(tabs, windowId);
     for (const id of ids) relocatingTabs.add(id);
@@ -119,8 +149,12 @@ export function createActivation(ctx) {
       if ((await ctx.activeGroupId(other)) === groupId) showing.push(other);
     const preferred = records.find((tab) => tab.id === preferredTabId);
     if (showing.includes(preferred?.windowId)) return preferred.windowId;
-    if (showing.length && !owned.some((tab) => tab.windowId === windowId)) return showing[0];
-    await bringTabs(windowId, elsewhere.filter((tab) => !showing.includes(tab.windowId)));
+    if (showing.length && !owned.some((tab) => tab.windowId === windowId))
+      return showing[0];
+    await bringTabs(
+      windowId,
+      elsewhere.filter((tab) => !showing.includes(tab.windowId)),
+    );
     return windowId;
   }
 
@@ -128,7 +162,8 @@ export function createActivation(ctx) {
   async function switchTo(windowId, groupId, preferredTabId) {
     const target = await gatherGroup(windowId, groupId, preferredTabId);
     await activate(target, groupId, preferredTabId);
-    if (target !== windowId) await api.windows.update(target, { focused: true });
+    if (target !== windowId)
+      await api.windows.update(target, { focused: true });
   }
 
   /**
@@ -138,12 +173,16 @@ export function createActivation(ctx) {
   async function openInNewWindow(windowId, groupId) {
     findGroup(store.state.groups, groupId);
     const records = await ctx.scan();
-    const selectedId = ownedTabs(records, groupId).find((tab) => tab.active)?.id;
+    const selectedId = ownedTabs(records, groupId).find(
+      (tab) => tab.active,
+    )?.id;
     for (const other of new Set(records.map((tab) => tab.windowId)))
-      if ((await ctx.activeGroupId(other)) === groupId) await activate(other, null);
+      if ((await ctx.activeGroupId(other)) === groupId)
+        await activate(other, null);
     let tabs = ownedTabs(await ctx.scan(), groupId);
     // An empty group gets a tab first, so the window starts from a tab already in the group.
-    if (!tabs.length) tabs = [{ ...(await createTabInGroup(windowId, groupId)), windowId }];
+    if (!tabs.length)
+      tabs = [{ ...(await createTabInGroup(windowId, groupId)), windowId }];
     const [first, ...rest] = tabs;
     await releaseSelected(tabs);
     // The new window must not start with a hidden tab.
@@ -157,5 +196,13 @@ export function createActivation(ctx) {
     await activate(created.id, groupId, selectedId);
   }
 
-  return { activate, createTabInGroup, bringTabs, gatherGroup, switchTo, openInNewWindow, relocatingTabs };
+  return {
+    activate,
+    createTabInGroup,
+    bringTabs,
+    gatherGroup,
+    switchTo,
+    openInNewWindow,
+    relocatingTabs,
+  };
 }

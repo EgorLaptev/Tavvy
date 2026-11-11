@@ -14,7 +14,10 @@ export function isBlankUrl(url) {
  * (about:preferences, about:addons, moz-extension://…). about:blank/newtab are excluded.
  */
 export function isInternalPage(url) {
-  return EXTENSION_PAGE.test(url ?? "") || (ABOUT_PAGE.test(url ?? "") && !/^about:(blank|newtab)$/i.test(url));
+  return (
+    EXTENSION_PAGE.test(url ?? "") ||
+    (ABOUT_PAGE.test(url ?? "") && !/^about:(blank|newtab)$/i.test(url))
+  );
 }
 
 /** Pages that can be reopened as-is in another Firefox container. */

@@ -32,7 +32,11 @@ export function animatePanelChange(change) {
   for (const node of nodes)
     node
       .getAnimations?.()
-      .filter((animation) => animation.id === "layout-shift" || animation.id === "group-drag-shift")
+      .filter(
+        (animation) =>
+          animation.id === "layout-shift" ||
+          animation.id === "group-drag-shift",
+      )
       .forEach((animation) => animation.cancel());
   change();
   panel.style.transition = "none";

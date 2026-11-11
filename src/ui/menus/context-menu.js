@@ -4,7 +4,10 @@ import { element, icon, button, clampToViewport } from "../dom.js";
 
 /** Horizontal position of a submenu: right of its menu when it fits, otherwise left of it. */
 export function submenuLeft(menuBounds, submenuWidth, viewportWidth) {
-  const left = menuBounds.right + submenuWidth <= viewportWidth ? menuBounds.right : menuBounds.left - submenuWidth;
+  const left =
+    menuBounds.right + submenuWidth <= viewportWidth
+      ? menuBounds.right
+      : menuBounds.left - submenuWidth;
   return Math.max(0, left);
 }
 
@@ -38,7 +41,12 @@ export function createContextMenu(ctx) {
     submenuTrigger = null;
   }
   function onPointerDown(event) {
-    if (!menu.contains(event.target) && !submenu.contains(event.target) && !submenuTrigger?.contains(event.target)) close();
+    if (
+      !menu.contains(event.target) &&
+      !submenu.contains(event.target) &&
+      !submenuTrigger?.contains(event.target)
+    )
+      close();
   }
   function onKeyDown(event) {
     if (event.key !== "Escape" || (menu.hidden && submenu.hidden)) return;
@@ -52,8 +60,23 @@ export function createContextMenu(ctx) {
   document.addEventListener("pointerdown", onPointerDown);
   document.addEventListener("keydown", onKeyDown);
 
-  function addAction(label, action, disabled = false, className = "", keepOpen = false, parent = menu) {
-    const item = button(label, "group-context-item", element("span", "group-context-label", label), () => { if (!keepOpen) close(); action(); });
+  function addAction(
+    label,
+    action,
+    disabled = false,
+    className = "",
+    keepOpen = false,
+    parent = menu,
+  ) {
+    const item = button(
+      label,
+      "group-context-item",
+      element("span", "group-context-label", label),
+      () => {
+        if (!keepOpen) close();
+        action();
+      },
+    );
     if (className) item.classList.add(className);
     item.setAttribute("role", "menuitem");
     item.disabled = disabled;
@@ -88,14 +111,29 @@ export function createContextMenu(ctx) {
   function showSubmenu(trigger, entries) {
     const wasOpen = submenuTrigger === trigger && !submenu.hidden;
     submenuTrigger?.setAttribute("aria-expanded", "false");
-    menu.querySelectorAll('[aria-expanded="true"]').forEach((item) => item.setAttribute("aria-expanded", "false"));
-    if (wasOpen) { submenu.hidden = true; submenuTrigger = null; return; }
+    menu
+      .querySelectorAll('[aria-expanded="true"]')
+      .forEach((item) => item.setAttribute("aria-expanded", "false"));
+    if (wasOpen) {
+      submenu.hidden = true;
+      submenuTrigger = null;
+      return;
+    }
     submenu.replaceChildren();
     for (const entry of entries) {
-      const item = addAction(entry.label, entry.action, !!entry.disabled, entry.current ? "is-current" : "", !!entry.keepOpen, submenu);
-      if (entry.root) item.prepend(icon("m10 3-5 5 5 5", "group-context-root-icon"));
+      const item = addAction(
+        entry.label,
+        entry.action,
+        !!entry.disabled,
+        entry.current ? "is-current" : "",
+        !!entry.keepOpen,
+        submenu,
+      );
+      if (entry.root)
+        item.prepend(icon("m10 3-5 5 5 5", "group-context-root-icon"));
       if (entry.group) item.prepend(groupBadge(entry.group));
-      if (entry.space && entry.space.id !== "default") item.prepend(spaceBadge(entry.space));
+      if (entry.space && entry.space.id !== "default")
+        item.prepend(spaceBadge(entry.space));
     }
     submenu.hidden = false;
     submenuTrigger = trigger;
@@ -104,7 +142,11 @@ export function createContextMenu(ctx) {
   }
 
   function positionSubmenu(trigger) {
-    const menuBounds = (menu.contains(trigger) ? menu : trigger).getBoundingClientRect(), triggerBounds = trigger.getBoundingClientRect(), submenuBounds = submenu.getBoundingClientRect();
+    const menuBounds = (
+        menu.contains(trigger) ? menu : trigger
+      ).getBoundingClientRect(),
+      triggerBounds = trigger.getBoundingClientRect(),
+      submenuBounds = submenu.getBoundingClientRect();
     submenu.style.left = `${submenuLeft(menuBounds, submenuBounds.width, window.innerWidth)}px`;
     submenu.style.top = `${clampToViewport(triggerBounds.top, submenuBounds.height, window.innerHeight)}px`;
   }
@@ -120,7 +162,12 @@ export function createContextMenu(ctx) {
   }
 
   function addSubmenu(label, entries, className) {
-    return addSubmenuTrigger(label, (trigger) => showSubmenu(trigger, entries), !entries.length, className);
+    return addSubmenuTrigger(
+      label,
+      (trigger) => showSubmenu(trigger, entries),
+      !entries.length,
+      className,
+    );
   }
 
   /** Shows the filled menu at the pointer position and focuses its first item. */

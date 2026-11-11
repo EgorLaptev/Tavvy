@@ -18,14 +18,16 @@ export function createTabCommands(ctx) {
     const target = await ctx.gatherGroup(windowId, command.groupId);
     const tab = await ctx.createTabInGroup(target, command.groupId);
     await ctx.activate(target, command.groupId, tab.id);
-    if (target !== windowId) await api.windows.update(target, { focused: true });
+    if (target !== windowId)
+      await api.windows.update(target, { focused: true });
   }
 
   async function activateTab(command, windowId) {
     const tab = await requireTab(command.tabId);
     if (tab.pinned && !groupPinned()) {
       await api.tabs.update(tab.id, { active: true });
-      if (tab.windowId !== windowId) await api.windows.update(tab.windowId, { focused: true });
+      if (tab.windowId !== windowId)
+        await api.windows.update(tab.windowId, { focused: true });
     } else if (tab.groupId) await ctx.switchTo(windowId, tab.groupId, tab.id);
     else await openUngroupedTab(tab, windowId);
   }
@@ -37,7 +39,8 @@ export function createTabCommands(ctx) {
   async function openUngroupedTab(tab, windowId) {
     if ((await ctx.activeGroupId(tab.windowId)) === null) {
       await ctx.activate(tab.windowId, null, tab.id);
-      if (tab.windowId !== windowId) await api.windows.update(tab.windowId, { focused: true });
+      if (tab.windowId !== windowId)
+        await api.windows.update(tab.windowId, { focused: true });
       return;
     }
     const groupId = await ctx.activeGroupId(windowId);
@@ -48,7 +51,8 @@ export function createTabCommands(ctx) {
 
   async function toggleTabMute(command) {
     const tab = await requireTab(command.tabId);
-    if (tab.audible || tab.muted) await api.tabs.update(tab.id, { muted: !tab.muted });
+    if (tab.audible || tab.muted)
+      await api.tabs.update(tab.id, { muted: !tab.muted });
   }
 
   async function reloadTab(command) {
@@ -60,7 +64,10 @@ export function createTabCommands(ctx) {
     const tab = await requireTab(command.tabId);
     if (tab.pinned || tab.managedPinned) return;
     // A hidden tab cannot be pinned; remember the intent until its group is shown.
-    if (groupPinned() && !ctx.visibleGroups(await ctx.activeGroupId(tab.windowId)).has(tab.groupId)) {
+    if (
+      groupPinned() &&
+      !ctx.visibleGroups(await ctx.activeGroupId(tab.windowId)).has(tab.groupId)
+    ) {
       await api.sessions.setTabValue(tab.id, TAB_GROUP_PINNED, true);
       return;
     }
@@ -74,7 +81,12 @@ export function createTabCommands(ctx) {
       await api.sessions.setTabValue(tab.id, TAB_GROUP_PINNED, false);
     } else if (tab.pinned) {
       // A global pinned tab joins the group the user is looking at.
-      if (!groupPinned()) await api.sessions.setTabValue(tab.id, TAB_GROUP, await ctx.activeGroupId(tab.windowId));
+      if (!groupPinned())
+        await api.sessions.setTabValue(
+          tab.id,
+          TAB_GROUP,
+          await ctx.activeGroupId(tab.windowId),
+        );
       await api.tabs.update(tab.id, { pinned: false });
     }
   }
@@ -92,17 +104,33 @@ export function createTabCommands(ctx) {
     const sourceSpaceId = tab.groupId
       ? groupSpaceId(findGroup(store.state.groups, tab.groupId))
       : ctx.spaceIdForCookieStore(tab.cookieStoreId);
-    if ((expected.cookieStoreId && tab.cookieStoreId !== expected.cookieStoreId) || sourceSpaceId !== groupSpaceId(destination))
+    if (
+      (expected.cookieStoreId &&
+        tab.cookieStoreId !== expected.cookieStoreId) ||
+      sourceSpaceId !== groupSpaceId(destination)
+    )
       throw new Error("Перенос вкладок между пространствами не поддерживается");
     await api.sessions.setTabValue(tab.id, TAB_GROUP, command.groupId);
-    if (Number.isInteger(command.index)) await api.tabs.move(tab.id, { index: command.index });
+    if (Number.isInteger(command.index))
+      await api.tabs.move(tab.id, { index: command.index });
     const currentGroupId = await ctx.activeGroupId(tab.windowId);
     if (!tab.active) return ctx.applyVisibility(tab.windowId, currentGroupId);
-    if (command.keepActiveGroup !== true) return ctx.switchTo(windowId, command.groupId, tab.id);
+    if (command.keepActiveGroup !== true)
+      return ctx.switchTo(windowId, command.groupId, tab.id);
     // Moved from the context menu: stay in the current group, pick another tab if needed.
-    if (ctx.visibleGroups(currentGroupId).has(command.groupId)) await ctx.applyVisibility(tab.windowId, currentGroupId);
+    if (ctx.visibleGroups(currentGroupId).has(command.groupId))
+      await ctx.applyVisibility(tab.windowId, currentGroupId);
     else await ctx.activate(tab.windowId, currentGroupId);
   }
 
-  return { createTab, activateTab, toggleTabMute, reloadTab, pinTab, unpinTab, closeTab, moveTab };
+  return {
+    createTab,
+    activateTab,
+    toggleTabMute,
+    reloadTab,
+    pinTab,
+    unpinTab,
+    closeTab,
+    moveTab,
+  };
 }

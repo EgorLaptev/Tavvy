@@ -3,12 +3,19 @@ import { defaultInbox } from "../../domain/group-tree.js";
 import { KNOWN_KEY, LAST_ACTIVE_GROUP_KEY, WORKSPACE_KEY } from "./keys.js";
 
 function defaultState() {
-  return { version: 1, groups: [defaultInbox()], archive: [], known: {}, settings: normalizeSettings(null) };
+  return {
+    version: 1,
+    groups: [defaultInbox()],
+    archive: [],
+    known: {},
+    settings: normalizeSettings(null),
+  };
 }
 
 /** Upgrades a stored workspace in place to the current in-memory shape. */
 export function migrateWorkspace(state) {
-  if (state.version !== 1) throw new Error("Неподдерживаемая версия данных Tavvy");
+  if (state.version !== 1)
+    throw new Error("Неподдерживаемая версия данных Tavvy");
   state.known ??= {};
   // Keep older archive data in backups without recording new closures.
   state.archive ??= [];
@@ -58,14 +65,22 @@ export function createWorkspaceStore(storage) {
     // Tab records without a workspace mean the groups were lost or are unreadable.
     // Starting with defaults would let tabs be reassigned and the real data overwritten.
     if (!stored && Object.keys(known[KNOWN_KEY] || {}).length)
-      throw new Error("Данные групп Tavvy не найдены. Восстановите резервную копию.");
+      throw new Error(
+        "Данные групп Tavvy не найдены. Восстановите резервную копию.",
+      );
     firstRun = !stored;
     state = migrateWorkspace(stored ?? defaultState());
     if (known[KNOWN_KEY]) state.known = known[KNOWN_KEY];
-    lastActiveGroupId = (await storage.get(LAST_ACTIVE_GROUP_KEY))[LAST_ACTIVE_GROUP_KEY] ?? null;
+    lastActiveGroupId =
+      (await storage.get(LAST_ACTIVE_GROUP_KEY))[LAST_ACTIVE_GROUP_KEY] ?? null;
     // A new or legacy workspace (one that embeds `known`) is written on the next save.
-    savedState = !stored || stored.known ? null : JSON.stringify({ ...state, known: undefined });
-    savedKnown = known[KNOWN_KEY] ? JSON.stringify(compactKnown(state.known)) : "";
+    savedState =
+      !stored || stored.known
+        ? null
+        : JSON.stringify({ ...state, known: undefined });
+    savedKnown = known[KNOWN_KEY]
+      ? JSON.stringify(compactKnown(state.known))
+      : "";
     savedKnownRevision = known[KNOWN_KEY] ? knownRevision : -1;
   });
 

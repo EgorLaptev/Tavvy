@@ -14,7 +14,13 @@ const WEB_PAGE = /^https?:/i;
  * bookmark. Tavvy's own tabs are always created inactive and are never candidates.
  */
 export function isUnclaimedNewTab(tab) {
-  return !tab.incognito && !tab.pinned && tab.active && tab.openerTabId == null && tab.cookieStoreId === "firefox-default";
+  return (
+    !tab.incognito &&
+    !tab.pinned &&
+    tab.active &&
+    tab.openerTabId == null &&
+    tab.cookieStoreId === "firefox-default"
+  );
 }
 
 /**
@@ -82,8 +88,10 @@ export function createNewTabHandler(ctx) {
     if (groupSpaceId(group) === DEFAULT_SPACE_ID) return;
     const container = await ctx.tabOptionsForGroup(group);
     const url = await firstAddress(watch);
-    if (NEW_TAB_PAGE.test(url)) await reopenInContainer(tab, groupId, container, undefined);
-    else if (WEB_PAGE.test(url)) await reopenInContainer(tab, groupId, container, url);
+    if (NEW_TAB_PAGE.test(url))
+      await reopenInContainer(tab, groupId, container, undefined);
+    else if (WEB_PAGE.test(url))
+      await reopenInContainer(tab, groupId, container, url);
   }
 
   function created(tab) {

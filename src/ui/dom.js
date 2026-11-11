@@ -54,8 +54,7 @@ export function reorderChildren(parent, children) {
     if (parent.childNodes[i] !== children[i])
       parent.insertBefore(children[i], parent.childNodes[i] || null);
   const keep = new Set(children);
-  for (const node of [...parent.childNodes])
-    if (!keep.has(node)) node.remove();
+  for (const node of [...parent.childNodes]) if (!keep.has(node)) node.remove();
 }
 
 /** True while a group or a tab is being dragged; re-rendering then would move nodes under the pointer. */

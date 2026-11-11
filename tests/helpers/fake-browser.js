@@ -61,7 +61,8 @@ export function fixture() {
       getTabValue: async (id, key) => tags.get(`${id}:${key}`),
       setTabValue: async (id, key, value) => tags.set(`${id}:${key}`, value),
       getWindowValue: async (id, key) => windows.get(`${id}:${key}`),
-      setWindowValue: async (id, key, value) => windows.set(`${id}:${key}`, value),
+      setWindowValue: async (id, key, value) =>
+        windows.set(`${id}:${key}`, value),
     },
     tabs: {
       query: async () => structuredClone(records),
@@ -89,7 +90,8 @@ export function fixture() {
             .filter((t) => t.windowId === tab.windowId)
             .forEach((t) => (t.active = false));
         Object.assign(tab, options);
-        if (typeof options.muted === "boolean") tab.mutedInfo = { muted: options.muted };
+        if (typeof options.muted === "boolean")
+          tab.mutedInfo = { muted: options.muted };
         return { ...tab };
       },
       show: async (ids) =>
@@ -116,7 +118,14 @@ export function fixture() {
           let position = index;
           if (Number.isInteger(windowId) && windowId !== tab.windowId) {
             Object.assign(tab, { windowId, active: false });
-            if (position < 0) position = Math.max(-1, ...records.filter((t) => t.windowId === windowId && t !== tab).map((t) => t.index)) + 1;
+            if (position < 0)
+              position =
+                Math.max(
+                  -1,
+                  ...records
+                    .filter((t) => t.windowId === windowId && t !== tab)
+                    .map((t) => t.index),
+                ) + 1;
           }
           tab.index = position;
           moved.push({ ...tab });
@@ -129,9 +138,27 @@ export function fixture() {
       create: async ({ tabId } = {}) => {
         const id = Math.max(...records.map((tab) => tab.windowId)) + 1;
         const tab = records.find((t) => t.id === tabId);
-        if (tab) Object.assign(tab, { windowId: id, index: 0, active: true, hidden: false });
-        else records.push({ id: next++, windowId: id, index: 0, active: true, title: "Новая вкладка", url: "about:newtab", pinned: false });
-        return { id, tabs: [{ ...records.at(tab ? records.indexOf(tab) : -1) }] };
+        if (tab)
+          Object.assign(tab, {
+            windowId: id,
+            index: 0,
+            active: true,
+            hidden: false,
+          });
+        else
+          records.push({
+            id: next++,
+            windowId: id,
+            index: 0,
+            active: true,
+            title: "Новая вкладка",
+            url: "about:newtab",
+            pinned: false,
+          });
+        return {
+          id,
+          tabs: [{ ...records.at(tab ? records.indexOf(tab) : -1) }],
+        };
       },
       update: async (id, options) => {
         if (options.focused) api.windows.focused = id;

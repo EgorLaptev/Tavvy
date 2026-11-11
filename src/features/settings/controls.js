@@ -2,7 +2,13 @@ import { LANGUAGES } from "../../domain/languages.js";
 
 /** Settings markup that is generated rather than written in index.html. */
 
-const THEME_OPTIONS = [["Чёрная", "black", "Чёрная"], ["Тёмная", "dark", "Тёмная"], ["Светлая", "light", "Светлая"], ["Стандартная", "default", "Стандартная"], ["Как в системе", "system", "Как в системе"]];
+const THEME_OPTIONS = [
+  ["Чёрная", "black", "Чёрная"],
+  ["Тёмная", "dark", "Тёмная"],
+  ["Светлая", "light", "Светлая"],
+  ["Стандартная", "default", "Стандартная"],
+  ["Как в системе", "system", "Как в системе"],
+];
 
 const MARKER_OPTIONS = [
   ["blob", "Блоб", "settings.markers.blob"],
@@ -32,7 +38,11 @@ function makeSelect(button, labelKey, labelText) {
 
 /** On the full settings page, theme and language are plain selects instead of subpages. */
 export function createPageSelects(appearanceGroup) {
-  const themeSelect = makeSelect(appearanceGroup.querySelector(".theme-open:not(.language-open)"), "settings.theme.title", "Тема");
+  const themeSelect = makeSelect(
+    appearanceGroup.querySelector(".theme-open:not(.language-open)"),
+    "settings.theme.title",
+    "Тема",
+  );
   for (const [value, key, label] of THEME_OPTIONS) {
     const option = document.createElement("option");
     option.value = value;
@@ -40,8 +50,14 @@ export function createPageSelects(appearanceGroup) {
     option.textContent = label;
     themeSelect.append(option);
   }
-  const languageSelect = makeSelect(appearanceGroup.querySelector(".language-open"), "settings.language", "Язык");
-  document.querySelector("#settings-tabs-title").after(languageSelect.closest(".setting"));
+  const languageSelect = makeSelect(
+    appearanceGroup.querySelector(".language-open"),
+    "settings.language",
+    "Язык",
+  );
+  document
+    .querySelector("#settings-tabs-title")
+    .after(languageSelect.closest(".setting"));
   for (const [value, label] of LANGUAGES) {
     const option = document.createElement("option");
     option.value = value;

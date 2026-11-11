@@ -19,7 +19,11 @@ export function createColorPalette(ctx) {
     anchor = null;
   }
   function onPointerDown(event) {
-    if (!palette.hidden && !palette.contains(event.target) && event.target !== anchor)
+    if (
+      !palette.hidden &&
+      !palette.contains(event.target) &&
+      event.target !== anchor
+    )
       close();
   }
   function onKeyDown(event) {
@@ -47,21 +51,38 @@ export function createColorPalette(ctx) {
 
   /** Opens the swatches for `groupId` below `colorButton`, or closes them when already open there. */
   function toggle(colorButton, groupId) {
-    if (anchor === colorButton) { close(); return; }
+    if (anchor === colorButton) {
+      close();
+      return;
+    }
     close();
     palette.replaceChildren();
     const group = ctx.viewIndex.groups.get(groupId);
     const markerShape = groupMarker(groupId);
     palette.style.setProperty("--swatch-radius", markerShape.borderRadius);
-    palette.style.setProperty("--swatch-rotation", `${markerShape.rotation}deg`);
-    palette.style.setProperty("--swatch-label", JSON.stringify(markerLetters(group?.title)));
-    palette.style.setProperty("--swatch-label2", JSON.stringify(markerLetters(group?.title, 2)));
+    palette.style.setProperty(
+      "--swatch-rotation",
+      `${markerShape.rotation}deg`,
+    );
+    palette.style.setProperty(
+      "--swatch-label",
+      JSON.stringify(markerLetters(group?.title)),
+    );
+    palette.style.setProperty(
+      "--swatch-label2",
+      JSON.stringify(markerLetters(group?.title, 2)),
+    );
     const selected = group?.color?.toLowerCase();
     for (const [name, color] of GROUP_COLOR_PRESETS) {
-      const swatch = button(t(name), "group-color-swatch", document.createTextNode(""), () => {
-        close(true);
-        ctx.run({ type: "setGroupColor", groupId, color });
-      });
+      const swatch = button(
+        t(name),
+        "group-color-swatch",
+        document.createTextNode(""),
+        () => {
+          close(true);
+          ctx.run({ type: "setGroupColor", groupId, color });
+        },
+      );
       swatch.style.setProperty("--swatch-color", color);
       swatch.setAttribute("aria-label", t(name));
       swatch.dataset.color = color;
@@ -74,7 +95,8 @@ export function createColorPalette(ctx) {
   return {
     toggle,
     close,
-    translate: () => palette.setAttribute("aria-label", t("groups.choose_group_color")),
+    translate: () =>
+      palette.setAttribute("aria-label", t("groups.choose_group_color")),
     dispose() {
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);

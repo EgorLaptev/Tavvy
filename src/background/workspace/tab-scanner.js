@@ -3,7 +3,15 @@ import { readPlaceholder } from "../../domain/urls.js";
 import { TAB_GROUP, TAB_GROUP_PINNED, TAB_IMPORT_METADATA } from "./keys.js";
 
 const UTILITY_PAGES = ["import.html", "settings.html"];
-const KNOWN_FIELDS = ["id", "windowId", "groupId", "title", "url", "faviconUrl", "pinned"];
+const KNOWN_FIELDS = [
+  "id",
+  "windowId",
+  "groupId",
+  "title",
+  "url",
+  "faviconUrl",
+  "pinned",
+];
 
 /**
  * Builds the list of tab records (Firefox tab + Tavvy group) for all normal windows.
@@ -11,14 +19,23 @@ const KNOWN_FIELDS = ["id", "windowId", "groupId", "title", "url", "faviconUrl",
  */
 export function createTabScanner(ctx) {
   const { api, index, store } = ctx;
-  let cache, stamp, orderVersion = 0;
+  let cache,
+    stamp,
+    orderVersion = 0;
   let byId = new Map();
   /** Tabs being replaced by the new-tab handler; hidden from scans meanwhile. */
   const pendingNewTabs = new Set();
 
   function isUtilityPage(url) {
-    const pages = UTILITY_PAGES.map((name) => api.runtime?.getURL?.(name)).filter(Boolean);
-    return pages.some((page) => url === page || url?.startsWith(page + "?") || url?.startsWith(page + "#"));
+    const pages = UTILITY_PAGES.map((name) =>
+      api.runtime?.getURL?.(name),
+    ).filter(Boolean);
+    return pages.some(
+      (page) =>
+        url === page ||
+        url?.startsWith(page + "?") ||
+        url?.startsWith(page + "#"),
+    );
   }
 
   /**
@@ -26,7 +43,8 @@ export function createTabScanner(ctx) {
    * without a group, where new tabs stay without a group.
    */
   async function inferGroup(tab, windowGroups) {
-    if (!windowGroups.has(tab.windowId)) windowGroups.set(tab.windowId, ctx.activeGroupId(tab.windowId));
+    if (!windowGroups.has(tab.windowId))
+      windowGroups.set(tab.windowId, ctx.activeGroupId(tab.windowId));
     const windowGroupId = await windowGroups.get(tab.windowId);
     if (!windowGroupId) return null;
     return chooseGroupForNewTab({
@@ -68,20 +86,26 @@ export function createTabScanner(ctx) {
     let managedPinned = false;
     if (store.state.settings?.groupPinnedTabs) {
       try {
-        managedPinned = (await api.sessions.getTabValue(tab.id, TAB_GROUP_PINNED)) === true;
+        managedPinned =
+          (await api.sessions.getTabValue(tab.id, TAB_GROUP_PINNED)) === true;
       } catch {
         return null;
       }
     }
     const previous = store.knownTab(tab.id);
     const url = tab.pendingUrl || tab.url || "about:newtab";
-    const cachedFavicon = tab.discarded && previous?.url === url ? previous.faviconUrl : "";
+    const cachedFavicon =
+      tab.discarded && previous?.url === url ? previous.faviconUrl : "";
     const record = {
       id: tab.id,
       windowId: tab.windowId,
       groupId,
       cookieStoreId: tab.cookieStoreId,
-      title: readPlaceholder(tab.url)?.title || tab.title || metadata?.title || "Новая вкладка",
+      title:
+        readPlaceholder(tab.url)?.title ||
+        tab.title ||
+        metadata?.title ||
+        "Новая вкладка",
       url,
       faviconUrl: tab.favIconUrl || cachedFavicon || metadata?.faviconUrl || "",
       pinned: tab.pinned,
@@ -94,24 +118,35 @@ export function createTabScanner(ctx) {
       sharingState: tab.sharingState,
       discarded: tab.discarded,
     };
-    store.remember(record, !previous || KNOWN_FIELDS.some((key) => previous[key] !== record[key]));
+    store.remember(
+      record,
+      !previous || KNOWN_FIELDS.some((key) => previous[key] !== record[key]),
+    );
     return record;
   }
 
   async function scan() {
     const tabs = await api.tabs.query({ windowType: "normal" });
     const state = store.state;
-    const nextStamp = index.version + ":" + Boolean(state.settings?.groupPinnedTabs) + ":" + state.groups.map((group) => group.id).join(",");
+    const nextStamp =
+      index.version +
+      ":" +
+      Boolean(state.settings?.groupPinnedTabs) +
+      ":" +
+      state.groups.map((group) => group.id).join(",");
     if (cache && stamp === nextStamp) return cache;
     const nextOrderVersion = index.orderVersion;
     const validGroups = new Set(state.groups.map((group) => group.id));
     const windowGroups = new Map();
     const records = await Promise.all(
-      tabs.filter((tab) => !tab.incognito).map((tab) => readRecord(tab, validGroups, windowGroups)),
+      tabs
+        .filter((tab) => !tab.incognito)
+        .map((tab) => readRecord(tab, validGroups, windowGroups)),
     );
     const live = index.liveIds();
     for (const key of store.knownIds())
-      if (!live.has(Number(key)) && !index.removed.has(Number(key))) store.forget(key);
+      if (!live.has(Number(key)) && !index.removed.has(Number(key)))
+        store.forget(key);
     cache = records.filter(Boolean);
     byId = new Map(cache.map((record) => [record.id, record]));
     stamp = nextStamp;

@@ -6,18 +6,29 @@ const shapes = [
   [65, 35, 72, 28, 30, 62, 38, 70],
   [32, 68, 55, 45, 65, 30, 70, 35],
 ];
-const graphemeSegmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter(undefined, { granularity: "grapheme" }) : null;
+const graphemeSegmenter =
+  typeof Intl.Segmenter === "function"
+    ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
+    : null;
 function graphemes(value) {
-  return graphemeSegmenter ? Array.from(graphemeSegmenter.segment(value), (item) => item.segment) : Array.from(value);
+  return graphemeSegmenter
+    ? Array.from(graphemeSegmenter.segment(value), (item) => item.segment)
+    : Array.from(value);
 }
 export function markerLetters(title, count = 3) {
   const text = String(title ?? "").trim();
   const words = text.match(/[\p{L}\p{N}\p{M}]+/gu) || [];
-  const letters = words.length === 2 && count === 3
-    ? graphemes(words[0]).slice(0, 2).join("") + graphemes(words[1])[0]
-    : words.length > 1
-      ? words.slice(0, count).map((word) => graphemes(word)[0]).join("")
-      : graphemes(words[0] || text).slice(0, count).join("");
+  const letters =
+    words.length === 2 && count === 3
+      ? graphemes(words[0]).slice(0, 2).join("") + graphemes(words[1])[0]
+      : words.length > 1
+        ? words
+            .slice(0, count)
+            .map((word) => graphemes(word)[0])
+            .join("")
+        : graphemes(words[0] || text)
+            .slice(0, count)
+            .join("");
   return letters.toLocaleUpperCase();
 }
 export function groupMarker(id) {
@@ -31,7 +42,14 @@ export function groupMarker(id) {
     borderRadius: `${radii.slice(0, 4).join("% ")}% / ${radii.slice(4).join("% ")}%`,
   };
 }
-export function drawMarker(ctx, id, color, size, style = DEFAULT_SETTINGS.markerStyle, title = "") {
+export function drawMarker(
+  ctx,
+  id,
+  color,
+  size,
+  style = DEFAULT_SETTINGS.markerStyle,
+  title = "",
+) {
   if (style === "none") return;
   if (style === "letters" || style === "letters2") {
     ctx.save();

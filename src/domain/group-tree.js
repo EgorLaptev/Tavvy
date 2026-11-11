@@ -1,10 +1,21 @@
 // Pure operations on the group list. Array order is display order.
 export const INBOX_ID = "inbox";
-export const GROUP_COLORS = ["#398dff", "#a855f7", "#00c98a", "#ff7800", "#ff168a"];
+export const GROUP_COLORS = [
+  "#398dff",
+  "#a855f7",
+  "#00c98a",
+  "#ff7800",
+  "#ff168a",
+];
 export const MAX_GROUP_TITLE = 100;
 
 export function defaultInbox() {
-  return { id: INBOX_ID, title: "Основная", color: GROUP_COLORS[0], parentId: null };
+  return {
+    id: INBOX_ID,
+    title: "Основная",
+    color: GROUP_COLORS[0],
+    parentId: null,
+  };
 }
 
 export function findGroup(groups, groupId) {
@@ -59,7 +70,8 @@ export function visibleGroupIds(groups, groupId, settings) {
 export function assertNoCycle(groups, groupId, parentId) {
   let parent = parentId ? findGroup(groups, parentId) : null;
   while (parent) {
-    if (parent.id === groupId) throw new Error("Нельзя вложить группу в саму себя");
+    if (parent.id === groupId)
+      throw new Error("Нельзя вложить группу в саму себя");
     parent = parent.parentId ? findGroup(groups, parent.parentId) : null;
   }
 }
@@ -75,23 +87,31 @@ export function placeGroup(groups, moving, beforeId) {
 /** Removes a group and attaches its children to its parent. */
 export function removeGroup(groups, groupId) {
   const removed = findGroup(groups, groupId);
-  for (const child of groups) if (child.parentId === groupId) child.parentId = removed.parentId;
+  for (const child of groups)
+    if (child.parentId === groupId) child.parentId = removed.parentId;
   return groups.filter((item) => item.id !== groupId);
 }
 
 export function normalizeNewTitle(value) {
-  const title = String(value ?? "").trim().slice(0, MAX_GROUP_TITLE);
+  const title = String(value ?? "")
+    .trim()
+    .slice(0, MAX_GROUP_TITLE);
   if (!title) throw new Error("Введите название группы");
   return title;
 }
 
 export function normalizeRenamedTitle(value) {
-  if (typeof value !== "string" || value.length > MAX_GROUP_TITLE || !value.trim())
+  if (
+    typeof value !== "string" ||
+    value.length > MAX_GROUP_TITLE ||
+    !value.trim()
+  )
     throw new Error("Введите название группы");
   return value.trim();
 }
 
 export function normalizeGroupColor(value) {
-  if (typeof value !== "string" || !/^#[0-9a-f]{6}$/i.test(value)) throw new Error("Некорректный цвет группы");
+  if (typeof value !== "string" || !/^#[0-9a-f]{6}$/i.test(value))
+    throw new Error("Некорректный цвет группы");
   return value.toLowerCase();
 }

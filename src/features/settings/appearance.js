@@ -3,7 +3,9 @@ import { MAX_POPUP_HEIGHT, THEMES } from "../../domain/settings.js";
 /** Root classes for a theme. "Standard" and "System" follow the system light/dark preference. */
 export function themeClasses(theme, systemLight) {
   return {
-    light: theme === "Светлая" || (["Как в системе", "Стандартная"].includes(theme) && systemLight),
+    light:
+      theme === "Светлая" ||
+      (["Как в системе", "Стандартная"].includes(theme) && systemLight),
     dark: theme === "Тёмная",
     standard: theme === "Стандартная",
   };
@@ -13,7 +15,10 @@ export function themeClasses(theme, systemLight) {
 export function panelSize(settings) {
   return {
     width: Math.max(320, Math.min(800, Number(settings.width) || 440)),
-    height: Math.max(200, Math.min(MAX_POPUP_HEIGHT, Number(settings.height) || 300)),
+    height: Math.max(
+      200,
+      Math.min(MAX_POPUP_HEIGHT, Number(settings.height) || 300),
+    ),
   };
 }
 

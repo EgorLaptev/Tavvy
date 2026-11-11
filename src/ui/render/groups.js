@@ -17,7 +17,8 @@ export function createGroupList(ctx) {
   const { container } = ctx;
 
   function contains(outerId, innerId) {
-    const outer = ctx.groupViews.get(outerId)?.node, inner = ctx.groupViews.get(innerId)?.node;
+    const outer = ctx.groupViews.get(outerId)?.node,
+      inner = ctx.groupViews.get(innerId)?.node;
     return !!(outer && inner && outer.contains(inner));
   }
 
@@ -32,16 +33,24 @@ export function createGroupList(ctx) {
     );
     const spaceGlyph = element("span", "spaces-icon spaces-icon-container");
     spaceGlyph.setAttribute("aria-hidden", "true");
-    const spaceLabel = button(t("spaces.title"), "group-space-label", spaceGlyph, (event) => {
-      event.stopPropagation();
-      if (ctx.menu.isOpen()) ctx.menu.reset();
-      ctx.containerPicker.show(group.id, spaceLabel);
-    });
+    const spaceLabel = button(
+      t("spaces.title"),
+      "group-space-label",
+      spaceGlyph,
+      (event) => {
+        event.stopPropagation();
+        if (ctx.menu.isOpen()) ctx.menu.reset();
+        ctx.containerPicker.show(group.id, spaceLabel);
+      },
+    );
     spaceLabel.setAttribute("aria-haspopup", "menu");
     spaceLabel.setAttribute("aria-expanded", "false");
     header.append(title);
-    const colorInput = button(`${t("groups.group_color")}: ${group.title}`, "group-color-input", document.createTextNode(""), () =>
-      ctx.palette.toggle(colorInput, group.id),
+    const colorInput = button(
+      `${t("groups.group_color")}: ${group.title}`,
+      "group-color-input",
+      document.createTextNode(""),
+      () => ctx.palette.toggle(colorInput, group.id),
     );
     colorInput.setAttribute("aria-expanded", "false");
     colorInput.setAttribute("aria-haspopup", "true");
@@ -84,7 +93,9 @@ export function createGroupList(ctx) {
       children,
     };
     controls.addEventListener("contextmenu", (event) =>
-      ctx.groupMenu.open(event, group, () => startGroupRename(ctx, view, group.id)),
+      ctx.groupMenu.open(event, group, () =>
+        startGroupRename(ctx, view, group.id),
+      ),
     );
     return view;
   }
@@ -98,7 +109,10 @@ export function createGroupList(ctx) {
       view.title.textContent = title;
       view.marker.dataset.label = markerLetters(group.title);
       view.marker.dataset.label2 = markerLetters(group.title, 2);
-      view.colorInput.setAttribute("aria-label", `${t("groups.group_color")}: ${group.title}`);
+      view.colorInput.setAttribute(
+        "aria-label",
+        `${t("groups.group_color")}: ${group.title}`,
+      );
     }
     if (view.color !== group.color) {
       view.marker.style.background = group.color;
@@ -107,10 +121,15 @@ export function createGroupList(ctx) {
     }
     const { space, label: spaceLabel } = groupSpace(group, snapshot.spaces, t);
     view.spaceLabel.hidden = !group.spaceId;
-    view.spaceGlyph.style.maskImage = group.spaceId ? `url("${ctx.spaceIconUrl(spaceIcon(space?.icon))}")` : "";
+    view.spaceGlyph.style.maskImage = group.spaceId
+      ? `url("${ctx.spaceIconUrl(spaceIcon(space?.icon))}")`
+      : "";
     view.spaceLabel.title = spaceLabel;
     view.spaceLabel.setAttribute("aria-label", view.spaceLabel.title);
-    view.header.setAttribute("aria-label", group.spaceId ? `${title} — ${view.spaceLabel.title}` : title);
+    view.header.setAttribute(
+      "aria-label",
+      group.spaceId ? `${title} — ${view.spaceLabel.title}` : title,
+    );
     renderGroupStatus(view.statuses, viewIndex.groupStatus.get(group.id) || 0);
     const count = String(viewIndex.byGroup.get(group.id)?.length || 0);
     if (view.count.textContent !== count) view.count.textContent = count;
@@ -121,8 +140,17 @@ export function createGroupList(ctx) {
   /** Puts every card under its parent (or the panel) in snapshot order. */
   function layout() {
     const { snapshot, viewIndex, groupViews } = ctx;
-    const ids = groupChildren(snapshot.groups, viewIndex.groups, snapshot.settings.nestedGroups !== false);
-    const children = new Map([...ids].map(([parent, list]) => [parent, list.map((id) => groupViews.get(id).node)]));
+    const ids = groupChildren(
+      snapshot.groups,
+      viewIndex.groups,
+      snapshot.settings.nestedGroups !== false,
+    );
+    const children = new Map(
+      [...ids].map(([parent, list]) => [
+        parent,
+        list.map((id) => groupViews.get(id).node),
+      ]),
+    );
     // Reparent before removing obsolete child positions.
     for (const [parent, rows] of children)
       if (parent)
@@ -134,7 +162,11 @@ export function createGroupList(ctx) {
       reorderChildren(view.children, children.get(id) || []);
     // The "No group" card is in the panel only while there are tabs without a group.
     const ungrouped = ctx.ungrouped.node.hidden ? [] : [ctx.ungrouped.node];
-    reorderChildren(container, [...ungrouped, ...(children.get(null) || []), ...ctx.newGroup.nodes]);
+    reorderChildren(container, [
+      ...ungrouped,
+      ...(children.get(null) || []),
+      ...ctx.newGroup.nodes,
+    ]);
   }
 
   function render() {

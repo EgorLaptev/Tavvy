@@ -29,7 +29,9 @@ export function createCommandClient(ctx) {
   async function request(command) {
     const result = await send(command);
     if (!result?.ok)
-      throw new Error(translateText(result?.error || "Фоновый процесс недоступен"));
+      throw new Error(
+        translateText(result?.error || "Фоновый процесс недоступен"),
+      );
     return result.snapshot;
   }
 

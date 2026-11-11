@@ -2,7 +2,6 @@ import { LANGUAGES } from "../domain/languages.js";
 import { setLanguage, t } from "../locales/index.js";
 import { ONBOARDING_KEY as KEY } from "../background/onboarding-gate.js";
 
-
 export async function showCompatibilityNotice(api, popup, windowId) {
   if (api.isDemo) return;
   popup.classList.add("showing-compatibility-notice");
@@ -13,7 +12,8 @@ export async function showCompatibilityNotice(api, popup, windowId) {
   }
 
   const workspace = await api.storage.local.get("tavvy:workspace:v1");
-  const initialLanguage = workspace["tavvy:workspace:v1"]?.settings?.language || "en";
+  const initialLanguage =
+    workspace["tavvy:workspace:v1"]?.settings?.language || "en";
   let language = initialLanguage;
   setLanguage(language);
   const notice = document.createElement("section");
@@ -33,7 +33,8 @@ export async function showCompatibilityNotice(api, popup, windowId) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 24 24");
   svg.setAttribute("aria-hidden", "true");
-  svg.innerHTML = '<path d="M4 5h10M9 3v2m3 0c-.4 4-3.4 7-7 8m1-5c1.3 2.1 3.3 3.8 5.5 4.7M13 20l3.5-9 3.5 9m-5.8-3h4.6"/>';
+  svg.innerHTML =
+    '<path d="M4 5h10M9 3v2m3 0c-.4 4-3.4 7-7 8m1-5c1.3 2.1 3.3 3.8 5.5 4.7M13 20l3.5-9 3.5 9m-5.8-3h4.6"/>';
   const select = document.createElement("select");
   for (const [value, text] of LANGUAGES) {
     const option = document.createElement("option");
@@ -70,7 +71,8 @@ export async function showCompatibilityNotice(api, popup, windowId) {
       select.disabled = true;
       try {
         const result = await api.runtime.sendMessage({
-          channel: "tavvy-command", windowId,
+          channel: "tavvy-command",
+          windowId,
           command: { type: "completeOnboarding", language },
         });
         if (!result?.ok) throw new Error("Could not activate Tavvy");

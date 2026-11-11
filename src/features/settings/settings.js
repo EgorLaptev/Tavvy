@@ -1,11 +1,31 @@
 import { LANGUAGES } from "../../domain/languages.js";
 import { createEventScope } from "../../ui/event-scope.js";
-import { normalizeSettings, THEMES, validBackupFolder } from "../../domain/settings.js";
+import {
+  normalizeSettings,
+  THEMES,
+  validBackupFolder,
+} from "../../domain/settings.js";
 import { versionLabel } from "../../domain/version-names.js";
-import { setLanguage, t, format, getLanguage, translateStatic, translateText } from "../../locales/index.js";
-import { createPageSelects, fillLanguageView, createMarkerOptions } from "./controls.js";
+import {
+  setLanguage,
+  t,
+  format,
+  getLanguage,
+  translateStatic,
+  translateText,
+} from "../../locales/index.js";
+import {
+  createPageSelects,
+  fillLanguageView,
+  createMarkerOptions,
+} from "./controls.js";
 import { mountBackupRestore } from "./backup-restore.js";
-import { themeClasses, panelSize, sliderProgress, isSettingsExport } from "./appearance.js";
+import {
+  themeClasses,
+  panelSize,
+  sliderProgress,
+  isSettingsExport,
+} from "./appearance.js";
 
 /**
  * Connects the settings view to `repository` ({read, write}). Changes are applied to the
@@ -29,14 +49,30 @@ export function mountSettings({
     'input[aria-label="Выгружать неактивные вкладки"]',
   );
   const animationInput = document.querySelector('input[aria-label="Анимации"]');
-  const closeTabsOnGroupDelete = document.querySelector(".close-tabs-on-group-delete");
-  const groupPinnedInput = document.querySelector('input[aria-label="Закреплённые вкладки по группам"]');
-  const nestedInput = document.querySelector('input[aria-label="Вложенные группы"]');
-  const nestedVisibility = document.querySelector('select[aria-label="Показывать вкладки"]');
-  const nestedVisibilityRow = document.querySelector(".nested-visibility-setting");
-  const dynamicIconInput = document.querySelector('input[aria-label="Динамическая иконка"]');
-  const backupInput = document.querySelector('input[aria-label="Автоматические копии"]');
-  const backupFrequency = document.querySelector('select[aria-label="Частота копирования"]');
+  const closeTabsOnGroupDelete = document.querySelector(
+    ".close-tabs-on-group-delete",
+  );
+  const groupPinnedInput = document.querySelector(
+    'input[aria-label="Закреплённые вкладки по группам"]',
+  );
+  const nestedInput = document.querySelector(
+    'input[aria-label="Вложенные группы"]',
+  );
+  const nestedVisibility = document.querySelector(
+    'select[aria-label="Показывать вкладки"]',
+  );
+  const nestedVisibilityRow = document.querySelector(
+    ".nested-visibility-setting",
+  );
+  const dynamicIconInput = document.querySelector(
+    'input[aria-label="Динамическая иконка"]',
+  );
+  const backupInput = document.querySelector(
+    'input[aria-label="Автоматические копии"]',
+  );
+  const backupFrequency = document.querySelector(
+    'select[aria-label="Частота копирования"]',
+  );
   const backupFrequencyRow = document.querySelector(".backup-frequency");
   const backupFolder = document.querySelector(".backup-folder-input");
   const backupNotice = document.querySelector(".backup-notice");
@@ -51,16 +87,43 @@ export function mountSettings({
     if (!onBackupStatus) return;
     try {
       const status = await onBackupStatus();
-      backupNotice.textContent = status.error ? format("common.error_message", {error: translateText(status.error)}) : status.lastSuccess ? format("settings.backup.last_backup_date", {date: new Date(status.lastSuccess).toLocaleString(getLanguage())}) : t("settings.backup.the_folder_is_inside_firefox_downloads");
-    } catch { backupNotice.textContent = t("settings.backup.could_not_get_backup_status"); }
+      backupNotice.textContent = status.error
+        ? format("common.error_message", { error: translateText(status.error) })
+        : status.lastSuccess
+          ? format("settings.backup.last_backup_date", {
+              date: new Date(status.lastSuccess).toLocaleString(getLanguage()),
+            })
+          : t("settings.backup.the_folder_is_inside_firefox_downloads");
+    } catch {
+      backupNotice.textContent = t(
+        "settings.backup.could_not_get_backup_status",
+      );
+    }
   }
   listen(document.querySelector(".backup-open"), "click", updateBackupStatus);
-  if (document.documentElement.classList.contains("settings-page")) void updateBackupStatus();
+  if (document.documentElement.classList.contains("settings-page"))
+    void updateBackupStatus();
   listen(document.querySelector(".backup-create"), "click", async () => {
-    if (!onBackup) { backupNotice.textContent = t("settings.backup.backups_are_available_in_the_firefox_extension"); return; }
+    if (!onBackup) {
+      backupNotice.textContent = t(
+        "settings.backup.backups_are_available_in_the_firefox_extension",
+      );
+      return;
+    }
     backupNotice.textContent = t("settings.backup.creating_backup");
-    try { await savePending; await onBackup(); backupNotice.textContent = format("settings.backup.backup_saved_to_downloads_folder", {folder: savedSettings.backupFolder}); }
-    catch (error) { backupNotice.textContent = format("settings.backup.could_not_create_backup_error", {error: translateText(error.message)}); }
+    try {
+      await savePending;
+      await onBackup();
+      backupNotice.textContent = format(
+        "settings.backup.backup_saved_to_downloads_folder",
+        { folder: savedSettings.backupFolder },
+      );
+    } catch (error) {
+      backupNotice.textContent = format(
+        "settings.backup.could_not_create_backup_error",
+        { error: translateText(error.message) },
+      );
+    }
   });
   const markerSelect = createMarkerOptions(appearanceGroup);
   if (appVersion) {
@@ -76,9 +139,10 @@ export function mountSettings({
   let savedSettings = normalizeSettings(repository.read());
   setLanguage(savedSettings.language);
   function applySettings() {
-    if (!THEMES.includes(savedSettings.theme))
-      savedSettings.theme = "Чёрная";
-    if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion);
+    if (!THEMES.includes(savedSettings.theme)) savedSettings.theme = "Чёрная";
+    if (appVersion)
+      document.querySelector(".app-version").textContent =
+        versionLabel(appVersion);
     const theme = themeClasses(savedSettings.theme, systemTheme.matches);
     document.documentElement.classList.toggle("light-theme", theme.light);
     document.documentElement.classList.toggle("dark-theme", theme.dark);
@@ -87,19 +151,21 @@ export function mountSettings({
       "animations-off",
       !savedSettings.animations,
     );
-    document.documentElement.dataset.markerStyle =
-      savedSettings.markerStyle;
+    document.documentElement.dataset.markerStyle = savedSettings.markerStyle;
     markerSelect.querySelectorAll("input").forEach((input) => {
-      input.checked = input.value === (savedSettings.markerStyle);
+      input.checked = input.value === savedSettings.markerStyle;
     });
     animationInput.checked = Boolean(savedSettings.animations);
     if (themeSelect) themeSelect.value = savedSettings.theme;
     if (languageSelect) languageSelect.value = savedSettings.language;
-    languageCurrent.textContent = LANGUAGES.find(([code]) => code === savedSettings.language)?.[1] || "English";
+    languageCurrent.textContent =
+      LANGUAGES.find(([code]) => code === savedSettings.language)?.[1] ||
+      "English";
     languageView.querySelectorAll('input[name="language"]').forEach((input) => {
       input.checked = input.value === savedSettings.language;
     });
-    closeTabsOnGroupDelete.checked = savedSettings.closeTabsOnGroupDelete !== false;
+    closeTabsOnGroupDelete.checked =
+      savedSettings.closeTabsOnGroupDelete !== false;
     groupPinnedInput.checked = Boolean(savedSettings.groupPinnedTabs);
     nestedInput.checked = savedSettings.nestedGroups !== false;
     nestedVisibility.value = savedSettings.nestedTabsVisibility;
@@ -127,7 +193,10 @@ export function mountSettings({
       try {
         localStorage.setItem(
           "tavvy:popup-size:v1",
-          JSON.stringify({ width: Number(panelWidth.value), height: Number(panelHeight.value) }),
+          JSON.stringify({
+            width: Number(panelWidth.value),
+            height: Number(panelHeight.value),
+          }),
         );
       } catch {
         // Settings remain usable if the synchronous startup cache is unavailable.
@@ -136,7 +205,9 @@ export function mountSettings({
     themeInputs.forEach((input) => {
       input.checked = input.value === savedSettings.theme;
     });
-    document.querySelector(".theme-current").textContent = translateText(savedSettings.theme);
+    document.querySelector(".theme-current").textContent = translateText(
+      savedSettings.theme,
+    );
   }
   function saveSettings() {
     savedSettings = normalizeSettings(savedSettings);
@@ -147,14 +218,20 @@ export function mountSettings({
     setLanguage(savedSettings.language);
     translateStatic(document.querySelector(".popup"));
     applySettings();
-    if (appVersion) document.querySelector(".app-version").textContent = versionLabel(appVersion);
+    if (appVersion)
+      document.querySelector(".app-version").textContent =
+        versionLabel(appVersion);
     saveSettings();
     onLanguageChange?.();
   }
   listen(languageView, "change", (event) => {
-    if (event.target.matches('input[name="language"]')) chooseLanguage(event.target.value);
+    if (event.target.matches('input[name="language"]'))
+      chooseLanguage(event.target.value);
   });
-  if (languageSelect) listen(languageSelect, "change", () => chooseLanguage(languageSelect.value));
+  if (languageSelect)
+    listen(languageSelect, "change", () =>
+      chooseLanguage(languageSelect.value),
+    );
   listen(animationInput, "change", () => {
     savedSettings.animations = animationInput.checked;
     applySettings();
@@ -201,7 +278,9 @@ export function mountSettings({
     }
     savedSettings.backupFolder = folder;
     backupFolder.value = folder;
-    backupNotice.textContent = format("settings.backup.backup_folder_path", {folder});
+    backupNotice.textContent = format("settings.backup.backup_folder_path", {
+      folder,
+    });
     saveSettings();
   });
   listen(markerSelect, "change", (event) => {
@@ -220,10 +299,16 @@ export function mountSettings({
     delete savedSettings.brightness;
     applySettings();
     saveSettings();
-    setTimeout(() => document.documentElement.classList.remove("theme-changing"), 300);
+    setTimeout(
+      () => document.documentElement.classList.remove("theme-changing"),
+      300,
+    );
   }
-  themeInputs.forEach((input) => listen(input, "change", () => chooseTheme(input.value)));
-  if (themeSelect) listen(themeSelect, "change", () => chooseTheme(themeSelect.value));
+  themeInputs.forEach((input) =>
+    listen(input, "change", () => chooseTheme(input.value)),
+  );
+  if (themeSelect)
+    listen(themeSelect, "change", () => chooseTheme(themeSelect.value));
   // Resizing the popup while dragging its width slider moves the slider under
   // the pointer (Firefox anchors the popup to the toolbar). Commit on release.
   listen(panelWidth, "change", () => {
@@ -284,7 +369,10 @@ export function mountSettings({
   });
   const sizeSliders = [panelWidth, panelHeight];
   function updateSliderFill(slider) {
-    slider.style.setProperty("--progress", sliderProgress(slider.value, slider.min, slider.max));
+    slider.style.setProperty(
+      "--progress",
+      sliderProgress(slider.value, slider.min, slider.max),
+    );
     const output = slider.parentElement.querySelector("output");
     if (output) output.textContent = `${slider.value} px`;
   }

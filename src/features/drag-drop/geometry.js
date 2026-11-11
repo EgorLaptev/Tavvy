@@ -4,7 +4,10 @@
 export const DRAG_THRESHOLD = 6;
 
 export function dragStarted(start, point) {
-  return Math.hypot(point.clientX - start.x, point.clientY - start.y) > DRAG_THRESHOLD;
+  return (
+    Math.hypot(point.clientX - start.x, point.clientY - start.y) >
+    DRAG_THRESHOLD
+  );
 }
 
 export function insideRect(point, rect) {
@@ -29,7 +32,9 @@ export function nearHeaderEdge(clientY, headerRect) {
 export function reorderThreshold(headerRect, placeholderIndex, targetIndex) {
   const midpoint = headerRect.top + headerRect.height / 2;
   const hysteresis = Math.min(8, headerRect.height / 4);
-  if (placeholderIndex >= 0 && placeholderIndex === targetIndex - 1) return midpoint + hysteresis;
-  if (placeholderIndex >= 0 && placeholderIndex === targetIndex + 1) return midpoint - hysteresis;
+  if (placeholderIndex >= 0 && placeholderIndex === targetIndex - 1)
+    return midpoint + hysteresis;
+  if (placeholderIndex >= 0 && placeholderIndex === targetIndex + 1)
+    return midpoint - hysteresis;
   return midpoint;
 }

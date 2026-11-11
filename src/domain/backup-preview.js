@@ -13,7 +13,10 @@ export function previewBackup(data) {
       else counts.set(tab.groupId, (counts.get(tab.groupId) || 0) + 1);
     }
     return {
-      groups: plan.groups.map((group) => ({ title: group.title, tabs: counts.get(group.id) || 0 })),
+      groups: plan.groups.map((group) => ({
+        title: group.title,
+        tabs: counts.get(group.id) || 0,
+      })),
       tabs: plan.tabs.length - pinned,
       pinned,
       spaces: plan.spaces?.length || 0,
@@ -22,7 +25,10 @@ export function previewBackup(data) {
   }
   const plan = parseStgBackup(data);
   return {
-    groups: plan.groups.map((group) => ({ title: group.title, tabs: group.tabs.length })),
+    groups: plan.groups.map((group) => ({
+      title: group.title,
+      tabs: group.tabs.length,
+    })),
     tabs: plan.groups.reduce((count, group) => count + group.tabs.length, 0),
     pinned: plan.pinnedTabs.length,
     spaces: 0,

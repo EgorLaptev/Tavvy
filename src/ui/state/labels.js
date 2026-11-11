@@ -8,20 +8,30 @@ const LEGACY_MAIN_GROUP = "Основная";
 const LEGACY_NEW_TAB = "Новая вкладка";
 
 export function groupTitle(group, t) {
-  return group.id === "inbox" && group.title === LEGACY_MAIN_GROUP ? t("groups.main") : group.title;
+  return group.id === "inbox" && group.title === LEGACY_MAIN_GROUP
+    ? t("groups.main")
+    : group.title;
 }
 
 export function tabTitle(tab, t) {
-  return tab.url === "about:newtab" && tab.title === LEGACY_NEW_TAB ? t("tabs.new_tab") : tab.title;
+  return tab.url === "about:newtab" && tab.title === LEGACY_NEW_TAB
+    ? t("tabs.new_tab")
+    : tab.title;
 }
 
 /** The container of a group: its record in `spaces` and the label used for its badge. */
 export function groupSpace(group, spaces, t) {
-  const space = (spaces || []).find((item) => item.id === (group.spaceId || "default"));
-  const name = group.spaceId ? space?.name || group.spaceId : t("spaces.default");
+  const space = (spaces || []).find(
+    (item) => item.id === (group.spaceId || "default"),
+  );
+  const name = group.spaceId
+    ? space?.name || group.spaceId
+    : t("spaces.default");
   return {
     space,
-    label: space?.unavailable ? `${name}: ${t("spaces.container_unavailable")}` : name,
+    label: space?.unavailable
+      ? `${name}: ${t("spaces.container_unavailable")}`
+      : name,
   };
 }
 

@@ -10,8 +10,16 @@ let resolveReport;
 const report = new Promise((resolve) => (resolveReport = resolve));
 const server = createServer((req, res) => {
   if (req.url === "/test-favicon.png") {
-    res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "no-store" });
-    res.end(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=", "base64"));
+    res.writeHead(200, {
+      "Content-Type": "image/png",
+      "Cache-Control": "no-store",
+    });
+    res.end(
+      Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
+        "base64",
+      ),
+    );
     return;
   }
   if (req.method === "GET") {
@@ -39,7 +47,11 @@ manifest.host_permissions = ["http://127.0.0.1/*"];
 manifest.permissions.push("cookies");
 delete manifest.optional_permissions;
 // The smoke harness reports its result to a local test server.
-manifest.content_security_policy.extension_pages = manifest.content_security_policy.extension_pages.replace("connect-src 'none'", "connect-src http://127.0.0.1:*");
+manifest.content_security_policy.extension_pages =
+  manifest.content_security_policy.extension_pages.replace(
+    "connect-src 'none'",
+    "connect-src http://127.0.0.1:*",
+  );
 await writeFile(`${dir}/manifest.json`, JSON.stringify(manifest));
 await writeFile(
   `${dir}/background.js`,

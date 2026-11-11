@@ -9,7 +9,9 @@ export function createDragActions(ctx) {
       const groupId = node.dataset.groupId;
       if (!ctx.opened.has(groupId)) return;
       const nested = ctx.snapshot.settings.nestedGroups !== false;
-      collapseSubtree(ctx.opened, groupId, (id) => nested ? ctx.viewIndex.groups.get(id)?.parentId : null);
+      collapseSubtree(ctx.opened, groupId, (id) =>
+        nested ? ctx.viewIndex.groups.get(id)?.parentId : null,
+      );
       ctx.tabLists.render();
     },
     onMoveGroup: (node) =>
@@ -26,12 +28,18 @@ export function createDragActions(ctx) {
       // Dropped outside a group card (or on "No group"): put the row back.
       if (!group?.dataset.groupId) return ctx.render();
       const tab = ctx.viewIndex.tabs.get(Number(row.dataset.tabId));
-      const next = ctx.viewIndex.tabs.get(Number(row.nextElementSibling?.dataset.tabId));
+      const next = ctx.viewIndex.tabs.get(
+        Number(row.nextElementSibling?.dataset.tabId),
+      );
       return ctx.run({
         type: "moveTab",
         tabId: Number(row.dataset.tabId),
         groupId: group.dataset.groupId,
-        index: !next ? -1 : next.windowId === tab?.windowId ? next.index : undefined,
+        index: !next
+          ? -1
+          : next.windowId === tab?.windowId
+            ? next.index
+            : undefined,
       });
     },
   };

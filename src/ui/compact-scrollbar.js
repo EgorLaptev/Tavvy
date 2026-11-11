@@ -1,5 +1,9 @@
 export function mountCompactScrollbar(panel) {
-  const scrollers = [...panel.querySelectorAll(".groups, .settings-view, .theme-view, .backup-view")];
+  const scrollers = [
+    ...panel.querySelectorAll(
+      ".groups, .settings-view, .theme-view, .backup-view",
+    ),
+  ];
   const track = document.createElement("div");
   track.className = "compact-scrollbar";
   track.hidden = true;
@@ -9,7 +13,13 @@ export function mountCompactScrollbar(panel) {
   track.append(thumb);
   panel.append(track);
   panel.classList.add("has-compact-scrollbar");
-  let current, frame, dragging, wheelFrame, wheelTarget, wheelElement, lastWheelTime;
+  let current,
+    frame,
+    dragging,
+    wheelFrame,
+    wheelTarget,
+    wheelElement,
+    lastWheelTime;
   function stopWheel() {
     cancelAnimationFrame(wheelFrame);
     wheelFrame = null;
@@ -18,8 +28,12 @@ export function mountCompactScrollbar(panel) {
   }
   function animateWheel(time) {
     if (!wheelElement) return;
-    if (document.documentElement.classList.contains("animations-off")) { stopWheel(); return; }
-    const elapsed = lastWheelTime == null ? 16 : Math.min(50, time - lastWheelTime);
+    if (document.documentElement.classList.contains("animations-off")) {
+      stopWheel();
+      return;
+    }
+    const elapsed =
+      lastWheelTime == null ? 16 : Math.min(50, time - lastWheelTime);
     lastWheelTime = time;
     const distance = wheelTarget - wheelElement.scrollTop;
     if (Math.abs(distance) < 0.5) {
@@ -32,23 +46,43 @@ export function mountCompactScrollbar(panel) {
   }
   function onWheel(event) {
     const el = event.currentTarget;
-    if (event.target.closest("select, input[type=range]") || event.ctrlKey || event.shiftKey || !event.deltaY || Math.abs(event.deltaX) > Math.abs(event.deltaY) || document.documentElement.classList.contains("animations-off")) {
+    if (
+      event.target.closest("select, input[type=range]") ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      !event.deltaY ||
+      Math.abs(event.deltaX) > Math.abs(event.deltaY) ||
+      document.documentElement.classList.contains("animations-off")
+    ) {
       stopWheel();
       return;
     }
     const max = el.scrollHeight - el.clientHeight;
     if (max <= 0) return;
-    if (wheelElement !== el) { stopWheel(); wheelElement = el; wheelTarget = el.scrollTop; }
-    const units = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? el.clientHeight : 1;
+    if (wheelElement !== el) {
+      stopWheel();
+      wheelElement = el;
+      wheelTarget = el.scrollTop;
+    }
+    const units =
+      event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? el.clientHeight : 1;
     const next = Math.max(0, Math.min(max, wheelTarget + event.deltaY * units));
-    if (next === wheelTarget && !wheelFrame) { stopWheel(); return; }
+    if (next === wheelTarget && !wheelFrame) {
+      stopWheel();
+      return;
+    }
     event.preventDefault();
     wheelTarget = next;
     if (!wheelFrame) wheelFrame = requestAnimationFrame(animateWheel);
   }
   function update() {
     frame = null;
-    current = scrollers.find((el) => el.getClientRects().length && el.clientHeight > 0 && el.scrollHeight > el.clientHeight + 1);
+    current = scrollers.find(
+      (el) =>
+        el.getClientRects().length &&
+        el.clientHeight > 0 &&
+        el.scrollHeight > el.clientHeight + 1,
+    );
     track.hidden = !current;
     if (!current) return;
     const rect = current.getBoundingClientRect();
@@ -59,10 +93,13 @@ export function mountCompactScrollbar(panel) {
     track.style.height = `${rect.height}px`;
     track.style.left = `${rect.right - parent.left - 8}px`;
     thumb.style.height = `${height}px`;
-    thumb.style.transform = `translateY(${range * current.scrollTop / (current.scrollHeight - current.clientHeight)}px)`;
+    thumb.style.transform = `translateY(${(range * current.scrollTop) / (current.scrollHeight - current.clientHeight)}px)`;
   }
-  function schedule() { if (!frame) frame = requestAnimationFrame(update); }
-  const resize = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+  function schedule() {
+    if (!frame) frame = requestAnimationFrame(update);
+  }
+  const resize =
+    typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
   resize?.observe(panel);
   for (const el of scrollers) {
     resize?.observe(el);
@@ -70,13 +107,28 @@ export function mountCompactScrollbar(panel) {
     el.addEventListener("wheel", onWheel, { passive: false });
     el.addEventListener("pointerdown", stopWheel, { passive: true });
   }
-  const mutations = typeof MutationObserver === "undefined" ? null : new MutationObserver(schedule);
-  for (const el of scrollers) mutations?.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden", "class", "style"] });
+  const mutations =
+    typeof MutationObserver === "undefined"
+      ? null
+      : new MutationObserver(schedule);
+  for (const el of scrollers)
+    mutations?.observe(el, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["hidden", "class", "style"],
+    });
   track.addEventListener("pointerdown", (event) => {
     if (event.button !== 0 || !current) return;
     stopWheel();
     const thumbRect = thumb.getBoundingClientRect();
-    dragging = { id: event.pointerId, offset: event.target === thumb ? event.clientY - thumbRect.top : thumbRect.height / 2 };
+    dragging = {
+      id: event.pointerId,
+      offset:
+        event.target === thumb
+          ? event.clientY - thumbRect.top
+          : thumbRect.height / 2,
+    };
     track.setPointerCapture(event.pointerId);
     move(event);
     event.preventDefault();
@@ -86,12 +138,18 @@ export function mountCompactScrollbar(panel) {
     const rect = track.getBoundingClientRect();
     const available = rect.height - thumb.getBoundingClientRect().height;
     if (available <= 0) return;
-    const ratio = Math.min(1, Math.max(0, (event.clientY - rect.top - dragging.offset) / available));
+    const ratio = Math.min(
+      1,
+      Math.max(0, (event.clientY - rect.top - dragging.offset) / available),
+    );
     current.scrollTop = ratio * (current.scrollHeight - current.clientHeight);
     schedule();
   }
   track.addEventListener("pointermove", move);
-  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) track.addEventListener(type, () => { dragging = null; });
+  for (const type of ["pointerup", "pointercancel", "lostpointercapture"])
+    track.addEventListener(type, () => {
+      dragging = null;
+    });
   schedule();
   return () => {
     cancelAnimationFrame(frame);

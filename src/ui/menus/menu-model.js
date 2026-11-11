@@ -25,7 +25,11 @@ export function groupMoveTargets(groups, index, groupId) {
   return groups.filter((candidate) => {
     if (groupDepth(candidate, index) !== level) return false;
     const seen = new Set();
-    for (let item = candidate; item && !seen.has(item.id); item = item.parentId ? index.get(item.parentId) : null) {
+    for (
+      let item = candidate;
+      item && !seen.has(item.id);
+      item = item.parentId ? index.get(item.parentId) : null
+    ) {
       if (item.id === groupId) return false;
       seen.add(item.id);
     }
@@ -36,7 +40,9 @@ export function groupMoveTargets(groups, index, groupId) {
 /** Groups a tab can move to: any other group that uses the same container. */
 export function tabMoveTargets(groups, index, tab) {
   const space = index.get(tab.groupId)?.spaceId || "default";
-  return groups.filter((item) => item.id !== tab.groupId && (item.spaceId || "default") === space);
+  return groups.filter(
+    (item) => item.id !== tab.groupId && (item.spaceId || "default") === space,
+  );
 }
 
 /**
@@ -48,7 +54,10 @@ export function containerChoices(spaces, group) {
   const destinations = spaces
     .filter((space) => !space.unavailable)
     .map((space) => ({ space, current: space.id === current }));
-  const missing = spaces.find((space) => space.id === current && space.unavailable) || null;
-  const reconnect = missing ? spaces.filter((space) => space.firefoxContainer) : [];
+  const missing =
+    spaces.find((space) => space.id === current && space.unavailable) || null;
+  const reconnect = missing
+    ? spaces.filter((space) => space.firefoxContainer)
+    : [];
   return { current, destinations, missing, reconnect };
 }
