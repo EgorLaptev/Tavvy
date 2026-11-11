@@ -48,15 +48,15 @@ button.group-header {
         opacity 0.18s ease,
         padding $tab-transition-duration ease;
     /* stylelint-enable declaration-property-value-no-unknown */
-}
 
-.tabs.is-closed {
-    grid-template-rows: 0fr;
+    &.is-closed {
+        grid-template-rows: 0fr;
 
-    padding-top: 0;
-    padding-bottom: 0;
+        padding-top: 0;
+        padding-bottom: 0;
 
-    opacity: 0;
+        opacity: 0;
+    }
 }
 
 .tabs-inner {
@@ -120,41 +120,41 @@ button.group-header {
         height 0.3s ease,
         opacity 0.25s ease,
         padding 0.3s ease;
-}
 
-.tabs.is-closed {
-    height: 0;
-}
+    &.is-closed {
+        height: 0;
+    }
 
-.tabs .tabs-inner {
-    overflow: visible;
-}
+    .tabs-inner {
+        overflow: visible;
+    }
 
-.tabs.is-closed .tabs-inner,
-.tabs:not(.is-closed) .tabs-inner {
-    visibility: visible;
-}
+    &.is-closed .tabs-inner,
+    &:not(.is-closed) .tabs-inner {
+        visibility: visible;
+    }
 
-.tabs .tabs-inner > .tab-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+    .tabs-inner > .tab-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-.tabs .tabs-inner .tab-favicon {
-    display: grid;
-    flex: none;
-    place-items: center;
+    .tabs-inner .tab-favicon {
+        display: grid;
+        flex: none;
+        place-items: center;
 
-    width: 16px;
-    height: 16px;
+        width: 16px;
+        height: 16px;
 
-    font-size: 10px;
-    font-weight: 600;
-    color: #aaa;
+        font-size: 10px;
+        font-weight: 600;
+        color: #aaa;
 
-    background: #292929;
-    border-radius: 4px;
+        background: #292929;
+        border-radius: 4px;
+    }
 }
 
 .tab-row > span:nth-child(2) {
@@ -411,10 +411,10 @@ button.group-header {
     border-radius: 7px;
     background: #181818;
     box-shadow: 0 8px 24px #0008;
-}
 
-.group-context-menu[hidden] {
-    display: none;
+    &[hidden] {
+        display: none;
+    }
 }
 
 .group-context-item {
@@ -433,16 +433,16 @@ button.group-header {
     border: 0;
     border-radius: 4px;
     cursor: pointer;
-}
 
-.group-context-item:hover,
-.group-context-item:focus-visible {
-    background: #444;
-}
+    &:hover,
+    &:focus-visible {
+        background: #444;
+    }
 
-.group-context-item:disabled {
-    opacity: 0.45;
-    cursor: default;
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
 }
 
 .group-context-heading {
