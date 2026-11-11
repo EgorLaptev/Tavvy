@@ -171,7 +171,8 @@
         "jolly_jerboa": "Весёлый тушканчик",
         "playful_pangolin": "Игривый панголин",
         "clever_chameleon": "Смышлёный хамелеон",
-        "nomadic_narwhal": "Кочующий нарвал"
+        "nomadic_narwhal": "Кочующий нарвал",
+        "faithful_beaver": "Верный бобр"
     },
     "errors": {
         "tab_is_closed": "Вкладка закрыта",
