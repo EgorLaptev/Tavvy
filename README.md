@@ -79,5 +79,3 @@ Run `npm run lint` to check JavaScript with ESLint and CSS with Stylelint. The p
 Run `npm run format` to format source files with Prettier, or `npm run format:check` to check formatting without changing files.
 
 Stylelint checks CSS validity, naming, values, selector complexity and property order. Declarations are grouped by position, layout, box model, typography, appearance and motion, with a blank line between groups. Existing selector and value violations are warnings pending cleanup. Prettier uses four spaces for indentation.
-
-Group and tab styles use SCSS; the preview, development server and Firefox builds compile them to CSS.

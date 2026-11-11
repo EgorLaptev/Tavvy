@@ -1,4 +1,3 @@
-import { scssPlugin } from "./scss-plugin.js";
 import { context } from "esbuild";
 
 const js = await context({
@@ -10,7 +9,6 @@ const js = await context({
 });
 const css = await context({
     entryPoints: ["styles/preview.css"],
-    plugins: [scssPlugin],
     loader: { ".png": "file" },
     external: ["resource://*"],
     bundle: true,
