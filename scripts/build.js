@@ -1,3 +1,4 @@
+import { scssPlugin } from "./scss-plugin.js";
 import { build } from "esbuild";
 await build({
     entryPoints: ["src/app.js"],
@@ -10,6 +11,7 @@ await build({
 });
 await build({
     entryPoints: ["styles/preview.css"],
+    plugins: [scssPlugin],
     loader: { ".png": "file" },
     external: ["resource://*"],
     bundle: true,

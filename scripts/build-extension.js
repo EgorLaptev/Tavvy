@@ -1,3 +1,4 @@
+import { scssPlugin } from "./scss-plugin.js";
 import { build } from "esbuild";
 import {
     mkdir,
@@ -41,6 +42,7 @@ await build({
 });
 await build({
     entryPoints: ["styles/index.css"],
+    plugins: [scssPlugin],
     bundle: true,
     outfile: `${out}/popup.css`,
     loader: { ".png": "file" },

@@ -9,6 +9,7 @@ const group = (groupName, properties) => ({
 export default {
     extends: ["stylelint-config-recommended"],
     plugins: ["stylelint-order"],
+    overrides: [{ files: ["**/*.scss"], customSyntax: "postcss-scss" }],
     rules: {
         "color-hex-length": ["short", { severity: "warning" }],
         "color-named": [

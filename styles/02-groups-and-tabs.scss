@@ -25,12 +25,12 @@ button.group-header {
     color: #555;
 
     cursor: default;
-}
 
-.tabs .empty:hover {
-    color: #555;
+    &:hover {
+        color: #555;
 
-    background: transparent;
+        background: transparent;
+    }
 }
 
 .tabs {
