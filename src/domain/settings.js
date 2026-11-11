@@ -28,11 +28,13 @@ export const THEMES = Object.freeze([
     "Как в системе",
     "Стандартная",
 ]);
+
 function clamp(value, fallback, min, max) {
     return typeof value === "number" && Number.isFinite(value)
         ? Math.min(max, Math.max(min, value))
         : fallback;
 }
+
 export function validBackupFolder(value) {
     if (
         typeof value !== "string" ||
@@ -41,6 +43,7 @@ export function validBackupFolder(value) {
         value.includes("\\")
     )
         return false;
+
     return value
         .split("/")
         .every(
@@ -52,11 +55,13 @@ export function validBackupFolder(value) {
                 !/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part),
         );
 }
+
 /** Firefox never shows an extension popup taller than 600 px. */
 export const MAX_POPUP_HEIGHT = 600;
 
 export function normalizeSettings(input) {
     const value = input && typeof input === "object" ? input : {};
+
     return {
         theme: THEMES.includes(value.theme)
             ? value.theme

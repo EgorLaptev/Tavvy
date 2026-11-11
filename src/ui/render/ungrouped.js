@@ -19,15 +19,21 @@ export function createUngroupedList(ctx) {
             ctx.render();
         }),
     );
+
     toggle.append(icon("m6 4 4 4-4 4", "arrow"));
+
     const header = button(t("groups.ungrouped"), "group-header", title, () =>
         toggle.click(),
     );
+
     controls.append(header, toggle);
+
     const tabs = element("div", "tabs is-closed"),
         inner = element("div", "tabs-inner");
+
     tabs.append(inner);
     node.append(controls, tabs);
+
     const view = { tabs, inner };
 
     function rows() {
@@ -39,7 +45,9 @@ export function createUngroupedList(ctx) {
         title.textContent = t("groups.ungrouped");
         header.setAttribute("aria-label", title.textContent);
         toggle.setAttribute("aria-label", t("groups.show_tabs"));
+
         const total = rows().length;
+
         if (count.textContent !== String(total))
             count.textContent = String(total);
         node.hidden = !total;
@@ -49,13 +57,17 @@ export function createUngroupedList(ctx) {
     /** Rows of the expanded card (see `createTabLists`). */
     function render(bounds, used) {
         const expanded = open && !node.hidden;
+
         toggle.setAttribute("aria-expanded", String(expanded));
         tabs.classList.toggle("is-closed", !expanded);
+
         if (!expanded) {
             inner.replaceChildren();
             tabs.style.height = "0px";
+
             return;
         }
+
         ctx.tabLists.fill(view, rows(), bounds, used);
     }
 

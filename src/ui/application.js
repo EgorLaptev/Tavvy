@@ -34,11 +34,15 @@ import { translateStatic } from "../locales/index.js";
 export async function mountApplication(api) {
     if (api.isDemo) document.documentElement.classList.add("preview-mode");
     document.documentElement.classList.add("extension-mode");
+
     const windowInfo = await api.windows.getCurrent();
     const windowId = windowInfo.id;
+
     if (windowInfo.incognito)
         throw new Error("Приватные окна пока не поддерживаются");
+
     const popup = document.querySelector(".popup");
+
     await showCompatibilityNotice(api, popup, windowId);
 
     const ctx = {
@@ -76,6 +80,7 @@ export async function mountApplication(api) {
     popup.prepend(ctx.status);
 
     const state = createViewState(ctx);
+
     ctx.beforeCommand = state.beforeCommand;
     ctx.applyResponse = state.applyResponse;
     ctx.client = createCommandClient(ctx);
@@ -98,6 +103,7 @@ export async function mountApplication(api) {
                 : undefined,
     });
     const disposeScrollbar = mountCompactScrollbar(popup);
+
     // Settings set the UI language, so everything translated below is created after this.
     mountSettings({
         ...navigation,
@@ -112,6 +118,7 @@ export async function mountApplication(api) {
     });
 
     let searchTimer;
+
     ctx.search.addEventListener("input", () => {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => animatePanelChange(ctx.render), 180);
@@ -122,6 +129,7 @@ export async function mountApplication(api) {
     ctx.groups = createGroupList(ctx);
     ctx.dragActions = createDragActions(ctx);
     ctx.tabLists = createTabLists(ctx);
+
     const liveUpdates = createLiveUpdates(ctx);
 
     window.addEventListener(

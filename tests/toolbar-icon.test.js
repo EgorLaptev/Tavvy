@@ -34,6 +34,7 @@ test("two-letter toolbar marker uses larger text", () => {
             drawn.push({ text, font: this.font, x, y, maxWidth });
         },
     };
+
     drawMarker(ctx, "group", "#fff", 100, "letters", "Work Projects Firefox");
     drawMarker(ctx, "group", "#fff", 100, "letters2", "Work Projects Firefox");
     assert.deepEqual(drawn, [
@@ -52,6 +53,7 @@ test("two-letter toolbar marker uses larger text", () => {
             maxWidth: undefined,
         },
     ]);
+
     for (const size of [16, 32, 64]) {
         drawMarker(ctx, "group", "#fff", size, "letters2", "Work Projects");
         assert.equal(drawn.at(-1).font, `600 ${size * 0.75}px sans-serif`);
@@ -70,6 +72,7 @@ test("wide letters are scaled proportionally rather than squeezed", () => {
             calls.push({ args, font: this.font });
         },
     };
+
     drawMarker(ctx, "group", "#fff", 100, "letters2", "Wide Word");
     assert.equal(calls[0].font, `600 ${(75 * 95) / 120}px sans-serif`);
     assert.deepEqual(calls[0].args, ["WW", 50, 50]);
@@ -107,6 +110,7 @@ test("no marker uses a transparent toolbar icon and restores the chosen style", 
     };
     const toolbar = createToolbarIcon(api, () => ({ getContext: () => ctx }));
     const group = { id: "a", color: "#398dff", title: "Work" };
+
     await toolbar.update(1, group);
     assert.equal(drawings, 3);
     await toolbar.setStyle("none");
@@ -148,6 +152,7 @@ test("toolbar updates are cached per window and titles follow group selection", 
     };
     const toolbar = createToolbarIcon(api, () => ({ getContext: () => ctx }));
     const group = { id: "a", color: "#398dff", title: "Работа" };
+
     await toolbar.update(1, group);
     await toolbar.update(1, group);
     assert.equal(calls.length, 2);
@@ -173,7 +178,9 @@ test("toolbar updates are cached per window and titles follow group selection", 
     );
     await toolbar.update(1, { ...group, id: "c", title: "Another group" });
     assert.equal(calls.at(-2)[1].path, "icon.svg");
+
     const beforeReenable = calls.length;
+
     await toolbar.setDynamic(true);
     assert.equal(
         calls

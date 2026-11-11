@@ -6,10 +6,13 @@ import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const script = resolve("scripts/check-commit-message.js");
+
 test("commit message hook accepts conventional subjects and rejects invalid ones", async () => {
     const dir = await mkdtemp(join(tmpdir(), "tavvy-commit-"));
+
     try {
         const path = join(dir, "message");
+
         for (const [subject, valid] of [
             ["feat: add search", true],
             ["fix(settings): save theme", true],
@@ -20,9 +23,11 @@ test("commit message hook accepts conventional subjects and rejects invalid ones
             ["unknown: add feature", false],
         ]) {
             await writeFile(path, subject + "\n\nBody\n");
+
             const result = spawnSync(process.execPath, [script, path], {
                 encoding: "utf8",
             });
+
             assert.equal(result.status === 0, valid, subject);
         }
     } finally {

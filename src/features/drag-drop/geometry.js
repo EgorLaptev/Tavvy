@@ -32,9 +32,11 @@ export function nearHeaderEdge(clientY, headerRect) {
 export function reorderThreshold(headerRect, placeholderIndex, targetIndex) {
     const midpoint = headerRect.top + headerRect.height / 2;
     const hysteresis = Math.min(8, headerRect.height / 4);
+
     if (placeholderIndex >= 0 && placeholderIndex === targetIndex - 1)
         return midpoint + hysteresis;
     if (placeholderIndex >= 0 && placeholderIndex === targetIndex + 1)
         return midpoint - hysteresis;
+
     return midpoint;
 }

@@ -10,11 +10,13 @@ const graphemeSegmenter =
     typeof Intl.Segmenter === "function"
         ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
         : null;
+
 function graphemes(value) {
     return graphemeSegmenter
         ? Array.from(graphemeSegmenter.segment(value), (item) => item.segment)
         : Array.from(value);
 }
+
 export function markerLetters(title, count = 3) {
     const text = String(title ?? "").trim();
     const words = text.match(/[\p{L}\p{N}\p{M}]+/gu) || [];
@@ -29,19 +31,25 @@ export function markerLetters(title, count = 3) {
               : graphemes(words[0] || text)
                     .slice(0, count)
                     .join("");
+
     return letters.toLocaleUpperCase();
 }
+
 export function groupMarker(id) {
     let hash = 2166136261;
+
     for (const character of String(id))
         hash = Math.imul(hash ^ character.charCodeAt(0), 16777619) >>> 0;
+
     const radii = shapes[hash % shapes.length];
+
     return {
         radii,
         rotation: hash % 90,
         borderRadius: `${radii.slice(0, 4).join("% ")}% / ${radii.slice(4).join("% ")}%`,
     };
 }
+
 export function drawMarker(
     ctx,
     id,
@@ -51,23 +59,31 @@ export function drawMarker(
     title = "",
 ) {
     if (style === "none") return;
+
     if (style === "letters" || style === "letters2") {
         ctx.save();
         ctx.fillStyle = color;
+
         const text = markerLetters(title, style === "letters2" ? 2 : 3);
         let fontSize = size * (style === "letters2" ? 0.75 : 0.42);
+
         ctx.font = `600 ${fontSize}px sans-serif`;
+
         const width = ctx.measureText(text).width;
+
         if (width > size * 0.95) {
             fontSize *= (size * 0.95) / width;
             ctx.font = `600 ${fontSize}px sans-serif`;
         }
+
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(text, size / 2, size / 2);
         ctx.restore();
+
         return;
     }
+
     const shape = groupMarker(id);
     const radii =
         style === "circle"
@@ -92,6 +108,7 @@ export function drawMarker(
         x = origin,
         y = origin,
         w = side;
+
     ctx.save();
     ctx.translate(size / 2, size / 2);
     ctx.rotate((rotation * Math.PI) / 180);

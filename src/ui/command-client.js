@@ -28,10 +28,12 @@ export function createCommandClient(ctx) {
     /** Resolves to the new snapshot or rejects with a translated error. */
     async function request(command) {
         const result = await send(command);
+
         if (!result?.ok)
             throw new Error(
                 translateText(result?.error || "Фоновый процесс недоступен"),
             );
+
         return result.snapshot;
     }
 
@@ -39,6 +41,7 @@ export function createCommandClient(ctx) {
         if (ctx.disposed) return Promise.resolve();
         if (command.type === "snapshot" && pendingSnapshot)
             return pendingSnapshot;
+
         const before = ctx.beforeCommand?.(command);
         const pending = request(command).then(
             (value) => ({ value }),
@@ -46,22 +49,27 @@ export function createCommandClient(ctx) {
         );
         const result = tail.then(async () => {
             const response = await pending;
+
             if (ctx.disposed) return;
             ctx.status.textContent = "";
             if (response.error) throw response.error;
             ctx.applyResponse(command, response.value, before);
         });
+
         tail = result.catch((error) => {
             if (ctx.disposed) return;
             ctx.status.textContent = error.message;
             ctx.render();
         });
+
         if (command.type === "snapshot") {
             pendingSnapshot = tail.finally(() => {
                 pendingSnapshot = null;
             });
+
             return pendingSnapshot;
         }
+
         return tail;
     }
 

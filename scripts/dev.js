@@ -1,4 +1,5 @@
 import { context } from "esbuild";
+
 const js = await context({
     entryPoints: ["src/app.js"],
     bundle: true,
@@ -14,6 +15,9 @@ const css = await context({
     outfile: "dist/app.css",
     sourcemap: true,
 });
+
 await Promise.all([js.watch(), css.watch()]);
+
 const server = await js.serve({ servedir: ".", port: 5173, host: "127.0.0.1" });
+
 console.log(`Tavvy: http://127.0.0.1:${server.port}`);

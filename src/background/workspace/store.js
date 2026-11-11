@@ -20,11 +20,13 @@ export function migrateWorkspace(state) {
     // Keep older archive data in backups without recording new closures.
     state.archive ??= [];
     state.spaces ??= [];
+
     for (const job of Object.values(state.imports || {}))
         if (job.complete) {
             delete job.completed;
             delete job.groupIds;
         }
+
     return state;
 }
 
@@ -62,6 +64,7 @@ export function createWorkspaceStore(storage) {
     const ready = storage.get(WORKSPACE_KEY).then(async (data) => {
         const stored = data[WORKSPACE_KEY];
         const known = await storage.get(KNOWN_KEY);
+
         // Tab records without a workspace mean the groups were lost or are unreadable.
         // Starting with defaults would let tabs be reassigned and the real data overwritten.
         if (!stored && Object.keys(known[KNOWN_KEY] || {}).length)
@@ -87,16 +90,23 @@ export function createWorkspaceStore(storage) {
 
     async function save() {
         const persisted = { ...state };
+
         delete persisted.known;
+
         const nextState = JSON.stringify(persisted);
         const changes = {};
+
         if (nextState !== savedState) changes[WORKSPACE_KEY] = persisted;
+
         let nextKnown = savedKnown;
+
         if (knownRevision !== savedKnownRevision) {
             const data = compactKnown(state.known);
+
             nextKnown = JSON.stringify(data);
             if (nextKnown !== savedKnown) changes[KNOWN_KEY] = data;
         }
+
         if (Object.keys(changes).length) await storage.set(changes);
         savedState = nextState;
         savedKnown = nextKnown;

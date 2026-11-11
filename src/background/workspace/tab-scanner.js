@@ -30,6 +30,7 @@ export function createTabScanner(ctx) {
         const pages = UTILITY_PAGES.map((name) =>
             api.runtime?.getURL?.(name),
         ).filter(Boolean);
+
         return pages.some(
             (page) =>
                 url === page ||
@@ -45,8 +46,11 @@ export function createTabScanner(ctx) {
     async function inferGroup(tab, windowGroups) {
         if (!windowGroups.has(tab.windowId))
             windowGroups.set(tab.windowId, ctx.activeGroupId(tab.windowId));
+
         const windowGroupId = await windowGroups.get(tab.windowId);
+
         if (!windowGroupId) return null;
+
         return chooseGroupForNewTab({
             groups: store.state.groups,
             windowGroupId,
@@ -56,20 +60,27 @@ export function createTabScanner(ctx) {
 
     async function readRecord(tab, validGroups, windowGroups) {
         if (pendingNewTabs.has(tab.id)) return null;
+
         if (isUtilityPage(tab.url)) {
             store.forget(tab.id);
+
             return null;
         }
+
         let groupId;
+
         try {
             groupId = await api.sessions.getTabValue(tab.id, TAB_GROUP);
         } catch {
             return null; // A tab can close while Firefox answers a query.
         }
+
         // A `null` tag marks a tab without a group; it keeps no group in every window.
         if (!validGroups.has(groupId) && groupId !== null) {
             const untagged = groupId === undefined;
+
             groupId = await inferGroup(tab, windowGroups);
+
             // A tag naming an unknown group is shown in the current group but never overwritten:
             // if the group list is ever incomplete, tabs must not be reassigned for good.
             if (untagged)
@@ -79,14 +90,18 @@ export function createTabScanner(ctx) {
                     return null;
                 }
         }
+
         let metadata;
+
         try {
             metadata = await api.sessions.getTabValue(
                 tab.id,
                 TAB_IMPORT_METADATA,
             );
         } catch {}
+
         let managedPinned = false;
+
         if (store.state.settings?.groupPinnedTabs) {
             try {
                 managedPinned =
@@ -98,6 +113,7 @@ export function createTabScanner(ctx) {
                 return null;
             }
         }
+
         const previous = store.knownTab(tab.id);
         const url = tab.pendingUrl || tab.url || "about:newtab";
         const cachedFavicon =
@@ -125,11 +141,13 @@ export function createTabScanner(ctx) {
             sharingState: tab.sharingState,
             discarded: tab.discarded,
         };
+
         store.remember(
             record,
             !previous ||
                 KNOWN_FIELDS.some((key) => previous[key] !== record[key]),
         );
+
         return record;
     }
 
@@ -142,7 +160,9 @@ export function createTabScanner(ctx) {
             Boolean(state.settings?.groupPinnedTabs) +
             ":" +
             state.groups.map((group) => group.id).join(",");
+
         if (cache && stamp === nextStamp) return cache;
+
         const nextOrderVersion = index.orderVersion;
         const validGroups = new Set(state.groups.map((group) => group.id));
         const windowGroups = new Map();
@@ -152,6 +172,7 @@ export function createTabScanner(ctx) {
                 .map((tab) => readRecord(tab, validGroups, windowGroups)),
         );
         const live = index.liveIds();
+
         for (const key of store.knownIds())
             if (!live.has(Number(key)) && !index.removed.has(Number(key)))
                 store.forget(key);
@@ -159,6 +180,7 @@ export function createTabScanner(ctx) {
         byId = new Map(cache.map((record) => [record.id, record]));
         stamp = nextStamp;
         orderVersion = nextOrderVersion;
+
         return cache;
     }
 

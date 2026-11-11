@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parseStgBackup, stgFingerprint } from "../src/domain/stg-import.js";
+
 const backup = {
     version: "5.3.2",
     groups: [
@@ -17,8 +18,10 @@ const backup = {
     ],
     pinnedTabs: [],
 };
+
 test("STG parser keeps order, repeated URLs and empty groups", () => {
     const plan = parseStgBackup(backup);
+
     assert.equal(plan.groups.length, 2);
     assert.equal(plan.groups[0].tabs.length, 2);
     assert.equal(plan.groups[1].tabs.length, 0);
@@ -51,6 +54,7 @@ test("STG parser preserves Firefox pages in groups and pinned tabs", () => {
         groups: [{ title: "Group", tabs: [{ url: "about:addons" }] }],
         pinnedTabs: [{ url: "about:config" }],
     });
+
     assert.equal(plan.groups[0].tabs[0].url, "about:addons");
     assert.equal(plan.browserPages, 2);
 });

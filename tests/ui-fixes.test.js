@@ -8,8 +8,10 @@ import { panelSize } from "../src/features/settings/appearance.js";
 function withDom(html, run) {
     const dom = new JSDOM(`<!doctype html><body>${html}</body>`);
     const saved = { document: globalThis.document, window: globalThis.window };
+
     globalThis.document = dom.window.document;
     globalThis.window = dom.window;
+
     try {
         return run(dom.window);
     } finally {
@@ -25,6 +27,7 @@ test("move targets terminate on cyclic group data", () => {
         { id: "c", parentId: null },
     ];
     const index = new Map(groups.map((group) => [group.id, group]));
+
     assert.doesNotThrow(() => groupMoveTargets(groups, index, "c"));
 });
 
@@ -37,17 +40,21 @@ test("popup height never exceeds what Firefox can show", () => {
 test("pressing inside the new-group draft does not start a group drag", async () => {
     const { bindGroupHeader, disposeGroupDrag } =
         await import("../src/features/drag-drop/group-drag.js");
+
     await withDom(
         '<div class="group-draft"><div class="group-header"><input></div></div>',
         (window) => {
             const header = window.document.querySelector(".group-header");
             let captured = false;
+
             header.setPointerCapture = () => (captured = true);
             bindGroupHeader(header, {});
+
             const event = new window.MouseEvent("pointerdown", {
                 bubbles: true,
                 button: 0,
             });
+
             window.document.querySelector("input").dispatchEvent(event);
             assert.equal(captured, false);
             disposeGroupDrag();
@@ -58,6 +65,7 @@ test("pressing inside the new-group draft does not start a group drag", async ()
 test("cancelling a drag clears the drop highlight", async () => {
     const { disposeTabDrag } =
         await import("../src/features/drag-drop/tab-drag.js");
+
     withDom('<div class="group drop-target"></div>', (window) => {
         disposeTabDrag();
         assert.equal(window.document.querySelector(".drop-target"), null);

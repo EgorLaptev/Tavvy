@@ -19,11 +19,14 @@ export function parseTavvyBackup(data) {
         (data.version === 1 && data.spaces !== undefined)
     )
         throw new Error("Повреждённый или неподдерживаемый бэкап Tavvy");
+
     const spaceIds = new Set([DEFAULT_SPACE_ID]);
     const spaces = [];
+
     if (data.spaces !== undefined) {
         if (!Array.isArray(data.spaces) || data.spaces.length > 100)
             throw new Error("Повреждены данные пространств");
+
         for (const space of data.spaces) {
             if (
                 !space ||
@@ -44,6 +47,7 @@ export function parseTavvyBackup(data) {
             });
         }
     }
+
     const ids = new Set();
     const groups = data.groups.map((g) => {
         if (
@@ -60,9 +64,12 @@ export function parseTavvyBackup(data) {
         )
             throw new Error("Повреждены данные группы");
         ids.add(g.id);
+
         const spaceId = g.spaceId || DEFAULT_SPACE_ID;
+
         if (!spaceIds.has(spaceId))
             throw new Error("Повреждены данные пространств");
+
         return {
             id: g.id,
             title: g.title.slice(0, 120),
@@ -72,9 +79,11 @@ export function parseTavvyBackup(data) {
         };
     });
     const map = new Map(groups.map((g) => [g.id, g]));
+
     for (const g of groups) {
         const seen = new Set([g.id]);
         let parent = g.parentId;
+
         while (parent !== null) {
             if (!map.has(parent) || seen.has(parent))
                 throw new Error("Повреждена вложенность групп");
@@ -82,8 +91,10 @@ export function parseTavvyBackup(data) {
             parent = map.get(parent).parentId;
         }
     }
+
     const safe =
         /^(https?:\/\/|file:\/\/|moz-extension:\/\/[0-9a-f-]{36}\/(?:[^\s]*)$|about:blank$|about:newtab$|about:[a-z0-9-]+(?:[?#][^\s]*)?$)/i;
+
     function entry(t) {
         if (
             !t ||
@@ -92,6 +103,7 @@ export function parseTavvyBackup(data) {
             !ids.has(t.groupId)
         )
             throw new Error("Повреждены данные вкладки");
+
         return {
             groupId: t.groupId,
             url: t.url,
@@ -100,6 +112,7 @@ export function parseTavvyBackup(data) {
             closedAt: Number.isFinite(t.closedAt) ? t.closedAt : Date.now(),
         };
     }
+
     return {
         groups,
         tabs: data.tabs.map(entry),

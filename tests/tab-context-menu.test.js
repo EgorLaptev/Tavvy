@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mountTabContextMenu } from "../src/background/tab-context-menu.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 10));
+
 function fixture(isEnabled = async () => true) {
     const handlers = {};
     const items = new Map();
@@ -46,10 +47,12 @@ function fixture(isEnabled = async () => true) {
     const service = {
         async dispatch(command, windowId) {
             calls.push({ command, windowId });
+
             return state;
         },
     };
     const canvases = [];
+
     const createCanvas = () => {
         const drawing = [];
         const context = {
@@ -78,9 +81,12 @@ function fixture(isEnabled = async () => true) {
             getContext: () => context,
             toDataURL: () => `data:image/png,${canvases.length}`,
         };
+
         canvases.push(canvas);
+
         return canvas;
     };
+
     const menu = mountTabContextMenu(
         { menus },
         service,
@@ -88,12 +94,14 @@ function fixture(isEnabled = async () => true) {
         createCanvas,
         isEnabled,
     );
+
     return { handlers, items, calls, state, canvases, menu };
 }
 
 test("tab context menu follows groups and moves the clicked tab in its window", async () => {
     const { handlers, items, calls, state, canvases } = fixture();
     const tab = { id: 17, windowId: 3, pinned: false };
+
     handlers.shown({ contexts: ["tab"] }, tab);
     await tick();
     assert.equal(items.get("tavvy-move-tab").title, "Перенести в группу");
@@ -131,6 +139,7 @@ test("tab context menu follows groups and moves the clicked tab in its window", 
 
 test("a closed menu is not rebuilt after its snapshot arrives", async () => {
     const { handlers, items, calls } = fixture();
+
     handlers.shown({ contexts: ["tab"] }, { id: 1, windowId: 1 });
     handlers.hidden();
     await tick();
@@ -140,6 +149,7 @@ test("a closed menu is not rebuilt after its snapshot arrives", async () => {
 
 test("tab destinations only include groups in the tab's container", async () => {
     const { handlers, items, state } = fixture();
+
     state.groups.push({
         id: "private",
         title: "Private",
@@ -160,6 +170,7 @@ test("menu markers follow the chosen style, including letters and no marker", as
     const { handlers, state, canvases } = fixture();
     const show = () =>
         handlers.shown({ contexts: ["tab"] }, { id: 1, windowId: 1 });
+
     state.settings.markerStyle = "letters2";
     show();
     await tick();
@@ -176,6 +187,7 @@ test("menu markers follow the chosen style, including letters and no marker", as
 test("context menu stays inactive before onboarding and becomes available afterward", async () => {
     let enabled = false;
     const { handlers, items, calls, menu } = fixture(async () => enabled);
+
     await tick();
     assert.equal(items.has("tavvy-move-tab"), false);
     handlers.shown({ contexts: ["tab"] }, { id: 1, windowId: 1 });

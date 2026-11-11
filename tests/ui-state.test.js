@@ -43,9 +43,11 @@ const groups = [
 ];
 const index = new Map(groups.map((group) => [group.id, group]));
 const parentOf = (id) => index.get(id)?.parentId;
+
 const isInside = (outer, inner) => {
     for (let id = parentOf(inner); id; id = parentOf(id))
         if (id === outer) return true;
+
     return false;
 };
 
@@ -68,24 +70,30 @@ test("a group is reachable only when all its ancestors are expanded", () => {
 test("the path to a group lists the group and its ancestors", () => {
     assert.deepEqual([...pathToGroup("a1", index, true)], ["a1", "a", "inbox"]);
     assert.deepEqual([...pathToGroup("a1", index, false)], ["a1"]);
+
     const cycle = new Map([
         ["x", { id: "x", parentId: "y" }],
         ["y", { id: "y", parentId: "x" }],
     ]);
+
     assert.deepEqual([...pathToGroup("x", cycle, true)], ["x", "y"]);
 });
 
 test("collapsing a subtree keeps ancestors and siblings open", () => {
     const opened = new Set(["inbox", "a", "a1", "a11", "b"]);
+
     collapseSubtree(opened, "a", parentOf);
     assert.deepEqual([...opened], ["inbox", "b"]);
+
     const flat = new Set(["inbox", "a", "a1"]);
+
     collapseSubtree(flat, "a", () => null);
     assert.deepEqual([...flat], ["inbox", "a1"]);
 });
 
 test("toggling opens one branch and closing removes descendants", () => {
     const opened = new Set(["inbox", "a", "b"]);
+
     toggleExpanded(opened, "a1", isInside);
     assert.deepEqual([...opened].sort(), ["a", "a1", "inbox"]);
     toggleExpanded(opened, "a11", isInside);
@@ -99,6 +107,7 @@ test("cards are laid out under existing parents in snapshot order", () => {
         index,
         true,
     );
+
     assert.deepEqual(Object.fromEntries(children), {
         null: ["inbox", "c", "orphan"],
         inbox: ["a", "b"],
@@ -129,6 +138,7 @@ test("container labels name missing and unavailable containers", () => {
         { id: "default", name: "None" },
         { id: "container:1", name: "Work", unavailable: true },
     ];
+
     assert.deepEqual(groupSpace(index.get("inbox"), spaces, t), {
         space: spaces[0],
         label: "<spaces.default>",
@@ -202,6 +212,7 @@ test("container choices offer reconnecting a missing container", () => {
         { id: "container:2", firefoxContainer: true, name: "Work" },
     ];
     const choices = containerChoices(spaces, index.get("c"));
+
     assert.equal(choices.current, "container:1");
     assert.deepEqual(
         choices.destinations.map(({ space, current }) => [space.id, current]),
@@ -212,7 +223,9 @@ test("container choices offer reconnecting a missing container", () => {
     );
     assert.equal(choices.missing, spaces[1]);
     assert.deepEqual(choices.reconnect, [spaces[2]]);
+
     const plain = containerChoices(spaces, index.get("a"));
+
     assert.equal(plain.current, "default");
     assert.equal(plain.destinations[0].current, true);
     assert.equal(plain.missing, null);
@@ -244,6 +257,7 @@ test("children are reordered in place and extra nodes removed", () => {
     const parent = document.querySelector("div");
     const [a, b, c] = parent.children;
     const d = document.createElement("i");
+
     reorderChildren(parent, [c, d, a]);
     assert.deepEqual([...parent.childNodes], [c, d, a]);
     assert.equal(b.isConnected, false);
@@ -265,7 +279,9 @@ test("virtual slices keep spacer heights equal to the hidden rows", () => {
         before: 0,
         after: 0,
     });
+
     const slice = virtualSlice(1000, 3000, 300);
+
     assert.equal(slice.before, slice.start * 30);
     assert.equal(slice.after, (1000 - slice.end) * 30);
     assert.ok(slice.start <= 100 && slice.end >= 110);

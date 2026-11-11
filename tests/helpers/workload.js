@@ -1,5 +1,6 @@
 import { createMemoryBrowser } from "../../src/mocks/memory-browser.js";
 import { createWorkspaceService } from "../../src/background/workspace-service.js";
+
 export function workload(count, windowCount = 1, groupCount = 2) {
     const groups = Array.from({ length: groupCount }, (_, i) => ({
         id: i ? "g" + i : "inbox",
@@ -22,25 +23,34 @@ export function workload(count, windowCount = 1, groupCount = 2) {
     }));
     const counts = {};
     const api = createMemoryBrowser({ groups, tabs });
+
     for (const namespace of ["tabs", "sessions", "storage"]) {
         const object =
             namespace === "storage" ? api.storage.local : api[namespace];
+
         for (const key of Object.keys(object)) {
             if (typeof object[key] !== "function") continue;
+
             const original = object[key];
+
             object[key] = async (...args) => {
                 const name = namespace + "." + key;
+
                 counts[name] = (counts[name] || 0) + 1;
                 if (name === "storage.set")
                     counts.serializedBytes =
                         (counts.serializedBytes || 0) +
                         Buffer.byteLength(JSON.stringify(args[0]));
+
                 return original(...args);
             };
         }
     }
+
     const service = createWorkspaceService(api);
+
     api.bind(service);
+
     return {
         api,
         service,

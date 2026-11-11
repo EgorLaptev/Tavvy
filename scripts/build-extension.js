@@ -7,7 +7,9 @@ import {
     readdir,
     unlink,
 } from "node:fs/promises";
+
 const out = "build/firefox";
+
 await mkdir(out, { recursive: true });
 await build({
     entryPoints: ["src/background/index.js"],
@@ -47,6 +49,7 @@ await build({
     minify: true,
     legalComments: "eof",
 });
+
 const html = (await readFile("index.html", "utf8"))
     .replace('<html lang="ru">', '<html lang="ru" class="extension-mode">')
     .replace(
@@ -58,14 +61,18 @@ const html = (await readFile("index.html", "utf8"))
         '<script src="dist/app.js">',
         '<script type="module" src="popup.js">',
     );
+
 await writeFile(`${out}/popup.html`, html);
+
 const settingsHtml = html
     .replace('class="extension-mode"', 'class="extension-mode settings-page"')
     .replace(
         "<title>Tabs Group</title>",
         '<title>Tavvy — Settings</title>\n    <link rel="icon" type="image/svg+xml" href="icon.svg">',
     );
+
 await writeFile(`${out}/settings.html`, settingsHtml);
+
 for (const file of ["settings-preview.html", "settings-preview.js"]) {
     try {
         await unlink(`${out}/${file}`);
@@ -73,6 +80,7 @@ for (const file of ["settings-preview.html", "settings-preview.js"]) {
         if (error.code !== "ENOENT") throw error;
     }
 }
+
 await copyFile("extension/manifest.json", `${out}/manifest.json`);
 await copyFile("extension/icon.svg", `${out}/icon.svg`);
 console.log(`Firefox extension: ${out}/manifest.json`);
@@ -99,11 +107,14 @@ await build({
     minify: true,
     legalComments: "eof",
 });
+
 for (const file of ["import.html", "local-file.html"]) {
     const page = await readFile(`extension/${file}`, "utf8");
+
     await writeFile(
         `${out}/${file}`,
         page.replace('<script src="', '<script type="module" src="'),
     );
 }
+
 await copyFile("extension/import.css", `${out}/import.css`);

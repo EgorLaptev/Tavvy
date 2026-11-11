@@ -12,6 +12,7 @@ const iconPath = (name) => TAB_STATUS_ICONS.find(([key]) => key === name)[1];
 export function renderTabStatus(container, tab, run) {
     const states = tabStatusNames(tab);
     const signature = states.join(",") + ":" + getLanguage();
+
     if (container.dataset.status === signature) return;
     container.dataset.status = signature;
     container.replaceChildren(
@@ -22,7 +23,9 @@ export function renderTabStatus(container, tab, run) {
                 interactive ? "button" : "span",
                 "tab-status-icon",
             );
+
             indicator.dataset.status = name;
+
             if (interactive) {
                 indicator.type = "button";
                 indicator.title = t(
@@ -43,8 +46,10 @@ export function renderTabStatus(container, tab, run) {
                 indicator.title = t(`tabs.status.${name}`);
                 indicator.setAttribute("role", "img");
             }
+
             indicator.setAttribute("aria-label", indicator.title);
             indicator.append(icon(iconPath(name)));
+
             return indicator;
         }),
     );
@@ -52,16 +57,19 @@ export function renderTabStatus(container, tab, run) {
 
 export function renderGroupStatus(container, bits) {
     const signature = `${bits}:${getLanguage()}`;
+
     if (container.dataset.status === signature) return;
     container.dataset.status = signature;
     container.replaceChildren(
         ...groupStatusNames(bits).map((name) => {
             const indicator = element("span", "tab-status-icon");
+
             indicator.dataset.status = name;
             indicator.title = t(`tabs.status.${name}`);
             indicator.setAttribute("role", "img");
             indicator.setAttribute("aria-label", indicator.title);
             indicator.append(icon(iconPath(name)));
+
             return indicator;
         }),
     );

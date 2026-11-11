@@ -78,6 +78,7 @@ export function createWorkspaceService(
                 );
         },
     };
+
     for (const create of [
         createContainers,
         createWindowState,
@@ -105,10 +106,13 @@ export function createWorkspaceService(
     async function execute(command, windowId) {
         if (!Number.isInteger(windowId))
             throw new Error("Не указано окно Firefox");
+
         const handler = Object.hasOwn(handlers, command.type)
             ? handlers[command.type]
             : null;
+
         if (!handler) throw new Error("Неизвестная команда");
+
         return (await handler(command, windowId)) ?? ctx.snapshot(windowId);
     }
 
@@ -122,13 +126,16 @@ export function createWorkspaceService(
             ctx.queue(async () => {
                 try {
                     const result = await execute(command, windowId);
+
                     if (command.type === "exportBackup")
                         return structuredClone(result);
+
                     if (command.type !== "snapshot") {
                         revision++;
                         ctx.markObserved();
                         await store.save();
                     }
+
                     return structuredClone({
                         ...result,
                         revision,

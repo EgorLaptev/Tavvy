@@ -29,6 +29,7 @@ export function createReconciler(ctx) {
             visibleGroups: ctx.visibleGroups(currentGroupId),
             selectedTab,
         });
+
         if (decision.moveTabTo) {
             await api.sessions.setTabValue(
                 selectedTab.id,
@@ -37,6 +38,7 @@ export function createReconciler(ctx) {
             );
             records = await ctx.scan();
         }
+
         // Remember a switch the user made in Firefox (not the first group of a brand-new window).
         await ctx.setActiveGroupId(
             windowId,
@@ -60,26 +62,33 @@ export function createReconciler(ctx) {
      */
     function attached(tabId, windowId) {
         if (ctx.relocatingTabs.delete(tabId)) return Promise.resolve();
+
         return ctx.queue(async () => {
             const tab = await browserApi.tabs.get(tabId).catch(() => null);
+
             if (
                 !tab ||
                 tab.incognito ||
                 (tab.pinned && !store.state.settings?.groupPinnedTabs)
             )
                 return;
+
             const windowGroupId = await ctx.storedGroupId(windowId);
+
             if (!windowGroupId) {
                 if (windowGroupId === undefined)
                     await ctx.setActiveGroupId(windowId, null);
                 await api.sessions.setTabValue(tabId, TAB_GROUP, null);
+
                 return;
             }
+
             const groupId = chooseGroupForNewTab({
                 groups: store.state.groups,
                 windowGroupId,
                 tabSpaceId: ctx.spaceIdForCookieStore(tab.cookieStoreId),
             });
+
             await api.sessions.setTabValue(tabId, TAB_GROUP, groupId);
         });
     }
@@ -90,7 +99,9 @@ export function createReconciler(ctx) {
         refreshPending = ctx
             .queue(async () => {
                 const records = await ctx.scan();
+
                 await ctx.syncToolbar();
+
                 for (const windowId of new Set(
                     records.map((tab) => tab.windowId),
                 )) {
@@ -99,16 +110,21 @@ export function createReconciler(ctx) {
                         console.error("Tavvy window", windowId, error),
                     );
                 }
+
                 store.endFirstRun();
+
                 const changed = index.version !== observedVersion;
+
                 if (changed) ctx.bumpRevision();
                 observedVersion = index.version;
                 await store.save();
+
                 return changed;
             })
             .finally(() => {
                 refreshPending = null;
             });
+
         return refreshPending;
     }
 
@@ -121,11 +137,14 @@ export function createReconciler(ctx) {
             .queue(async () => {
                 while (pendingRemovals.size) {
                     const batch = [...pendingRemovals.keys()];
+
                     pendingRemovals.clear();
+
                     for (const id of batch) {
                         store.forget(id);
                         index.forgetRemoved(id);
                     }
+
                     ctx.bumpRevision();
                     await store.save();
                 }
@@ -133,6 +152,7 @@ export function createReconciler(ctx) {
             .finally(() => {
                 removing = null;
             });
+
         return removing;
     }
 

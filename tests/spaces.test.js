@@ -17,6 +17,7 @@ test("legacy groups stay in the default space while new groups remain separate",
         { id: "a", spaceId: "work" },
         { id: "b", spaceId: "work", parentId: "a" },
     ];
+
     assert.equal(groupSpaceId(groups[0]), DEFAULT_SPACE_ID);
     assert.deepEqual(
         groupsInSpace(groups, DEFAULT_SPACE_ID).map((group) => group.id),
@@ -54,6 +55,7 @@ test("workspace backups preserve groups nested across spaces", async () => {
         settings: {},
     };
     const parsed = parseTavvyBackup(backup);
+
     assert.deepEqual(parsed.spaces, [{ id: "work", name: "Work" }]);
     assert.equal(parsed.groups[1].spaceId, "work");
     assert.equal(

@@ -19,26 +19,35 @@ export function bindGroupDropTarget(group, { onMoveTab } = {}) {
         event.preventDefault();
         event.stopPropagation();
         group.classList.remove("drop-target");
+
         const source = draggedTab.closest(".group");
+
         if (onMoveTab) {
             tabDropHandled = true;
             onMoveTab(draggedTab, group);
+
             return;
         }
+
         // Without a handler (static markup) the DOM is updated in place.
         const destination = group.querySelector(":scope > .tabs .tabs-inner");
+
         destination.querySelector(".empty")?.remove();
         destination.append(draggedTab);
+
         if (source !== group) {
             const from = source.querySelector(
                 ":scope > .group-controls .count",
             );
             const to = group.querySelector(":scope > .group-controls .count");
+
             from.textContent = Math.max(0, Number(from.textContent) - 1);
             to.textContent = Number(to.textContent) + 1;
         }
+
         [source, group].forEach((item) => {
             const tabs = item.querySelector(":scope > .tabs");
+
             if (!tabs.classList.contains("is-closed"))
                 tabs.style.height =
                     tabs.querySelector(".tabs-inner").scrollHeight + "px";
@@ -57,22 +66,29 @@ function moveDraggedRow(parent, beforeNode) {
     const before = new Map(
         rows.map((item) => [item, item.getBoundingClientRect().top]),
     );
+
     for (const item of rows) {
         item.getAnimations?.()
             .filter((animation) => animation.id === "tab-drag-shift")
             .forEach((animation) => animation.cancel());
     }
+
     parent.insertBefore(draggedTab, beforeNode);
+
     if (previousParent !== parent) {
         for (const container of new Set([previousParent, parent])) {
             const tabs = container.closest(".tabs");
+
             if (tabs && !tabs.classList.contains("is-closed"))
                 tabs.style.height = `${container.scrollHeight}px`;
         }
     }
+
     if (document.documentElement.classList.contains("animations-off")) return;
+
     for (const item of rows) {
         const delta = before.get(item) - item.getBoundingClientRect().top;
+
         if (delta && item.animate)
             item.animate(
                 [
@@ -107,11 +123,13 @@ export function bindTabRow(row, { onMoveTab } = {}) {
         if (!draggedTab || draggedTab === row) return;
         event.preventDefault();
         event.stopPropagation();
+
         const after =
             event.clientY >
             row.getBoundingClientRect().top + row.offsetHeight / 2;
         const parent = row.parentElement;
         const beforeNode = after ? row.nextSibling : row;
+
         if (
             beforeNode === draggedTab ||
             (draggedTab.parentElement === parent &&

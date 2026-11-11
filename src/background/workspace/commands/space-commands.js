@@ -21,6 +21,7 @@ export function createSpaceCommands(ctx) {
     function newSpace(identity) {
         if (store.state.spaces.length >= MAX_SPACES)
             throw new Error("Слишком много пространств");
+
         return {
             id: ctx.newId(),
             name: identity.name,
@@ -35,6 +36,7 @@ export function createSpaceCommands(ctx) {
         const previous = await ctx.lastGroupInSpace(windowId, spaceId);
         const target =
             available.find((item) => item.id === previous) || available[0];
+
         if (target) await ctx.activate(windowId, target.id);
         else await ctx.setEmptySpaceId(windowId, spaceId);
     }
@@ -42,17 +44,21 @@ export function createSpaceCommands(ctx) {
     async function rebindSpace(command, windowId) {
         if (command.spaceId === DEFAULT_SPACE_ID)
             throw new Error("Контейнер пространства недоступен");
+
         const selected = ctx.space(command.spaceId);
         const identities = await ctx.listContainers();
+
         if (
             identities.some(
                 (identity) => identity.cookieStoreId === selected.cookieStoreId,
             )
         )
             throw new Error("Контейнер пространства уже существует");
+
         const target = identities.find(
             (identity) => identity.cookieStoreId === command.cookieStoreId,
         );
+
         if (
             !target ||
             store.state.spaces.some(
@@ -83,6 +89,7 @@ export function createSpaceCommands(ctx) {
 
     async function activateSpace(command, windowId) {
         let spaceId = command.spaceId;
+
         if (
             typeof spaceId === "string" &&
             spaceId.startsWith(UNLINKED_CONTAINER_PREFIX)
@@ -93,19 +100,26 @@ export function createSpaceCommands(ctx) {
             const identity = (await ctx.listContainers()).find(
                 (item) => item.cookieStoreId === cookieStoreId,
             );
+
             if (!identity) throw new Error("Контейнер пространства недоступен");
+
             let existing = store.state.spaces.find(
                 (item) => item.cookieStoreId === cookieStoreId,
             );
+
             if (!existing) {
                 existing = newSpace(identity);
                 store.state.spaces.push(existing);
                 await store.save();
             }
+
             spaceId = existing.id;
         }
+
         ctx.space(spaceId);
+
         const current = await ctx.activeGroupId(windowId);
+
         if (current)
             await ctx.rememberGroupInSpace(
                 windowId,
@@ -118,8 +132,10 @@ export function createSpaceCommands(ctx) {
     /** Destination space and container for `moveGroupToSpace`. */
     async function resolveDestination(spaceId) {
         const identities = await ctx.listContainers();
+
         if (spaceId === DEFAULT_SPACE_ID)
             return { space: null, identity: null };
+
         if (spaceId?.startsWith(UNLINKED_CONTAINER_PREFIX)) {
             const cookieStoreId = spaceId.slice(
                 UNLINKED_CONTAINER_PREFIX.length,
@@ -127,9 +143,12 @@ export function createSpaceCommands(ctx) {
             const identity = identities.find(
                 (item) => item.cookieStoreId === cookieStoreId,
             );
+
             if (!identity) throw new Error("Контейнер пространства недоступен");
+
             return { space: null, identity };
         }
+
         const space =
             store.state.spaces.find((item) => item.id === spaceId) || null;
         const identity =
@@ -137,7 +156,9 @@ export function createSpaceCommands(ctx) {
             identities.find(
                 (item) => item.cookieStoreId === space.cookieStoreId,
             );
+
         if (!identity) throw new Error("Контейнер пространства недоступен");
+
         return { space, identity };
     }
 
@@ -150,6 +171,7 @@ export function createSpaceCommands(ctx) {
         if (tab.url === "about:newtab") return undefined;
         if (isTransferableUrl(tab.url) || readPlaceholder(tab.url))
             return tab.url;
+
         return placeholderUrl(
             api.runtime.getURL("local-file.html"),
             tab.url,
@@ -164,12 +186,14 @@ export function createSpaceCommands(ctx) {
         let { space: destination, identity } = await resolveDestination(
             command.spaceId,
         );
+
         if (
             destination?.id === sourceSpace ||
             (command.spaceId === DEFAULT_SPACE_ID &&
                 sourceSpace === DEFAULT_SPACE_ID)
         )
             return ctx.snapshot(windowId);
+
         const records = await ctx.scan();
         const targets = records.filter(
             (tab) =>
@@ -179,11 +203,14 @@ export function createSpaceCommands(ctx) {
             groupsInSpace(store.state.groups, sourceSpace).find(
                 (item) => item.id !== moving.id,
             ) || findGroup(store.state.groups, INBOX_ID);
+
         if (!destination && identity) destination = newSpace(identity);
+
         const cookieStoreId = identity
             ? identity.cookieStoreId
             : "firefox-default";
         const created = [];
+
         try {
             for (const tab of targets) {
                 const url = reopenUrl(tab);
@@ -194,9 +221,11 @@ export function createSpaceCommands(ctx) {
                     ...(url ? { url } : {}),
                     cookieStoreId,
                 });
+
                 created.push({ copy, original: tab });
                 await api.sessions.setTabValue(copy.id, TAB_GROUP, tab.groupId);
             }
+
             for (const { copy, original } of created)
                 if (original.active)
                     await api.tabs.update(copy.id, { active: true });
@@ -210,6 +239,7 @@ export function createSpaceCommands(ctx) {
                 await api.tabs.remove(copy.id).catch(() => {});
             throw error;
         }
+
         // Global pinned tabs stay in their container, so they move to a group that remains there.
         if (!groupPinned())
             for (const tab of records.filter(

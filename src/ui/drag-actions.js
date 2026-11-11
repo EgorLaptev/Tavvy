@@ -7,8 +7,11 @@ export function createDragActions(ctx) {
         // A dragged group is collapsed together with everything expanded inside it.
         onStartGroupDrag: (node) => {
             const groupId = node.dataset.groupId;
+
             if (!ctx.opened.has(groupId)) return;
+
             const nested = ctx.snapshot.settings.nestedGroups !== false;
+
             collapseSubtree(ctx.opened, groupId, (id) =>
                 nested ? ctx.viewIndex.groups.get(id)?.parentId : null,
             );
@@ -29,10 +32,12 @@ export function createDragActions(ctx) {
         onMoveTab: (row, group) => {
             // Dropped outside a group card (or on "No group"): put the row back.
             if (!group?.dataset.groupId) return ctx.render();
+
             const tab = ctx.viewIndex.tabs.get(Number(row.dataset.tabId));
             const next = ctx.viewIndex.tabs.get(
                 Number(row.nextElementSibling?.dataset.tabId),
             );
+
             return ctx.run({
                 type: "moveTab",
                 tabId: Number(row.dataset.tabId),

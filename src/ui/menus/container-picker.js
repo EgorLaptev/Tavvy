@@ -18,6 +18,7 @@ export function createContainerPicker(ctx) {
             true,
             menu.submenu,
         );
+
         back.prepend(icon("m10 3-5 5 5 5", "group-context-root-icon"));
     }
 
@@ -50,23 +51,30 @@ export function createContainerPicker(ctx) {
     /** Requests the optional permission; only called when the snapshot reports it missing. */
     async function requestPermission() {
         let granted = false;
+
         try {
             granted = !!(await api.permissions?.request({
                 permissions: ["cookies"],
             }));
         } catch {}
+
         if (!granted) {
             menu.close();
             ctx.status.textContent = t("spaces.permission");
+
             return false;
         }
+
         await ctx.run({ type: "snapshot" });
         if (ctx.disposed) return false;
+
         if (!ctx.snapshot.spacePermission) {
             menu.close();
             ctx.status.textContent = t("spaces.permission");
+
             return false;
         }
+
         return true;
     }
 
@@ -75,8 +83,11 @@ export function createContainerPicker(ctx) {
         if (!ctx.snapshot.spacePermission && !(await requestPermission()))
             return;
         if (!trigger.isConnected) return;
+
         const group = ctx.viewIndex.groups.get(groupId);
+
         if (!group) return;
+
         const { current, destinations, missing, reconnect } = containerChoices(
             ctx.snapshot.spaces,
             group,
@@ -96,6 +107,7 @@ export function createContainerPicker(ctx) {
                 },
             }),
         );
+
         if (missing) {
             entries.push({
                 label: `${missing.name} — ${t("spaces.container_unavailable")}`,
@@ -116,6 +128,7 @@ export function createContainerPicker(ctx) {
                         }),
                 });
         }
+
         if (returning) menu.closeSubmenu();
         menu.showSubmenu(trigger, entries);
     }

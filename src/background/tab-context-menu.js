@@ -22,6 +22,7 @@ export function mountTabContextMenu(
     let destinations = new Map();
     // Firefox preserves menu items between background restarts; rebuild our menu once.
     let rootCreated = false;
+
     async function ensureRoot() {
         if (!rootCreated && (await isEnabled())) {
             api.menus.create({
@@ -32,27 +33,37 @@ export function mountTabContextMenu(
             rootCreated = true;
         }
     }
+
     const initialized = api.menus.removeAll().then(ensureRoot);
     let updateQueue = initialized;
+
     function enable() {
         updateQueue = updateQueue.catch(console.error).then(ensureRoot);
+
         return updateQueue;
     }
+
     api.menus.onHidden.addListener(() => {
         generation++;
     });
     api.menus.onShown.addListener((info, tab) => {
         if (!info.contexts.includes("tab") || !tab || tab.incognito) return;
+
         const current = ++generation;
+
         updateQueue = updateQueue.catch(console.error).then(async () => {
             if (!(await isEnabled())) return;
             await ensureRoot();
+
             const snapshot = await service.dispatch(
                 { type: "snapshot" },
                 tab.windowId,
             );
+
             if (generation !== current) return;
+
             const locale = locales[snapshot.settings.language] || en;
+
             await api.menus.update(rootId, {
                 title: locale.groups.move_tab_to_group,
                 enabled: !(tab.pinned && !snapshot.settings.groupPinnedTabs),
@@ -62,6 +73,7 @@ export function mountTabContextMenu(
             childIds = [];
             destinations = new Map();
             if (generation !== current) return;
+
             const sourceGroup = snapshot.groups.find(
                 (group) =>
                     group.id ===
@@ -71,6 +83,7 @@ export function mountTabContextMenu(
             const available = snapshot.groups.filter(
                 (group) => (group.spaceId || "default") === sourceSpace,
             );
+
             for (const [index, group] of available.entries()) {
                 const id = `${rootId}-${index}`;
                 const title =
@@ -78,6 +91,7 @@ export function mountTabContextMenu(
                         ? locale.groups.main
                         : group.title;
                 const canvas = createCanvas();
+
                 canvas.width = canvas.height = 32;
                 drawMarker(
                     canvas.getContext("2d"),
@@ -98,12 +112,14 @@ export function mountTabContextMenu(
                 childIds.push(id);
                 destinations.set(id, group.id);
             }
+
             if (generation === current) await api.menus.refresh();
         });
         updateQueue.catch(console.error);
     });
     api.menus.onClicked.addListener((info, tab) => {
         const groupId = destinations.get(info.menuItemId);
+
         if (
             !groupId ||
             !tab ||
@@ -132,5 +148,6 @@ export function mountTabContextMenu(
             .catch(console.error);
     });
     initialized.catch(console.error);
+
     return { enable };
 }

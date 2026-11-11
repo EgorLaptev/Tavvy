@@ -3,6 +3,7 @@ try {
     const size = JSON.parse(
         localStorage.getItem("tavvy:popup-size:v1") || "null",
     );
+
     if (size && Number.isFinite(size.width) && Number.isFinite(size.height)) {
         document.documentElement.style.setProperty(
             "--panel-width",

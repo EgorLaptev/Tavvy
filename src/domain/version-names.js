@@ -22,5 +22,6 @@ export const VERSION_NAMES = Object.freeze({
 
 export function versionLabel(version) {
     const name = VERSION_NAMES[version];
+
     return name ? `${version} · ${name}` : version;
 }

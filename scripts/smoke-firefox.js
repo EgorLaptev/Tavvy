@@ -3,9 +3,12 @@ import { cp, readFile, writeFile, mkdir } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { build } from "esbuild";
 import path from "node:path";
+
 const dir = path.resolve(`build/smoke-${Date.now()}`);
+
 await mkdir(dir, { recursive: true });
 await cp("build/firefox", dir, { recursive: true });
+
 let resolveReport;
 const report = new Promise((resolve) => (resolveReport = resolve));
 const server = createServer((req, res) => {
@@ -20,18 +23,24 @@ const server = createServer((req, res) => {
                 "base64",
             ),
         );
+
         return;
     }
+
     if (req.method === "GET") {
         res.writeHead(200, { "Content-Type": "text/html" });
         res.end("<!doctype html><title>Tavvy smoke tab</title>Tab");
+
         return;
     }
+
     let body = "";
+
     req.on("data", (chunk) => (body += chunk));
     req.on("end", () => {
         res.writeHead(200, { "Access-Control-Allow-Origin": "*" });
         res.end("ok");
+
         try {
             resolveReport(JSON.parse(body));
         } catch {
@@ -39,9 +48,12 @@ const server = createServer((req, res) => {
         }
     });
 });
+
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+
 const port = server.address().port;
 const manifest = JSON.parse(await readFile(`${dir}/manifest.json`, "utf8"));
+
 manifest.host_permissions = ["http://127.0.0.1/*"];
 // The isolated smoke profile grants the optional container permission for testing.
 manifest.permissions.push("cookies");
@@ -353,11 +365,13 @@ await writeFile(
     `${dir}/stress.html`,
     '<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="popup.css"><body><script src="stress.js"></script>',
 );
+
 // Reuse the application shell so stress checks run the production renderer in Firefox.
 const shell = (await readFile(`${dir}/popup.html`, "utf8")).replace(
     "popup.js",
     "stress.js",
 );
+
 await writeFile(`${dir}/stress.html`, shell);
 await build({
     entryPoints: ["tests/browser/stress-page.js"],
@@ -365,6 +379,7 @@ await build({
     outfile: `${dir}/stress.js`,
     target: "firefox140",
 });
+
 const args = [
     "node_modules/web-ext/bin/web-ext.js",
     "run",
@@ -377,22 +392,29 @@ const args = [
     "--start-url",
     "about:blank",
 ];
+
 if (process.env.FIREFOX_BINARY)
     args.push("--firefox", process.env.FIREFOX_BINARY);
+
 const child = spawn(process.execPath, args, {
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true,
 });
+
 child.stdout.on("data", (chunk) => process.stdout.write(chunk));
 child.stderr.on("data", (chunk) => process.stderr.write(chunk));
+
 const timeout = setTimeout(
     () => resolveReport({ ok: false, error: "Firefox smoke timed out" }),
     55000,
 );
+
 child.on("error", (error) =>
     resolveReport({ ok: false, error: error.message }),
 );
+
 const result = await report;
+
 clearTimeout(timeout);
 console.log(JSON.stringify(result, null, 2));
 server.close();

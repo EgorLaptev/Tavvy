@@ -13,8 +13,10 @@ import { isInternalPage } from "./urls.js";
  */
 export function chooseGroupForNewTab({ groups, windowGroupId, tabSpaceId }) {
     const windowSpaceId = groupSpaceId(findGroup(groups, windowGroupId));
+
     if (tabSpaceId === windowSpaceId || tabSpaceId === DEFAULT_SPACE_ID)
         return windowGroupId;
+
     return groupsInSpace(groups, tabSpaceId)[0]?.id || windowGroupId;
 }
 
@@ -35,5 +37,6 @@ export function resolveSelection({
         return { groupId: currentGroupId };
     if (isInternalPage(selectedTab.url))
         return { groupId: currentGroupId, moveTabTo: currentGroupId };
+
     return { groupId: selectedTab.groupId };
 }

@@ -43,11 +43,13 @@ export function createNewTabHandler(ctx) {
 
     function firstAddress(watch) {
         if (watch.url !== "about:blank") return watch.url;
+
         return new Promise((resolve) => {
             const timer = setTimeout(
                 () => resolve(watch.url),
                 FIRST_ADDRESS_WAIT_MS,
             );
+
             watch.notify = () => {
                 clearTimeout(timer);
                 resolve(watch.url);
@@ -58,6 +60,7 @@ export function createNewTabHandler(ctx) {
     /** Opens `url` (or an empty page) in the group's container in place of `tab`. */
     async function reopenInContainer(tab, groupId, container, url) {
         let replacement;
+
         try {
             replacement = await browserApi.tabs.create({
                 windowId: tab.windowId,
@@ -72,7 +75,9 @@ export function createNewTabHandler(ctx) {
             if (replacement) await ctx.closeTab(replacement.id).catch(() => {});
             throw error;
         }
+
         const original = await browserApi.tabs.get(tab.id).catch(() => null);
+
         // The user may have typed an address into the empty tab while the replacement opened.
         if (
             !url &&
@@ -81,20 +86,28 @@ export function createNewTabHandler(ctx) {
         ) {
             await api.tabs.update(tab.id, { active: true }).catch(() => {});
             await ctx.closeTab(replacement.id).catch(() => {});
+
             return;
         }
+
         if (original) await ctx.closeTab(tab.id);
     }
 
     async function handle(tab, watch) {
         await store.ready;
         if (await browserApi.sessions.getTabValue(tab.id, TAB_GROUP)) return;
+
         const groupId = await ctx.activeGroupId(tab.windowId);
+
         if (!groupId) return;
+
         const group = findGroup(store.state.groups, groupId);
+
         if (groupSpaceId(group) === DEFAULT_SPACE_ID) return;
+
         const container = await ctx.tabOptionsForGroup(group);
         const url = await firstAddress(watch);
+
         if (NEW_TAB_PAGE.test(url))
             await reopenInContainer(tab, groupId, container, undefined);
         else if (WEB_PAGE.test(url))
@@ -103,10 +116,13 @@ export function createNewTabHandler(ctx) {
 
     function created(tab) {
         if (!isUnclaimedNewTab(tab)) return Promise.resolve();
+
         const watch = { url: tab.url || "about:blank", notify: null };
+
         watching.set(tab.id, watch);
         // Hidden from scans until decided, so the tab cannot switch the window's group meanwhile.
         ctx.pendingNewTabs.add(tab.id);
+
         return handle(tab, watch).finally(() => {
             watching.delete(tab.id);
             ctx.pendingNewTabs.delete(tab.id);
@@ -117,6 +133,7 @@ export function createNewTabHandler(ctx) {
     /** Forwards Firefox's `tabs.onUpdated` URL changes for tabs that are still undecided. */
     function updated(tabId, changes) {
         const watch = watching.get(tabId);
+
         if (!watch || !changes.url || changes.url === "about:blank") return;
         watch.url = changes.url;
         watch.notify?.();

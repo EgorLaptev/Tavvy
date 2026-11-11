@@ -6,6 +6,7 @@ const backup = {
     version: "5",
     groups: [{ title: "Group", tabs: [{ url: "https://example.org" }] }],
 };
+
 function fixture({ failBackup = false, failImport = false } = {}) {
     const calls = [];
     const browser = {
@@ -15,6 +16,7 @@ function fixture({ failBackup = false, failImport = false } = {}) {
         dispatch: async (command) => {
             calls.push([command.type]);
             if (failImport) throw new Error("import failed");
+
             return { importReport: {} };
         },
     };
@@ -24,23 +26,27 @@ function fixture({ failBackup = false, failImport = false } = {}) {
             if (failBackup) throw new Error("backup failed");
         },
     };
+
     return { restore: createRestoreManager(browser, service, backups), calls };
 }
 
 test("restore saves a fresh backup before importing", async () => {
     const { restore, calls } = fixture();
+
     await restore({ type: "importStg", backup }, 7);
     assert.deepEqual(calls, [["backup", 7, { fresh: true }], ["importStg"]]);
 });
 
 test("a failed backup prevents the import from changing anything", async () => {
     const { restore, calls } = fixture({ failBackup: true });
+
     await assert.rejects(restore({ type: "importStg", backup }, 7));
     assert.deepEqual(calls, [["backup", 7, { fresh: true }]]);
 });
 
 test("a failed import is reported", async () => {
     const { restore } = fixture({ failImport: true });
+
     await assert.rejects(
         restore({ type: "importStg", backup }, 7),
         /import failed/,
@@ -49,6 +55,7 @@ test("a failed import is reported", async () => {
 
 test("invalid backup is rejected before saving or modifying tabs", async () => {
     const { restore, calls } = fixture();
+
     await assert.rejects(restore({ type: "importStg", backup: {} }, 7));
     await assert.rejects(
         restore(
@@ -68,6 +75,7 @@ test("restores run one after another", async () => {
             order.push("start " + command.id);
             if (command.id === 1) await gate;
             order.push("end " + command.id);
+
             return {};
         },
     };
@@ -76,6 +84,7 @@ test("restores run one after another", async () => {
     });
     const first = restore({ type: "importStg", backup, id: 1 }, 1);
     const second = restore({ type: "importStg", backup, id: 2 }, 1);
+
     await new Promise((resolve) => setTimeout(resolve, 10));
     release();
     await Promise.all([first, second]);

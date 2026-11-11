@@ -7,11 +7,13 @@
 export function groupDepth(group, index) {
     let depth = 0;
     const seen = new Set();
+
     while (group?.parentId && !seen.has(group.id)) {
         seen.add(group.id);
         group = index.get(group.parentId);
         depth++;
     }
+
     return depth;
 }
 
@@ -22,9 +24,12 @@ export function groupDepth(group, index) {
 export function groupMoveTargets(groups, index, groupId) {
     const current = index.get(groupId);
     const level = groupDepth(current, index);
+
     return groups.filter((candidate) => {
         if (groupDepth(candidate, index) !== level) return false;
+
         const seen = new Set();
+
         for (
             let item = candidate;
             item && !seen.has(item.id);
@@ -33,6 +38,7 @@ export function groupMoveTargets(groups, index, groupId) {
             if (item.id === groupId) return false;
             seen.add(item.id);
         }
+
         return candidate.id !== current.parentId;
     });
 }
@@ -40,6 +46,7 @@ export function groupMoveTargets(groups, index, groupId) {
 /** Groups a tab can move to: any other group that uses the same container. */
 export function tabMoveTargets(groups, index, tab) {
     const space = index.get(tab.groupId)?.spaceId || "default";
+
     return groups.filter(
         (item) =>
             item.id !== tab.groupId && (item.spaceId || "default") === space,
@@ -61,5 +68,6 @@ export function containerChoices(spaces, group) {
     const reconnect = missing
         ? spaces.filter((space) => space.firefoxContainer)
         : [];
+
     return { current, destinations, missing, reconnect };
 }

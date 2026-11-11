@@ -6,8 +6,10 @@ import { t } from "../../locales/index.js";
 
 function spacer(height) {
     const node = element("div", "tab-spacer");
+
     node.style.height = height + "px";
     node.setAttribute("aria-hidden", "true");
+
     return node;
 }
 
@@ -24,11 +26,14 @@ export function createTabLists(ctx) {
         const offset = bounds.top - view.inner.getBoundingClientRect().top;
         const slice = virtualSlice(rows.length, offset, container.clientHeight);
         const desired = [];
+
         if (slice.start) desired.push(spacer(slice.before));
+
         for (const tab of rows.slice(slice.start, slice.end)) {
             desired.push(ctx.tabRows.rowFor(tab));
             used.add(tab.id);
         }
+
         if (slice.end < rows.length) desired.push(spacer(slice.after));
         if (!rows.length)
             desired.push(element("div", "empty", t("tabs.no_tabs")));
@@ -38,29 +43,37 @@ export function createTabLists(ctx) {
 
     function render() {
         if (ctx.disposed || !ctx.filterResult) return;
+
         const { snapshot, viewIndex, filterResult, opened, groupViews } = ctx;
         const used = new Set(),
             bounds = container.getBoundingClientRect();
         const nested = snapshot.settings.nestedGroups !== false;
+
         for (const [id, view] of groupViews)
             view.toggle.setAttribute("aria-expanded", String(opened.has(id)));
+
         for (const group of snapshot.groups) {
             const view = groupViews.get(group.id),
                 isOpen = opened.has(group.id),
                 reachable =
                     expandedPath(group, opened, viewIndex.groups, nested) &&
                     filterResult.visible.has(group.id);
+
             view.toggle.setAttribute("aria-expanded", String(isOpen));
             view.tabs.classList.toggle("is-closed", !isOpen);
+
             if (!isOpen || !reachable) {
                 view.inner.replaceChildren();
                 view.tabs.style.height = "0px";
                 continue;
             }
+
             fill(view, filterResult.rows(group.id), bounds, used);
         }
+
         ctx.ungrouped.render(bounds, used);
         ctx.tabRows.prune(used);
+
         // Bind drag handling only when cards or rows were created, not on every scroll frame.
         if (ctx.dragTargetsDirty) {
             ctx.dragTargetsDirty = false;
@@ -76,6 +89,7 @@ export function createTabLists(ctx) {
             render();
         });
     }
+
     container.addEventListener("scroll", onScroll, { passive: true });
 
     return {

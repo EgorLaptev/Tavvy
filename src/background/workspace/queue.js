@@ -4,9 +4,12 @@
  */
 export function createSerialQueue(before) {
     let tail = Promise.resolve();
+
     return (task) => {
         const result = tail.then(before).then(task);
+
         tail = result.catch(() => {});
+
         return result;
     };
 }

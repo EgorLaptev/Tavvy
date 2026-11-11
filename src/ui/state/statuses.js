@@ -23,6 +23,7 @@ export function tabStatusNames(tab) {
         muted: tab.muted,
         ...tab.sharingState,
     };
+
     return TAB_STATUS_ICONS.filter(([name]) => active[name]).map(
         ([name]) => name,
     );

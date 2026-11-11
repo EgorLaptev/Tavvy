@@ -10,10 +10,12 @@ test("wheel scrolling is smooth on every popup screen and respects disabled anim
         pretendToBeVisual: true,
     });
     const { window } = dom;
+
     window.structuredClone = structuredClone;
     window.matchMedia = () => ({ matches: false, addEventListener() {} });
     window.eval(await readFile("dist/app.js", "utf8"));
     await new Promise((resolve) => setTimeout(resolve, 30));
+
     for (const selector of [
         ".groups",
         ".settings-view",
@@ -21,6 +23,7 @@ test("wheel scrolling is smooth on every popup screen and respects disabled anim
         ".backup-view",
     ]) {
         const el = window.document.querySelector(selector);
+
         Object.defineProperty(el, "scrollHeight", {
             configurable: true,
             value: 500,
@@ -29,22 +32,27 @@ test("wheel scrolling is smooth on every popup screen and respects disabled anim
             configurable: true,
             value: 100,
         });
+
         const event = new window.WheelEvent("wheel", {
             deltaY: 100,
             bubbles: true,
             cancelable: true,
         });
+
         el.dispatchEvent(event);
         assert.equal(event.defaultPrevented, true, selector);
         await new Promise((resolve) => setTimeout(resolve, 35));
         assert.ok(el.scrollTop > 0 && el.scrollTop < 100, selector);
     }
+
     window.document.documentElement.classList.add("animations-off");
+
     const event = new window.WheelEvent("wheel", {
         deltaY: 100,
         bubbles: true,
         cancelable: true,
     });
+
     window.document.querySelector(".groups").dispatchEvent(event);
     assert.equal(event.defaultPrevented, false);
     window.dispatchEvent(new window.PageTransitionEvent("pagehide"));

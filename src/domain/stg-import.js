@@ -8,8 +8,10 @@ export function parseStgBackup(input) {
     )
         throw new Error("Не найден бэкап Simple Tab Groups");
     if (input.groups.length > 1000) throw new Error("Слишком много групп");
+
     let total = 0;
     const seen = new Set();
+
     function tab(value) {
         if (
             !value ||
@@ -20,6 +22,7 @@ export function parseStgBackup(input) {
         )
             throw new Error("В бэкапе есть неподдерживаемая ссылка");
         if (++total > 10000) throw new Error("Слишком много вкладок");
+
         return {
             url: value.url,
             title:
@@ -33,6 +36,7 @@ export function parseStgBackup(input) {
                     : "",
         };
     }
+
     const groups = input.groups.map((value, index) => {
         if (
             !value ||
@@ -41,7 +45,9 @@ export function parseStgBackup(input) {
             !value.title.trim()
         )
             throw new Error("Повреждены данные группы");
+
         const sourceId = String(value.id ?? index);
+
         if (
             sourceId.length > 100 ||
             ["__proto__", "constructor", "prototype"].includes(sourceId)
@@ -49,6 +55,7 @@ export function parseStgBackup(input) {
             throw new Error("Недопустимый ID группы");
         if (seen.has(sourceId)) throw new Error("Повторяющийся ID группы");
         seen.add(sourceId);
+
         const color =
             typeof value.iconColor === "string" &&
             /^(#[\da-f]{3,8}|hsla?\([\d.,%\s]+\)|rgba?\([\d.,%\s]+\))$/i.test(
@@ -56,6 +63,7 @@ export function parseStgBackup(input) {
             )
                 ? value.iconColor
                 : "#398dff";
+
         return {
             sourceId,
             title: value.title.trim().slice(0, 120),
@@ -63,9 +71,12 @@ export function parseStgBackup(input) {
             tabs: value.tabs.map(tab),
         };
     });
+
     if (input.pinnedTabs && !Array.isArray(input.pinnedTabs))
         throw new Error("Повреждён список закреплённых вкладок");
+
     const pinnedTabs = (input.pinnedTabs || []).map(tab);
+
     return {
         groups,
         pinnedTabs,
@@ -79,6 +90,7 @@ export function parseStgBackup(input) {
             .filter((t) => t.url.startsWith("file:")).length,
     };
 }
+
 export async function stgFingerprint(plan) {
     const bytes = new TextEncoder().encode(
         JSON.stringify({
@@ -91,6 +103,7 @@ export async function stgFingerprint(plan) {
         }),
     );
     const hash = await crypto.subtle.digest("SHA-256", bytes);
+
     return [...new Uint8Array(hash)]
         .map((byte) => byte.toString(16).padStart(2, "0"))
         .join("");

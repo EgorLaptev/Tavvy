@@ -27,6 +27,7 @@ export function groupSpace(group, spaces, t) {
     const name = group.spaceId
         ? space?.name || group.spaceId
         : t("spaces.default");
+
     return {
         space,
         label: space?.unavailable

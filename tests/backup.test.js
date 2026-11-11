@@ -29,6 +29,7 @@ test("backup scheduling persists its first due date and records completed downlo
         downloads: {
             download: async (options) => {
                 downloads.push(options);
+
                 return 1;
             },
             search: async () => [{ state: "complete" }],
@@ -37,8 +38,11 @@ test("backup scheduling persists its first due date and records completed downlo
     const manager = createBackupManager(api, {
         dispatch: async () => ({ format: "tavvy-backup" }),
     });
+
     await manager.schedule();
+
     const first = alarms.at(-1).when;
+
     await manager.schedule();
     assert.equal(alarms.at(-1).when, first);
     await manager.download(1);
@@ -52,6 +56,7 @@ test("backup scheduling persists its first due date and records completed downlo
 
 test("backup folders stay inside downloads", () => {
     assert.equal(validBackupFolder("Tavvy/Backups"), true);
+
     for (const path of [
         "../outside",
         "/absolute",
@@ -87,6 +92,7 @@ test("backups are scheduled by default while an explicit opt-out is respected", 
         },
     };
     const manager = createBackupManager(api, {});
+
     await manager.schedule();
     assert.equal(alarms.length, 1);
     assert.ok(
@@ -118,6 +124,7 @@ test("backup validation rejects cyclic groups and executable URLs", () => {
         archive: [],
         settings: {},
     };
+
     assert.equal(parseTavvyBackup(backup).groups.length, 1);
     assert.throws(() =>
         parseTavvyBackup({
@@ -145,6 +152,7 @@ test("accent color survives backup parsing and rejects values outside the preset
         settings: { accentColor: "#38BDF8" },
     };
     const settings = parseTavvyBackup(backup).settings;
+
     assert.equal(settings.accentColor, "#38bdf8");
     assert.equal(
         normalizeSettings({ accentColor: "red; color: red" }).accentColor,
@@ -171,10 +179,12 @@ test("automatic backup removes only its completed download from history", async 
         downloads: {
             download: async () => {
                 calls.push("download");
+
                 return 42;
             },
             search: async () => {
                 calls.push("complete");
+
                 return [{ state: "complete" }];
             },
             erase: async (query) => {
@@ -185,6 +195,7 @@ test("automatic backup removes only its completed download from history", async 
     const manager = createBackupManager(api, {
         dispatch: async () => ({ format: "tavvy-backup" }),
     });
+
     await manager.runAlarm({ name: "tavvy-backup" });
     assert.deepEqual(calls, ["download", "complete", ["erase", { id: 42 }]]);
     assert.ok((await manager.status()).lastSuccess);
@@ -211,6 +222,7 @@ test("automatic backup stays successful if removing its history entry fails", as
         },
     };
     const manager = createBackupManager(api, { dispatch: async () => ({}) });
+
     await manager.download(1, { automatic: true });
     assert.ok((await manager.status()).lastSuccess);
     assert.equal((await manager.status()).error, "");
@@ -235,6 +247,7 @@ test("failed automatic backup does not erase its history entry", async () => {
         },
     };
     const manager = createBackupManager(api, { dispatch: async () => ({}) });
+
     await assert.rejects(manager.download(1, { automatic: true }));
     assert.equal(erased, false);
 });

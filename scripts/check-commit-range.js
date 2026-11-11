@@ -9,8 +9,10 @@ const output = execFileSync(
     { encoding: "utf8" },
 ).trim();
 let failed = false;
+
 for (const line of output ? output.split("\n") : []) {
     const [hash, subject] = line.split("\0");
+
     if (!isConventionalCommit(subject)) {
         console.error(
             `Invalid commit subject ${hash.slice(0, 12)}: ${subject}`,
@@ -18,4 +20,5 @@ for (const line of output ? output.split("\n") : []) {
         failed = true;
     }
 }
+
 if (failed) process.exitCode = 1;

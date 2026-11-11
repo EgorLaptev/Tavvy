@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { JSDOM } from "jsdom";
+
 const wait = () => new Promise((resolve) => setTimeout(resolve, 20));
+
 for (const succeeds of [true, false])
     test(`popup ${succeeds ? "closes on success" : "stays open on error"} after group selection`, async () => {
         const dom = new JSDOM(
@@ -15,10 +17,13 @@ for (const succeeds of [true, false])
         );
         const { window } = dom;
         let closed = 0;
+
         window.close = () => {
             closed++;
         };
+
         window.matchMedia = () => ({ matches: false, addEventListener() {} });
+
         const snapshot = {
             groups: [
                 {
@@ -39,6 +44,7 @@ for (const succeeds of [true, false])
                 position: "right",
             },
         };
+
         window.browser = {
             storage: {
                 local: {
@@ -69,6 +75,7 @@ for (const succeeds of [true, false])
                 window.document.querySelector(".extension-status").textContent,
                 "Ошибка переключения",
             );
+
         dom.window.close = () => {};
     });
 
@@ -84,10 +91,13 @@ for (const succeeds of [true, false])
         );
         const { window } = dom;
         let closed = 0;
+
         window.close = () => {
             closed++;
         };
+
         window.matchMedia = () => ({ matches: false, addEventListener() {} });
+
         const snapshot = {
             groups: [
                 {
@@ -106,6 +116,7 @@ for (const succeeds of [true, false])
                 height: 300,
             },
         };
+
         window.browser = {
             storage: {
                 local: {
@@ -134,6 +145,7 @@ for (const succeeds of [true, false])
                 window.document.querySelector(".extension-status").textContent,
                 "Settings unavailable",
             );
+
         dom.window.close = () => {};
     });
 
@@ -144,8 +156,11 @@ test("tabs without a group are listed in a separate card and open on click", asy
         pretendToBeVisual: true,
     });
     const { window } = dom;
+
     window.close = () => {};
+
     window.matchMedia = () => ({ matches: false, addEventListener() {} });
+
     const tab = (id, groupId) => ({
         id,
         windowId: 1,
@@ -177,6 +192,7 @@ test("tabs without a group are listed in a separate card and open on click", asy
         },
     };
     const sent = [];
+
     window.browser = {
         storage: {
             local: {
@@ -190,6 +206,7 @@ test("tabs without a group are listed in a separate card and open on click", asy
             onMessage: { addListener() {} },
             sendMessage: async (message) => {
                 sent.push(message.command);
+
                 return { ok: true, snapshot };
             },
         },
@@ -197,8 +214,10 @@ test("tabs without a group are listed in a separate card and open on click", asy
     };
     window.eval(await readFile("build/test/popup.js", "utf8"));
     await wait();
+
     const doc = window.document;
     const card = doc.querySelector(".groups > .ungrouped");
+
     assert.ok(card, "the card is the first one in the panel");
     assert.equal(doc.querySelector(".groups").firstElementChild, card);
     assert.equal(card.querySelector(".count").textContent, "2");
@@ -215,7 +234,9 @@ test("tabs without a group are listed in a separate card and open on click", asy
     );
     card.querySelector(".group-header").click();
     await wait();
+
     const rows = card.querySelectorAll(".tab-row");
+
     assert.deepEqual(
         [...rows].map((row) => row.dataset.tabId),
         ["1", "2"],

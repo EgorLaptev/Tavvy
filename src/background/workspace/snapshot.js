@@ -20,6 +20,7 @@ export function createSnapshots(ctx) {
     function sortedTabIds(windowId, records) {
         const groupPinnedTabs = !!store.state.settings?.groupPinnedTabs;
         let sorted = sortedWindows.get(windowId);
+
         if (
             !sorted ||
             sorted.version !== ctx.scanOrderVersion ||
@@ -46,6 +47,7 @@ export function createSnapshots(ctx) {
             };
             sortedWindows.set(windowId, sorted);
         }
+
         return sorted.ids;
     }
 
@@ -55,6 +57,7 @@ export function createSnapshots(ctx) {
                 const identity = identities.find(
                     (item) => item.cookieStoreId === cookieStoreId,
                 );
+
                 return {
                     id,
                     name: identity?.name || name,
@@ -76,6 +79,7 @@ export function createSnapshots(ctx) {
                 icon: spaceIcon(item.icon),
                 firefoxContainer: true,
             }));
+
         return [{ id: DEFAULT_SPACE_ID, name: "" }, ...linked, ...unlinked];
     }
 
@@ -92,7 +96,9 @@ export function createSnapshots(ctx) {
             : null;
         const activeSpaceId =
             (await ctx.emptySpaceId(windowId)) || groupSpaceId(activeGroup);
+
         await ctx.syncToolbar(windowId, activeGroup);
+
         return {
             revision: ctx.revision,
             groups: store.state.groups,

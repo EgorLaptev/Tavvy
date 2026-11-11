@@ -9,6 +9,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 const script = resolve("scripts/release-pr.js");
 const git = (dir, ...args) =>
     execFileSync("git", args, { cwd: dir, stdio: "pipe" });
+
 function run(dir, ...args) {
     return spawnSync(process.execPath, [script, ...args], {
         cwd: dir,
@@ -16,8 +17,10 @@ function run(dir, ...args) {
         encoding: "utf8",
     });
 }
+
 test("release PR description includes changes and preserves manual text", async () => {
     const dir = await mkdtemp(join(tmpdir(), "tavvy-pr-"));
+
     try {
         git(dir, "init", "-q");
         git(dir, "config", "user.name", "Test");
@@ -32,9 +35,13 @@ test("release PR description includes changes and preserves manual text", async 
         await writeFile(join(dir, "file.txt"), "work");
         git(dir, "add", ".");
         git(dir, "commit", "-qm", "Add feature");
+
         const initial = run(dir);
+
         assert.equal(initial.status, 0, initial.stderr);
+
         const body = await readFile(join(dir, "build", "pr-body.md"), "utf8");
+
         assert.match(body, /First change/);
         assert.match(body, /Add feature/);
         await writeFile(
@@ -45,16 +52,20 @@ test("release PR description includes changes and preserves manual text", async 
             join(dir, "CHANGELOG.md"),
             "## Unreleased\n\n- Updated change.\n",
         );
+
         const update = run(
             dir,
             "--merge-existing",
             join(dir, "build", "existing.md"),
         );
+
         assert.equal(update.status, 0, update.stderr);
+
         const updated = await readFile(
             join(dir, "build", "pr-body.md"),
             "utf8",
         );
+
         assert.match(updated, /Reviewer note/);
         assert.match(updated, /Extra note/);
         assert.match(updated, /Updated change/);

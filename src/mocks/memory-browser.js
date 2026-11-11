@@ -36,7 +36,9 @@ export function createMemoryBrowser({
             },
         ]),
     );
+
     for (const tab of tabs) sessions.set(tab.id + ":tavvy:group", tab.groupId);
+
     let service;
     const api = {
         isDemo: true,
@@ -81,12 +83,14 @@ export function createMemoryBrowser({
                         ...[...records.values()].map((tab) => tab.windowId),
                     ) + 1;
                 const tab = records.get(tabId);
+
                 if (tab)
                     Object.assign(tab, {
                         windowId: id,
                         index: 0,
                         active: true,
                     });
+
                 return { id, tabs: tab ? [{ ...tab }] : [] };
             },
             async update(id) {
@@ -105,9 +109,11 @@ export function createMemoryBrowser({
                         message.command,
                         message.windowId,
                     );
+
                     if (message.command.type !== "snapshot")
                         for (const listener of listeners)
                             listener({ channel: "tavvy", type: "changed" });
+
                     return { ok: true, snapshot };
                 } catch (error) {
                     return { ok: false, error: error.message };
@@ -126,6 +132,7 @@ export function createMemoryBrowser({
             },
             async get(id) {
                 if (!records.has(id)) throw new Error("Вкладка закрыта");
+
                 return { ...records.get(id) };
             },
             async getCurrent() {
@@ -144,11 +151,14 @@ export function createMemoryBrowser({
                     discarded: false,
                     ...options,
                 };
+
                 records.set(tab.id, tab);
+
                 return { ...tab };
             },
             async update(id, options) {
                 const tab = records.get(id);
+
                 if (options.active)
                     for (const item of records.values())
                         if (item.windowId === tab.windowId) item.active = false;
@@ -156,6 +166,7 @@ export function createMemoryBrowser({
                 if (typeof options.muted === "boolean")
                     tab.mutedInfo = { muted: options.muted };
                 if (options.active) tab.discarded = false;
+
                 return { ...tab };
             },
             async remove(id) {
@@ -166,6 +177,7 @@ export function createMemoryBrowser({
             },
             async hide(ids) {
                 for (const id of ids) records.get(id).hidden = true;
+
                 return ids;
             },
             async reload(id) {
@@ -176,10 +188,13 @@ export function createMemoryBrowser({
             },
             async move(ids, { index, windowId }) {
                 const moved = [];
+
                 for (const id of Array.isArray(ids) ? ids : [ids]) {
                     const tab = records.get(id);
+
                     if (Number.isInteger(windowId) && windowId !== tab.windowId)
                         Object.assign(tab, { windowId, active: false });
+
                     const ordered = [...records.values()]
                         .filter(
                             (item) =>
@@ -187,22 +202,27 @@ export function createMemoryBrowser({
                                 item.id !== id,
                         )
                         .sort((a, b) => a.index - b.index);
+
                     ordered.splice(index < 0 ? ordered.length : index, 0, tab);
                     ordered.forEach(
                         (item, position) => (item.index = position),
                     );
                     moved.push({ ...tab });
                 }
+
                 return Array.isArray(ids) ? moved : moved[0];
             },
         },
     };
+
     if (containers) {
         const identities = structuredClone(containers);
         let granted = settings.experimentalSpaces === true;
+
         api.permissions = {
             async request() {
                 granted = true;
+
                 return true;
             },
             async contains() {
@@ -218,38 +238,47 @@ export function createMemoryBrowser({
                     identities.map((item) => item.cookieStoreId),
                 );
                 let number = 1;
+
                 while (used.has(`firefox-container-${number}`)) number++;
+
                 const identity = {
                     name,
                     color,
                     icon,
                     cookieStoreId: `firefox-container-${number}`,
                 };
+
                 identities.push(identity);
+
                 return structuredClone(identity);
             },
             async get(cookieStoreId) {
                 const identity = identities.find(
                     (item) => item.cookieStoreId === cookieStoreId,
                 );
+
                 if (!identity)
                     throw new Error(
                         `Invalid contextual identity: ${cookieStoreId}`,
                     );
+
                 return structuredClone(identity);
             },
             async update(cookieStoreId, details) {
                 const identity = identities.find(
                     (item) => item.cookieStoreId === cookieStoreId,
                 );
+
                 if (!identity)
                     throw new Error(
                         `Invalid contextual identity: ${cookieStoreId}`,
                     );
                 Object.assign(identity, details);
+
                 return structuredClone(identity);
             },
         };
     }
+
     return api;
 }

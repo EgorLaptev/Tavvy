@@ -25,14 +25,18 @@ export function createContainers({ browserApi, store }) {
     function space(spaceId) {
         if (spaceId === DEFAULT_SPACE_ID)
             return { id: DEFAULT_SPACE_ID, name: "", cookieStoreId: null };
+
         const found = store.state.spaces.find((item) => item.id === spaceId);
+
         if (!found) throw new Error("Пространство не найдено");
+
         return found;
     }
 
     /** Firefox containers available to Tavvy (empty without the cookies permission). */
     async function listContainers() {
         if (!(await hasPermission())) return [];
+
         const identities = await browserApi.contextualIdentities.query({});
         const signature = JSON.stringify(
             identities.map(({ cookieStoreId, name, icon }) => [
@@ -41,10 +45,12 @@ export function createContainers({ browserApi, store }) {
                 icon,
             ]),
         );
+
         if (signature !== identitiesSignature) {
             identitiesSignature = signature;
             identitiesVersion++;
         }
+
         return identities.filter(
             (item) =>
                 typeof item.cookieStoreId === "string" &&
@@ -55,8 +61,11 @@ export function createContainers({ browserApi, store }) {
     /** `tabs.create` options that open a tab in the group's container. Throws if unavailable. */
     async function tabOptionsForGroup(group) {
         const spaceId = groupSpaceId(group);
+
         if (spaceId === DEFAULT_SPACE_ID) return {};
+
         const selected = space(spaceId);
+
         if (
             typeof selected.cookieStoreId !== "string" ||
             !selected.cookieStoreId.startsWith(CONTAINER_PREFIX)
@@ -71,7 +80,9 @@ export function createContainers({ browserApi, store }) {
             throw new Error(
                 "Для пространства необходимо разрешение на контейнеры Firefox",
             );
+
         let identity;
+
         try {
             identity = await browserApi.contextualIdentities.get(
                 selected.cookieStoreId,
@@ -85,8 +96,10 @@ export function createContainers({ browserApi, store }) {
                 throw new Error("Контейнер пространства недоступен");
             throw error;
         }
+
         if (identity?.cookieStoreId !== selected.cookieStoreId)
             throw new Error("Контейнер пространства недоступен");
+
         return { cookieStoreId: selected.cookieStoreId };
     }
 

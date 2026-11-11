@@ -81,14 +81,19 @@ export function mountSettings({
     const appearanceGroup = document.querySelector(".settings-appearance");
     const languageCurrent = document.querySelector(".language-current");
     let themeSelect, languageSelect;
+
     if (document.documentElement.classList.contains("settings-page"))
         ({ themeSelect, languageSelect } = createPageSelects(appearanceGroup));
     fillLanguageView(languageView);
+
     let savePending = Promise.resolve();
+
     async function updateBackupStatus() {
         if (!onBackupStatus) return;
+
         try {
             const status = await onBackupStatus();
+
             backupNotice.textContent = status.error
                 ? format("common.error_message", {
                       error: translateText(status.error),
@@ -106,6 +111,7 @@ export function mountSettings({
             );
         }
     }
+
     listen(document.querySelector(".backup-open"), "click", updateBackupStatus);
     if (document.documentElement.classList.contains("settings-page"))
         void updateBackupStatus();
@@ -114,9 +120,12 @@ export function mountSettings({
             backupNotice.textContent = t(
                 "settings.backup.backups_are_available_in_the_firefox_extension",
             );
+
             return;
         }
+
         backupNotice.textContent = t("settings.backup.creating_backup");
+
         try {
             await savePending;
             await onBackup();
@@ -131,26 +140,34 @@ export function mountSettings({
             );
         }
     });
+
     const markerSelect = createMarkerOptions(appearanceGroup);
+
     if (appVersion) {
         const version = document.createElement("div");
+
         version.className = "app-version";
         version.textContent = versionLabel(appVersion);
         document.querySelector(".github-link").before(version);
     }
+
     const themeInputs = [...themeView.querySelectorAll("input[name=theme]")];
     const panelWidth = document.querySelector("#panel-width");
     const panelHeight = document.querySelector("#panel-height");
     const systemTheme = matchMedia("(prefers-color-scheme: light)");
     let savedSettings = normalizeSettings(repository.read());
+
     setLanguage(savedSettings.language);
+
     function applySettings() {
         if (!THEMES.includes(savedSettings.theme))
             savedSettings.theme = "Чёрная";
         if (appVersion)
             document.querySelector(".app-version").textContent =
                 versionLabel(appVersion);
+
         const theme = themeClasses(savedSettings.theme, systemTheme.matches);
+
         document.documentElement.classList.toggle("light-theme", theme.light);
         document.documentElement.classList.toggle("dark-theme", theme.dark);
         document.documentElement.classList.toggle(
@@ -189,7 +206,9 @@ export function mountSettings({
         backupFolder.value = savedSettings.backupFolder || "Tavvy";
         backupFrequencyRow.hidden = !backupInput.checked;
         discardInput.checked = Boolean(savedSettings.discardInactiveTabs);
+
         const size = panelSize(savedSettings);
+
         panelWidth.value = size.width;
         panelHeight.value = size.height;
         updateSliderFill(panelWidth);
@@ -202,6 +221,7 @@ export function mountSettings({
             "--panel-height",
             panelHeight.value + "px",
         );
+
         if (cachePopupSize) {
             try {
                 localStorage.setItem(
@@ -215,6 +235,7 @@ export function mountSettings({
                 // Settings remain usable if the synchronous startup cache is unavailable.
             }
         }
+
         themeInputs.forEach((input) => {
             input.checked = input.value === savedSettings.theme;
         });
@@ -222,10 +243,12 @@ export function mountSettings({
             savedSettings.theme,
         );
     }
+
     function saveSettings() {
         savedSettings = normalizeSettings(savedSettings);
         savePending = Promise.resolve(repository.write(savedSettings));
     }
+
     function chooseLanguage(value) {
         savedSettings.language = value;
         setLanguage(savedSettings.language);
@@ -237,6 +260,7 @@ export function mountSettings({
         saveSettings();
         onLanguageChange?.();
     }
+
     listen(languageView, "change", (event) => {
         if (event.target.matches('input[name="language"]'))
             chooseLanguage(event.target.value);
@@ -284,11 +308,14 @@ export function mountSettings({
     });
     listen(backupFolder, "change", () => {
         const folder = backupFolder.value.trim();
+
         if (!validBackupFolder(folder)) {
             backupFolder.value = savedSettings.backupFolder || "Tavvy";
             backupNotice.textContent = t("settings.backup.backup_folder_help");
+
             return;
         }
+
         savedSettings.backupFolder = folder;
         backupFolder.value = folder;
         backupNotice.textContent = format(
@@ -309,6 +336,7 @@ export function mountSettings({
         applySettings();
         saveSettings();
     });
+
     function chooseTheme(value) {
         document.documentElement.classList.add("theme-changing");
         savedSettings.theme = value;
@@ -320,6 +348,7 @@ export function mountSettings({
             300,
         );
     }
+
     themeInputs.forEach((input) =>
         listen(input, "change", () => chooseTheme(input.value)),
     );
@@ -339,7 +368,9 @@ export function mountSettings({
     });
     listen(systemTheme, "change", applySettings);
     applySettings();
+
     const importButton = document.querySelector('[aria-label="Импортировать"]');
+
     if (document.documentElement.classList.contains("settings-page"))
         mountBackupRestore({
             listen,
@@ -354,7 +385,9 @@ export function mountSettings({
                 onLanguageChange?.();
             },
         });
+
     const importInput = document.createElement("input");
+
     importInput.type = "file";
     importInput.accept = ".json,application/json";
     importInput.hidden = true;
@@ -366,13 +399,17 @@ export function mountSettings({
     listen(importInput, "change", async () => {
         try {
             if (!importInput.files[0]) return;
+
             const data = JSON.parse(await importInput.files[0].text());
+
             if (Array.isArray(data.groups)) {
                 if (!onImportGroups)
                     throw new Error(t("errors.group_import_requires_firefox"));
                 await onImportGroups(data);
+
                 return;
             }
+
             if (!isSettingsExport(data)) throw new Error();
             savedSettings = normalizeSettings(data.settings);
             applySettings();
@@ -383,18 +420,24 @@ export function mountSettings({
             importInput.value = "";
         }
     });
+
     const sizeSliders = [panelWidth, panelHeight];
+
     function updateSliderFill(slider) {
         slider.style.setProperty(
             "--progress",
             sliderProgress(slider.value, slider.min, slider.max),
         );
+
         const output = slider.parentElement.querySelector("output");
+
         if (output) output.textContent = `${slider.value} px`;
     }
+
     sizeSliders.forEach((slider) => {
         updateSliderFill(slider);
         listen(slider, "input", () => updateSliderFill(slider));
     });
+
     return dispose;
 }

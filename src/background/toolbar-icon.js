@@ -1,5 +1,6 @@
 import { drawMarker } from "../domain/group-marker.js";
 import { DEFAULT_SETTINGS } from "../domain/settings.js";
+
 export function createToolbarIcon(
     api,
     createCanvas = () => document.createElement("canvas"),
@@ -7,11 +8,14 @@ export function createToolbarIcon(
     const applied = new Map();
     let markerStyle = DEFAULT_SETTINGS.markerStyle;
     let dynamic = true;
+
     return {
         async setDynamic(enabled) {
             if (dynamic === enabled) return;
             dynamic = enabled;
+
             const previous = [...applied.entries()];
+
             applied.clear();
             await Promise.all(
                 previous.map(([windowId, value]) =>
@@ -23,6 +27,7 @@ export function createToolbarIcon(
             const windowIds = [...applied.entries()]
                 .filter(([, value]) => value.group?.id === group.id)
                 .map(([windowId]) => windowId);
+
             await Promise.all(
                 windowIds.map((windowId) => this.update(windowId, group)),
             );
@@ -30,7 +35,9 @@ export function createToolbarIcon(
         async setStyle(style) {
             if (markerStyle === style) return;
             markerStyle = style;
+
             const previous = [...applied.entries()];
+
             applied.clear();
             await Promise.all(
                 previous.map(([windowId, value]) =>
@@ -45,8 +52,10 @@ export function createToolbarIcon(
                 await api.action.setIcon({ windowId, path: "icon.svg" });
                 await api.action.setTitle({ windowId, title: "Tavvy" });
                 applied.set(windowId, { signature: null, group: null });
+
                 return;
             }
+
             const signature = JSON.stringify([
                 group.id,
                 group.color,
@@ -54,13 +63,18 @@ export function createToolbarIcon(
                 markerStyle,
                 dynamic,
             ]);
+
             if (applied.get(windowId)?.signature === signature) return;
             if (dynamic) {
                 const imageData = {};
+
                 for (const size of [16, 32, 64]) {
                     const canvas = createCanvas();
+
                     canvas.width = canvas.height = size;
+
                     const ctx = canvas.getContext("2d");
+
                     drawMarker(
                         ctx,
                         group.id,
@@ -71,6 +85,7 @@ export function createToolbarIcon(
                     );
                     imageData[size] = ctx.getImageData(0, 0, size, size);
                 }
+
                 await api.action.setIcon({ windowId, imageData });
             } else await api.action.setIcon({ windowId, path: "icon.svg" });
             await api.action.setTitle({

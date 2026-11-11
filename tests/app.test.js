@@ -16,6 +16,7 @@ test("release names remain in English", () => {
 test("background container errors have English translations", async () => {
     const ru = JSON.parse(await readFile("src/locales/ru.json", "utf8"));
     const en = JSON.parse(await readFile("src/locales/en.json", "utf8"));
+
     for (const key of [
         "invalid_activation_parameters",
         "complete_initial_setup",
@@ -33,7 +34,9 @@ test("locale keys use snake_case and all translations preserve placeholders", as
         Object.fromEntries(
             Object.entries(object).flatMap(([key, value]) => {
                 assert.match(key, /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/);
+
                 const path = prefix ? `${prefix}.${key}` : key;
+
                 return typeof value === "string"
                     ? [[path, value]]
                     : Object.entries(flatten(value, path));
@@ -42,18 +45,23 @@ test("locale keys use snake_case and all translations preserve placeholders", as
     const en = flatten(
         JSON.parse(await readFile("src/locales/en.json", "utf8")),
     );
+
     for (const locale of ["ru", "zh-CN", "es", "fr", "de"]) {
         const translations = flatten(
             JSON.parse(await readFile(`src/locales/${locale}.json`, "utf8")),
         );
+
         assert.deepEqual(
             Object.keys(translations).sort(),
             Object.keys(en).sort(),
         );
+
         for (const key of Object.keys(en)) {
             assert.ok(translations[key].trim(), `${locale}: ${key}`);
+
             const placeholders = (text) =>
                 [...text.matchAll(/\{\w+\}/g)].map((match) => match[0]).sort();
+
             assert.deepEqual(
                 placeholders(translations[key]),
                 placeholders(en[key]),
@@ -61,12 +69,14 @@ test("locale keys use snake_case and all translations preserve placeholders", as
             );
         }
     }
+
     for (const path of [
         "index.html",
         "extension/import.html",
         "extension/local-file.html",
     ]) {
         const dom = new JSDOM(await readFile(path, "utf8"));
+
         for (const element of dom.window.document.querySelectorAll(
             "[data-i18n], [data-i18n-aria-label], [data-i18n-placeholder], [data-i18n-title]",
         )) {
@@ -83,11 +93,14 @@ test("locale keys use snake_case and all translations preserve placeholders", as
                     );
             }
         }
+
         dom.window.close();
     }
+
     for (const language of ["zh-CN", "es", "fr", "de"]) {
         assert.equal(normalizeSettings({ language }).language, language);
     }
+
     assert.equal(normalizeSettings({ language: "pt-BR" }).language, "en");
 });
 
@@ -143,6 +156,7 @@ test("repository migrates legacy settings and handles corrupted JSON", () => {
         setItem: (key, value) => values.set(key, value),
     };
     const repository = createSettingsRepository(storage);
+
     assert.equal(repository.read().theme, "Тёмная");
     repository.write(repository.read());
     values.set("tavvy-mock-settings", "{}");
@@ -156,15 +170,21 @@ test("preview shows all groups and assigns containers without a global switcher"
         runScripts: "outside-only",
         pretendToBeVisual: true,
     });
+
     try {
         const { window } = dom;
+
         window.structuredClone = structuredClone;
         window.matchMedia = () => ({ matches: false, addEventListener() {} });
         window.eval(await readFile("dist/app.js", "utf8"));
         await new Promise((resolve) => setTimeout(resolve, 100));
+
         const doc = window.document;
+
         assert.equal(doc.querySelector(".spaces-bar"), null);
+
         const projects = doc.querySelector('[data-group-id="group-projects"]');
+
         assert.equal(
             projects
                 .querySelector(":scope > .group-controls .group-toggle")
@@ -180,9 +200,11 @@ test("preview shows all groups and assigns containers without a global switcher"
             .dispatchEvent(
                 new window.MouseEvent("contextmenu", { bubbles: true }),
             );
+
         const groupMenu = doc.querySelector(".group-context-menu");
         const submenu = doc.querySelector(".group-context-submenu");
         const move = groupMenu.querySelector(".group-context-move");
+
         groupMenu.querySelector(".group-context-move-group").click();
         assert.equal(submenu.hidden, false);
         assert.ok(submenu.textContent.includes("Ideas & inspiration"));
@@ -230,9 +252,11 @@ test("preview shows all groups and assigns containers without a global switcher"
             new window.MouseEvent("contextmenu", { bubbles: true }),
         );
         groupMenu.querySelector(".group-context-move-group").click();
+
         const rootAction = [
             ...submenu.querySelectorAll('[role="menuitem"]'),
         ].find((item) => item.textContent === "Ungroup");
+
         assert.ok(rootAction.querySelector("svg.group-context-root-icon"));
         assert.ok(submenu.textContent.includes("Studio Garden"));
         assert.ok(!submenu.textContent.includes("Current projects"));
@@ -256,16 +280,20 @@ test("preview shows all groups and assigns containers without a global switcher"
                 new window.MouseEvent("contextmenu", { bubbles: true }),
             );
         groupMenu.querySelector(".group-context-move").click();
+
         const work = [...submenu.querySelectorAll('[role="menuitem"]')].find(
             (item) => item.textContent === "Work",
         );
+
         assert.ok(work);
         work.click();
         submenu.querySelector(".group-container-submit").click();
         await new Promise((resolve) => setTimeout(resolve, 120));
+
         const spaceIcon = projects.querySelector(
             ":scope > .group-controls .group-space-label",
         );
+
         assert.equal(spaceIcon.hidden, false);
         assert.equal(spaceIcon.title, "Work");
         assert.match(
@@ -291,18 +319,23 @@ test("built app mounts and connects settings, groups and navigation", async () =
         pretendToBeVisual: true,
     });
     const { window } = dom;
+
     window.structuredClone = structuredClone;
     window.matchMedia = () => ({ matches: false, addEventListener() {} });
     window.eval(await readFile("dist/app.js", "utf8"));
     await new Promise((resolve) => setTimeout(resolve, 30));
+
     const document = window.document;
+
     assert.equal(document.documentElement.lang, "en");
     assert.equal(
         document.querySelector(".theme-open strong").textContent,
         "Theme",
     );
     assert.equal(document.querySelectorAll(".group").length, 10);
+
     const group = document.querySelectorAll(".group")[1];
+
     group.querySelector(".group-controls").dispatchEvent(
         new window.MouseEvent("contextmenu", {
             bubbles: true,
@@ -310,13 +343,17 @@ test("built app mounts and connects settings, groups and navigation", async () =
             clientY: 20,
         }),
     );
+
     const menu = document.querySelector(".group-context-menu");
+
     assert.equal(menu.hidden, false);
     assert.equal(menu.querySelectorAll('[role="menuitem"]').length >= 4, true);
     assert.ok(menu.lastElementChild.classList.contains("group-context-delete"));
     assert.equal(group.querySelector(".group-rename"), null);
     menu.querySelector('[role="menuitem"]').click();
+
     const renameInput = group.querySelector(".group-rename-input");
+
     renameInput.value = "Projects";
     renameInput.dispatchEvent(
         new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
@@ -326,7 +363,9 @@ test("built app mounts and connects settings, groups and navigation", async () =
         group.querySelector(".group-header strong").textContent,
         "Projects",
     );
+
     const color = group.querySelector(".group-color-input");
+
     color.click();
     document.querySelector('.group-color-swatch[data-color="#00c98a"]').click();
     await new Promise((resolve) => setTimeout(resolve, 30));
@@ -385,8 +424,10 @@ test("built app mounts and connects settings, groups and navigation", async () =
     document.querySelector(".language-open").click();
     assert.equal(document.querySelector(".language-view").hidden, false);
     assert.equal(document.querySelector(".settings-view").hidden, true);
+
     const chooseLanguage = (code) =>
         document.querySelector(`.language-view input[value="${code}"]`).click();
+
     chooseLanguage("ru");
     assert.equal(
         document.querySelector(".theme-open strong").textContent,
@@ -445,27 +486,35 @@ test("built app mounts and connects settings, groups and navigation", async () =
         document.querySelector(".create-group").textContent,
         "+ New group",
     );
+
     const manifest = JSON.parse(
         await readFile("extension/manifest.json", "utf8"),
     );
+
     assert.ok(
         document
             .querySelector(".app-version")
             .textContent.startsWith(manifest.version),
     );
     document.querySelector(".theme-open").click();
+
     const standard = document.querySelector('input[value="Стандартная"]');
+
     standard.checked = true;
     standard.dispatchEvent(new window.Event("change"));
     assert.ok(document.documentElement.classList.contains("standard-theme"));
+
     const light = document.querySelector('input[value="Светлая"]');
+
     light.checked = true;
     light.dispatchEvent(new window.Event("change"));
     assert.ok(document.documentElement.classList.contains("light-theme"));
     document.querySelector(".settings-back").click();
     assert.equal(document.querySelector(".accent-setting"), null);
     assert.ok(document.documentElement.classList.contains("light-theme"));
+
     const toggle = document.querySelector('input[aria-label="Animations"]');
+
     toggle.checked = false;
     toggle.dispatchEvent(new window.Event("change"));
     assert.ok(document.documentElement.classList.contains("animations-off"));

@@ -11,6 +11,7 @@ let groupDrag = null,
 
 function groupAtPoint(x, y) {
     const hit = document.elementFromPoint(x, y);
+
     // A placeholder inside .subgroups belongs to its parent in the DOM, but
     // is empty space, just like a placeholder in the top-level list.
     return hit?.closest(".group-placeholder")
@@ -30,7 +31,9 @@ function clearNesting(d) {
 function lift(d, onStartGroupDrag) {
     d.active = true;
     onStartGroupDrag?.(d.group);
+
     const rect = d.group.getBoundingClientRect();
+
     d.offsetX = d.x - rect.left;
     d.offsetY = d.y - rect.top;
     d.placeholder = document.createElement("div");
@@ -53,6 +56,7 @@ function lift(d, onStartGroupDrag) {
 function trackTrash(d, point) {
     const trash = document.querySelector(".group-trash");
     const overTrash = insideRect(point, trash.getBoundingClientRect());
+
     if (overTrash && !d.trashTimer) {
         trash.classList.add("holding");
         d.trashTimer = setTimeout(() => {
@@ -65,6 +69,7 @@ function trackTrash(d, point) {
         d.trashReady = false;
         trash.classList.remove("holding", "ready");
     }
+
     return overTrash;
 }
 
@@ -83,44 +88,57 @@ function placeBeside(d, target, headerRect, clientY) {
     const after = clientY > threshold;
     const parent = target.parentElement,
         beforeNode = after ? target.nextSibling : target;
+
     if (
         beforeNode === d.placeholder ||
         (d.placeholder.parentElement === parent &&
             d.placeholder.nextSibling === beforeNode)
     )
         return;
+
     // A nested list can change the positions of groups outside either
     // immediate parent, so measure every visible group in the panel.
     const before = new Map();
+
     for (const el of document.querySelectorAll(
         ".groups .group:not(.ungrouped)",
     )) {
         if (el === d.group || d.group.contains(el)) continue;
+
         const rect = el.getBoundingClientRect();
+
         if (rect.height) before.set(el, rect.top);
     }
+
     const siblings = [...before.keys()];
+
     for (const el of siblings) {
         el.getAnimations?.()
             .filter((animation) => animation.id === "group-drag-shift")
             .forEach((animation) => animation.cancel());
     }
+
     target.parentElement.insertBefore(
         d.placeholder,
         after ? target.nextSibling : target,
     );
+
     const shifts = new Map(
         siblings.map((el) => [
             el,
             before.get(el) - el.getBoundingClientRect().top,
         ]),
     );
+
     siblings.forEach((el) => {
         // A nested group already moves with its animated ancestor.
         let ancestor = el.parentElement.closest(".group");
+
         while (ancestor && !shifts.has(ancestor))
             ancestor = ancestor.parentElement.closest(".group");
+
         const delta = shifts.get(el) - (shifts.get(ancestor) || 0);
+
         if (delta)
             el.animate(
                 [
@@ -162,7 +180,9 @@ export function bindGroupHeader(
     );
     header.addEventListener("pointerdown", (event) => {
         if (event.button !== 0) return;
+
         const group = header.closest(".group");
+
         // Only real group cards can be dragged; the new-group draft also has a header but no card,
         // and pointer capture would break text selection in its input.
         if (!group || event.target.closest?.("input, textarea")) return;
@@ -175,21 +195,28 @@ export function bindGroupHeader(
         };
         header.setPointerCapture(event.pointerId);
     });
+
     function movePointer(event, forceReorder = false) {
         if (!groupDrag || groupDrag.header !== header) return;
+
         const d = groupDrag;
+
         if (!d.active && dragStarted(d, event)) lift(d, onStartGroupDrag);
         if (!d.active) return;
         d.ghost.style.transform = `translate3d(${event.clientX - d.offsetX}px, ${event.clientY - d.offsetY}px, 0) rotate(1deg)`;
+
         if (trackTrash(d, event)) {
             clearNesting(d);
             document
                 .querySelectorAll(".group-nest-target")
                 .forEach((el) => el.classList.remove("group-nest-target"));
             d.nest = null;
+
             return;
         }
+
         const target = groupAtPoint(event.clientX, event.clientY);
+
         if (
             !target ||
             target === d.group ||
@@ -199,8 +226,10 @@ export function bindGroupHeader(
             clearNesting(d);
             d.nest?.classList.remove("group-nest-target");
             d.nest = null;
+
             return;
         }
+
         const headerRect = target
             .querySelector(":scope > .group-controls")
             .getBoundingClientRect();
@@ -208,16 +237,21 @@ export function bindGroupHeader(
         const canNest =
             !nearHeaderEdge(event.clientY, headerRect) &&
             (canNestGroup?.() ?? true);
+
         if (d.nestCandidate !== target || !canNest) clearNesting(d);
+
         if (d.nest && (d.nest !== target || !canNest)) {
             d.nest.classList.remove("group-nest-target");
             d.nest = null;
         }
+
         if (canNest && d.nest !== target && !d.nestTimer && !forceReorder) {
             d.nestCandidate = target;
             d.nestTimer = setTimeout(() => {
                 d.nestTimer = null;
+
                 const latest = d.latest;
+
                 if (
                     groupDrag !== d ||
                     !latest ||
@@ -228,18 +262,23 @@ export function bindGroupHeader(
                 target.classList.add("group-nest-target");
             }, 225);
         }
+
         if (canNest && d.nest !== target && !forceReorder) {
             // Keep the hovered group still while deciding between nesting and reordering.
             return;
         }
+
         if (canNest && d.nest === target) {
             target.classList.add("group-nest-target");
         } else placeBeside(d, target, headerRect, event.clientY);
+
         const scroller = document.querySelector(".groups");
         const bounds = scroller.getBoundingClientRect();
+
         if (event.clientY < bounds.top + 30) scroller.scrollTop -= 10;
         if (event.clientY > bounds.bottom - 30) scroller.scrollTop += 10;
     }
+
     header.addEventListener("pointermove", (event) => {
         if (!groupDrag || groupDrag.header !== header) return;
         groupDrag.latest = { clientX: event.clientX, clientY: event.clientY };
@@ -250,9 +289,11 @@ export function bindGroupHeader(
             movePointer(groupDrag.latest);
         });
     });
+
     function finish(event, cancel = false) {
         if (!groupDrag || groupDrag.header !== header) return;
         if (groupDrag.frame) cancelAnimationFrame(groupDrag.frame);
+
         if (
             !cancel &&
             groupDrag.latest &&
@@ -263,7 +304,9 @@ export function bindGroupHeader(
                 true,
             );
         }
+
         const d = groupDrag;
+
         groupDrag = null;
         clearTimeout(d.nestTimer);
         if (!d.active) return;
@@ -271,6 +314,7 @@ export function bindGroupHeader(
         setTimeout(() => {
             suppressGroupClick = false;
         }, 0);
+
         if (!cancel && d.trashReady) {
             clearTimeout(d.trashTimer);
             if (onDeleteGroup) onDeleteGroup(d.group);
@@ -278,15 +322,19 @@ export function bindGroupHeader(
             d.placeholder.remove();
             d.ghost.remove();
             clearDropUi(d);
+
             return;
         }
+
         if (!cancel && d.nest) {
             let children = d.nest.querySelector(":scope > .subgroups");
+
             if (!children) {
                 children = document.createElement("div");
                 children.className = "subgroups";
                 d.nest.append(children);
             }
+
             children.append(d.group);
         } else if (!cancel) d.placeholder.before(d.group);
         d.group.classList.remove("group-drag-source");
@@ -296,6 +344,7 @@ export function bindGroupHeader(
             .forEach((el) => el.classList.remove("group-nest-target"));
         clearDropUi(d);
         if (!cancel && onMoveGroup) onMoveGroup(d.group);
+
         const end = d.group
             .querySelector(":scope > .group-controls")
             .getBoundingClientRect();
@@ -311,6 +360,7 @@ export function bindGroupHeader(
             destination?.width && destination?.height
                 ? `translate3d(${destination.left}px, ${destination.top}px, 0) rotate(0deg)`
                 : d.ghost.style.transform;
+
         d.ghost
             .animate(
                 [
@@ -327,6 +377,7 @@ export function bindGroupHeader(
             )
             .finished.finally(() => d.ghost.remove());
     }
+
     header.addEventListener("pointerup", finish);
     header.addEventListener("pointercancel", (event) => finish(event, true));
     header.addEventListener("lostpointercapture", (event) =>
@@ -344,6 +395,7 @@ export function disposeGroupDrag() {
         groupDrag.placeholder?.remove();
         groupDrag.group?.classList.remove("group-drag-source");
     }
+
     groupDrag = null;
     document
         .querySelectorAll(".group-nest-target")

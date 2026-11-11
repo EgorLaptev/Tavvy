@@ -7,18 +7,23 @@ import { dragInProgress } from "./dom.js";
 export function createLiveUpdates(ctx) {
     const { api } = ctx;
     let refreshTimer;
+
     const onMessage = (message) => {
         if (message?.channel !== "tavvy" || message.type !== "changed") return;
         clearTimeout(refreshTimer);
         refreshTimer = setTimeout(function refresh() {
             if (dragInProgress()) {
                 refreshTimer = setTimeout(refresh, 150);
+
                 return;
             }
+
             ctx.run({ type: "snapshot" });
         }, 100);
     };
+
     api.runtime.onMessage.addListener(onMessage);
+
     return {
         dispose() {
             clearTimeout(refreshTimer);

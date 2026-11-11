@@ -10,9 +10,13 @@ export function createTabMenu(ctx) {
         event.preventDefault();
         event.stopPropagation();
         menu.reset();
+
         const current = ctx.snapshot.tabs.find((item) => item.id === tabId);
+
         if (!current) return;
+
         const run = ctx.run;
+
         menu.addAction(t("tabs.actions.open"), () =>
             run({ type: "activateTab", tabId }),
         );
@@ -32,6 +36,7 @@ export function createTabMenu(ctx) {
             menu.addAction(t("tabs.actions.pin"), () =>
                 run({ type: "pinTab", tabId }),
             );
+
         const destinations = tabMoveTargets(
             ctx.snapshot.groups,
             ctx.viewIndex.groups,
@@ -47,6 +52,7 @@ export function createTabMenu(ctx) {
                     keepActiveGroup: true,
                 }),
         }));
+
         menu.addSubmenu(
             t("groups.move_tab_to_group"),
             current.pinned && !ctx.snapshot.settings.groupPinnedTabs

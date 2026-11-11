@@ -11,6 +11,7 @@ test("STG backup preview counts empty groups, tabs and pinned tabs", () => {
         ],
         pinnedTabs: [{ url: "about:addons" }],
     });
+
     assert.deepEqual(result, {
         groups: [
             { title: "Work", tabs: 1 },
@@ -36,6 +37,7 @@ test("Tavvy backup preview separates pinned tabs and retains legacy counts", () 
         archive: [{ groupId: "inbox", url: "https://old.example" }],
         settings: {},
     });
+
     assert.deepEqual(result, {
         groups: [{ title: "Main", tabs: 1 }],
         tabs: 1,

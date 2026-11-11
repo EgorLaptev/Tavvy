@@ -83,11 +83,14 @@ export function fixture() {
                     hidden: false,
                     ...options,
                 };
+
                 records.push(tab);
+
                 return { ...tab };
             },
             update: async (id, options) => {
                 const tab = records.find((t) => t.id === id);
+
                 if (options.active)
                     records
                         .filter((t) => t.windowId === tab.windowId)
@@ -95,6 +98,7 @@ export function fixture() {
                 Object.assign(tab, options);
                 if (typeof options.muted === "boolean")
                     tab.mutedInfo = { muted: options.muted };
+
                 return { ...tab };
             },
             show: async (ids) =>
@@ -104,10 +108,12 @@ export function fixture() {
             hide: async (ids) => {
                 ids.forEach((id) => {
                     const tab = records.find((t) => t.id === id);
+
                     assert.equal(tab.active, false, "never hide an active tab");
                     assert.equal(tab.pinned, false, "never hide a pinned tab");
                     tab.hidden = true;
                 });
+
                 return ids;
             },
             remove: async (id) => {
@@ -118,9 +124,11 @@ export function fixture() {
             },
             move: async (ids, { index, windowId }) => {
                 const moved = [];
+
                 for (const id of Array.isArray(ids) ? ids : [ids]) {
                     const tab = records.find((t) => t.id === id);
                     let position = index;
+
                     if (
                         Number.isInteger(windowId) &&
                         windowId !== tab.windowId
@@ -139,9 +147,11 @@ export function fixture() {
                                         .map((t) => t.index),
                                 ) + 1;
                     }
+
                     tab.index = position;
                     moved.push({ ...tab });
                 }
+
                 return Array.isArray(ids) ? moved : moved[0];
             },
         },
@@ -150,6 +160,7 @@ export function fixture() {
             create: async ({ tabId } = {}) => {
                 const id = Math.max(...records.map((tab) => tab.windowId)) + 1;
                 const tab = records.find((t) => t.id === tabId);
+
                 if (tab)
                     Object.assign(tab, {
                         windowId: id,
@@ -167,6 +178,7 @@ export function fixture() {
                         url: "about:newtab",
                         pinned: false,
                     });
+
                 return {
                     id,
                     tabs: [{ ...records.at(tab ? records.indexOf(tab) : -1) }],
@@ -174,10 +186,12 @@ export function fixture() {
             },
             update: async (id, options) => {
                 if (options.focused) api.windows.focused = id;
+
                 return { id };
             },
         },
     };
     const service = () => createWorkspaceService(api, () => `id-${++counter}`);
+
     return { api, records, tags, windows, values, service };
 }

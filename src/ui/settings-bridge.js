@@ -7,6 +7,7 @@ import { translateText } from "../locales/index.js";
 export function settingsOptions(ctx, { onLanguageChange }) {
     const { api, windowId, client } = ctx;
     const demo = api.isDemo;
+
     return {
         appVersion: api.runtime.getManifest?.().version ?? api.appVersion,
         onLanguageChange,
@@ -15,6 +16,7 @@ export function settingsOptions(ctx, { onLanguageChange }) {
             ? null
             : async () => {
                   const result = await client.send({ type: "backupNow" });
+
                   if (!result?.ok)
                       throw new Error(
                           result?.error || "Ошибка резервного копирования",
@@ -24,8 +26,10 @@ export function settingsOptions(ctx, { onLanguageChange }) {
             ? null
             : async () => {
                   const result = await client.send({ type: "backupStatus" });
+
                   if (!result?.ok)
                       throw new Error(result?.error || "Ошибка состояния");
+
                   return result.status;
               },
         onImportGroups: (backup) => ctx.run({ type: "importStg", backup }),
@@ -37,6 +41,7 @@ export function settingsOptions(ctx, { onLanguageChange }) {
                           ? "importBackup"
                           : "importStg";
                   const result = await client.send({ type, backup });
+
                   if (!result?.ok)
                       throw new Error(
                           translateText(
@@ -44,6 +49,7 @@ export function settingsOptions(ctx, { onLanguageChange }) {
                           ),
                       );
                   await ctx.run({ type: "snapshot" });
+
                   return result.snapshot;
               },
         onOpenImport: demo

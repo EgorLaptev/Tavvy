@@ -15,11 +15,15 @@ const documented =
     metadata +
     "\n## Release packages\n\n| Version | Release reference | Archive source | Size (bytes) | SHA-256 |\n| --- | --- | --- | ---: | --- |\n| 1.2.3 | `v1.2.3` | GitHub Release | pending | pending |\n";
 const script = resolve("scripts/check-release-push.js");
+
 function git(dir, ...args) {
     const result = spawnSync("git", args, { cwd: dir, encoding: "utf8" });
+
     assert.equal(result.status, 0, result.stderr);
+
     return result.stdout.trim();
 }
+
 function check(dir, input) {
     return spawnSync(process.execPath, [script], {
         cwd: dir,
@@ -48,6 +52,7 @@ test("release documentation must match the version, name, date and required meta
 
 test("pre-push checks the tagged commit and skips branch pushes and tag deletion", async () => {
     const dir = await mkdtemp(join(tmpdir(), "tavvy-push-"));
+
     try {
         git(dir, "init");
         git(dir, "config", "user.email", "test@example.test");
@@ -74,8 +79,10 @@ test("pre-push checks the tagged commit and skips branch pushes and tag deletion
         git(dir, "add", ".");
         git(dir, "commit", "-m", "release");
         git(dir, "tag", "-a", "v1.2.3", "-m", "release");
+
         const sha = git(dir, "rev-parse", "HEAD");
         const update = `refs/tags/v1.2.3 ${sha} refs/tags/v1.2.3 ${"0".repeat(40)}\n`;
+
         assert.equal(check(dir, update).status, 0);
         assert.equal(
             check(

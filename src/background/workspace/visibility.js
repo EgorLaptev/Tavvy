@@ -31,6 +31,7 @@ export function createVisibility(ctx) {
     /** Re-pins grouped pinned tabs that Firefox refused to hide. */
     async function restorePinsAfterFailedHide(records, requested, hiddenIds) {
         if (!groupPinned()) return;
+
         for (const tab of records.filter(
             (item) =>
                 item.managedPinned &&
@@ -39,8 +40,10 @@ export function createVisibility(ctx) {
         )) {
             if (!hiddenIds) {
                 const current = await api.tabs.get(tab.id).catch(() => null);
+
                 if (!current || current.hidden || current.pinned) continue;
             }
+
             await setManagedPin(tab.id, true);
         }
     }
@@ -50,28 +53,37 @@ export function createVisibility(ctx) {
         let records = (source || (await ctx.scan())).filter(
             (tab) => tab.windowId === windowId,
         );
+
         if (groupPinned()) {
             await applyGroupedPins(records, visible);
             records = (await ctx.scan()).filter(
                 (tab) => tab.windowId === windowId,
             );
         }
+
         records = records.filter((tab) => !tab.pinned);
+
         const show = records
             .filter((tab) => visible.has(tab.groupId) && tab.hidden)
             .map((tab) => tab.id);
+
         if (show.length) await api.tabs.show(show);
+
         const hide = records
             .filter((tab) => !visible.has(tab.groupId) && !tab.hidden)
             .map((tab) => tab.id);
+
         if (!hide.length) return;
+
         let hidden;
+
         try {
             hidden = await api.tabs.hide(hide);
         } catch (error) {
             await restorePinsAfterFailedHide(records, hide, null);
             throw error;
         }
+
         if (hidden.length !== hide.length) {
             await restorePinsAfterFailedHide(records, hide, new Set(hidden));
             throw new Error(

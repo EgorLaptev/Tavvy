@@ -7,7 +7,9 @@ const paths = {
     cart: "M1 2h2l1.5 8h8L15 4H4l-.2-1H1V2zm4 9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm7 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z",
     gift: "M2 6h12v8H2V6zm5 0v8h2V6H7zM1 4h14v2H1V4zm6 0C3-1 1 1 3 3c1 1 3 1 4 1zm2 0c4-5 6-3 4-1-1 1-3 1-4 1z",
 };
+
 export function previewSpaceIcon(name) {
     const path = paths[name] || paths.circle;
+
     return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="${path}"/></svg>`)}`;
 }

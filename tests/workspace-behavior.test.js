@@ -12,6 +12,7 @@ const ACTIVE = "tavvy:active-group";
 /** Simulates the user selecting a tab in Firefox's tab strip. */
 async function selectInFirefox(f, service, tabId) {
     const tab = f.records.find((item) => item.id === tabId);
+
     for (const item of f.records)
         if (item.windowId === tab.windowId) item.active = item.id === tabId;
     tab.hidden = false;
@@ -22,15 +23,18 @@ async function selectInFirefox(f, service, tabId) {
 
 function withContainers(f) {
     f.api.permissions = { contains: async () => true };
+
     const identity = {
         name: "Work",
         cookieStoreId: "firefox-container-1",
         icon: "briefcase",
     };
+
     f.api.contextualIdentities = {
         query: async () => [identity],
         get: async () => identity,
     };
+
     return identity;
 }
 
@@ -39,6 +43,7 @@ test("domain: tabs without a container stay in the current group", () => {
         { id: "inbox", parentId: null },
         { id: "work", parentId: null, spaceId: "s1" },
     ];
+
     assert.equal(
         chooseGroupForNewTab({
             groups,
@@ -67,6 +72,7 @@ test("domain: tabs without a container stay in the current group", () => {
 
 test("domain: selecting a Firefox page from a hidden group moves the page, not the window", () => {
     const visibleGroups = new Set(["b"]);
+
     assert.deepEqual(
         resolveSelection({
             currentGroupId: "b",
@@ -109,13 +115,16 @@ test("Firefox switching to a hidden about:preferences tab keeps the window in it
     const service = f.service();
     let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
     const a = snap.groups.find((g) => g.title === "A").id;
+
     snap = await service.dispatch({ type: "createGroup", title: "B" }, 1);
+
     const b = snap.groups.find((g) => g.title === "B").id;
     const prefs = await f.api.tabs.create({
         windowId: 1,
         active: false,
         url: "about:preferences",
     });
+
     f.tags.set(`${prefs.id}:${GROUP}`, a);
     service.invalidate({ type: "tab", tabId: prefs.id });
     await service.dispatch({ type: "activateGroup", groupId: b }, 1);
@@ -133,6 +142,7 @@ test("selecting an ordinary tab of a hidden group still follows it", async () =>
     const service = f.service();
     let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
     const a = snap.groups.find((g) => g.title === "A").id;
+
     await service.dispatch({ type: "moveTab", tabId: 2, groupId: a }, 1);
     await service.dispatch({ type: "activateGroup", groupId: "inbox" }, 1);
     await selectInFirefox(f, service, 2);
@@ -145,13 +155,17 @@ test("a tab dragged into another window joins the group shown there", async () =
     const service = f.service();
     let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
     const a = snap.groups.find((g) => g.title === "A").id;
+
     await service.dispatch({ type: "createGroup", title: "C" }, 2);
     snap = await service.dispatch({ type: "snapshot" }, 2);
+
     const c = snap.groups.find((g) => g.title === "C").id;
+
     await service.dispatch({ type: "activateGroup", groupId: c }, 2);
     await service.dispatch({ type: "moveTab", tabId: 2, groupId: a }, 1);
 
     const tab = f.records.find((item) => item.id === 2);
+
     tab.windowId = 2;
     // Firefox fires onDetached/onAttached.
     service.invalidate({ type: "window", windowId: 1 });
@@ -168,9 +182,12 @@ test("a tab torn off into its own window loses its group, as in Simple Tab Group
     const service = f.service();
     let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
     const a = snap.groups.find((g) => g.title === "A").id;
+
     await service.dispatch({ type: "moveTab", tabId: 2, groupId: a }, 1);
     await service.refresh();
+
     const tab = f.records.find((item) => item.id === 2);
+
     tab.windowId = 3;
     service.invalidate({ type: "window", windowId: 1 });
     service.invalidate({ type: "window", windowId: 3 });
@@ -186,12 +203,17 @@ test("windows open at installation join the default group; later new windows hav
     const f = fixture();
     const service = f.service();
     let snap = await service.dispatch({ type: "snapshot" }, 2);
+
     assert.equal(snap.activeGroupId, "inbox");
     snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
+
     const a = snap.groups.find((g) => g.title === "A").id;
+
     await service.dispatch({ type: "activateGroup", groupId: a }, 1);
     await service.refresh();
+
     const fresh = await f.api.tabs.create({ windowId: 5, active: true });
+
     service.invalidate({ type: "tab", tabId: fresh.id });
     await service.refresh();
     snap = await service.dispatch({ type: "snapshot" }, 5);
@@ -202,8 +224,10 @@ test("windows open at installation join the default group; later new windows hav
         "its tabs stay without a group",
     );
     assert.equal(f.records.find((tab) => tab.id === fresh.id).hidden, false);
+
     // A restart of the background page keeps it that way.
     const restarted = f.service();
+
     assert.equal(
         (await restarted.dispatch({ type: "snapshot" }, 5)).activeGroupId,
         null,
@@ -215,14 +239,19 @@ test("picking a group in a window without a group hides its tabs and closes a lo
     const service = f.service();
     let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
     const a = snap.groups.find((g) => g.title === "A").id;
+
     snap = await service.dispatch({ type: "createGroup", title: "B" }, 1);
+
     const b = snap.groups.find((g) => g.title === "B").id;
+
     await service.refresh();
+
     const blank = await f.api.tabs.create({
         windowId: 5,
         active: true,
         url: "about:newtab",
     });
+
     service.invalidate({ type: "tab", tabId: blank.id });
     await service.refresh();
     await service.dispatch({ type: "activateGroup", groupId: a }, 5);
@@ -242,6 +271,7 @@ test("picking a group in a window without a group hides its tabs and closes a lo
         active: false,
         url: "about:newtab",
     });
+
     service.invalidate({ type: "window", windowId: 6 });
     await service.refresh();
     snap = await service.dispatch({ type: "activateGroup", groupId: b }, 6);
@@ -261,7 +291,9 @@ test("picking a group in a window without a group hides its tabs and closes a lo
 
     // Opening a hidden tab without a group brings it into the group shown here.
     snap = await service.dispatch({ type: "activateTab", tabId: link.id }, 1);
+
     const opened = f.records.find((tab) => tab.id === link.id);
+
     assert.equal(opened.windowId, 1);
     assert.equal(opened.active, true);
     assert.equal(f.tags.get(`${link.id}:${GROUP}`), "inbox");
@@ -272,6 +304,7 @@ test("Firefox changing a window's group (session restore) is picked up immediate
     const service = f.service();
     let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
     const a = snap.groups.find((g) => g.title === "A").id;
+
     assert.equal(
         (await service.dispatch({ type: "snapshot" }, 1)).activeGroupId,
         "inbox",
@@ -285,10 +318,15 @@ test("Firefox changing a window's group (session restore) is picked up immediate
 
 test("tabs tagged with an unknown group are never retagged", async () => {
     const f = fixture();
+
     f.tags.set(`2:${GROUP}`, "group-from-elsewhere");
+
     const service = f.service();
+
     await service.refresh();
+
     const snap = await service.dispatch({ type: "snapshot" }, 1);
+
     assert.equal(snap.tabs.find((tab) => tab.id === 2).groupId, "inbox");
     assert.equal(f.tags.get(`2:${GROUP}`), "group-from-elsewhere");
     assert.equal(
@@ -300,6 +338,7 @@ test("tabs tagged with an unknown group are never retagged", async () => {
 
 test("the service refuses to start when the groups are missing but tab records exist", async () => {
     const f = fixture();
+
     f.values["tavvy:known:v1"] = {
         1: {
             id: 1,
@@ -310,7 +349,9 @@ test("the service refuses to start when the groups are missing but tab records e
             pinned: false,
         },
     };
+
     const service = f.service();
+
     await assert.rejects(
         service.dispatch({ type: "snapshot" }, 1),
         /не найдены/,
@@ -330,33 +371,43 @@ test("Ctrl+T in a container group opens an active container tab immediately", as
         },
         1,
     );
+
     snap = await service.dispatch(
         { type: "createGroup", title: "Work", spaceId: snap.activeSpaceId },
         1,
     );
+
     const work = snap.groups.find((g) => g.title === "Work").id;
+
     await service.dispatch({ type: "activateGroup", groupId: work }, 1);
 
     const created = [];
     const create = f.api.tabs.create;
+
     f.api.tabs.create = async (options) => {
         created.push(options);
+
         return create(options);
     };
+
     // A long-running command must not delay the replacement.
     let release;
     const busy = service.dispatch({ type: "snapshot" }, 1);
     const originalQuery = f.api.tabs.query;
+
     f.api.tabs.query = async (...args) => {
         await new Promise((resolve) => (release = resolve));
+
         return originalQuery(...args);
     };
+
     const tab = await create({
         windowId: 1,
         active: true,
         cookieStoreId: "firefox-default",
         url: "about:newtab",
     });
+
     for (const item of f.records)
         if (item.windowId === 1 && item.id !== tab.id) item.active = false;
     await service.created(tab);
@@ -377,9 +428,11 @@ test("Ctrl+T in a container group opens an active container tab immediately", as
     );
     assert.equal(created[0].url, undefined);
     assert.equal(created[0].cookieStoreId, identity.cookieStoreId);
+
     const replacement = f.records.find(
         (item) => item.cookieStoreId === identity.cookieStoreId && item.active,
     );
+
     assert.equal(f.tags.get(`${replacement.id}:${GROUP}`), work);
 });
 
@@ -394,6 +447,7 @@ test("a tab restored with Ctrl+Shift+T is not replaced", async () => {
         },
         1,
     );
+
     snap = await service.dispatch(
         { type: "createGroup", title: "Work", spaceId: snap.activeSpaceId },
         1,
@@ -405,12 +459,14 @@ test("a tab restored with Ctrl+Shift+T is not replaced", async () => {
         },
         1,
     );
+
     const restored = await f.api.tabs.create({
         windowId: 1,
         active: true,
         cookieStoreId: "firefox-default",
         url: "about:blank",
     });
+
     f.tags.set(`${restored.id}:${GROUP}`, "inbox");
     await service.created(restored);
     assert.ok(f.records.some((item) => item.id === restored.id));
@@ -426,12 +482,16 @@ async function containerGroup(f) {
         },
         1,
     );
+
     snap = await service.dispatch(
         { type: "createGroup", title: "Work", spaceId: snap.activeSpaceId },
         1,
     );
+
     const work = snap.groups.find((g) => g.title === "Work").id;
+
     await service.dispatch({ type: "activateGroup", groupId: work }, 1);
+
     return { service, identity, work };
 }
 
@@ -447,6 +507,7 @@ test("a link from another app opens in the container of the current group", asyn
         title: "example.org/page",
     });
     const handled = service.created(tab);
+
     f.records.find((item) => item.id === tab.id).url =
         "https://example.org/page";
     service.updated(tab.id, { url: "https://example.org/page" });
@@ -455,9 +516,11 @@ test("a link from another app opens in the container of the current group", asyn
         f.records.some((item) => item.id === tab.id),
         false,
     );
+
     const reopened = f.records.find(
         (item) => item.url === "https://example.org/page",
     );
+
     assert.equal(reopened.cookieStoreId, identity.cookieStoreId);
     assert.equal(reopened.active, true);
     assert.equal(f.tags.get(`${reopened.id}:${GROUP}`), work);
@@ -474,6 +537,7 @@ test("a link is never replaced by an empty tab", async () => {
     });
     const before = f.records.length;
     const handled = service.created(tab);
+
     service.updated(tab.id, { url: "about:blank" });
     service.updated(tab.id, { url: "file:///home/user/notes.txt" });
     await handled;
@@ -491,6 +555,7 @@ test("a new tab that loads about:newtab after about:blank is treated like Ctrl+T
         url: "about:blank",
     });
     const handled = service.created(tab);
+
     service.updated(tab.id, { url: "about:newtab" });
     await handled;
     assert.equal(
@@ -511,6 +576,7 @@ test("every window lists the tabs of all groups, except other windows' global pi
     const f = fixture();
     const service = f.service();
     const snap = await service.dispatch({ type: "snapshot" }, 2);
+
     assert.deepEqual(
         snap.tabs.map((tab) => tab.id),
         [4, 1, 2],
@@ -522,11 +588,14 @@ test("picking a group hidden in another window moves its tabs to the current win
     const service = f.service();
     let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
     const a = snap.groups.find((g) => g.title === "A").id;
+
     await service.dispatch({ type: "moveTab", tabId: 2, groupId: a }, 1);
     assert.equal(f.records.find((tab) => tab.id === 2).hidden, true);
 
     snap = await service.dispatch({ type: "activateGroup", groupId: a }, 2);
+
     const moved = f.records.find((tab) => tab.id === 2);
+
     assert.equal(moved.windowId, 2);
     assert.equal(moved.hidden, false);
     assert.equal(moved.active, true);
@@ -547,8 +616,11 @@ test("picking a group shown in another window focuses that window", async () => 
     const service = f.service();
     let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
     const a = snap.groups.find((g) => g.title === "A").id;
+
     await service.dispatch({ type: "activateGroup", groupId: a }, 1);
+
     const count = f.records.length;
+
     assert.equal(f.windows.get(`2:${ACTIVE}`), "inbox");
 
     await service.dispatch({ type: "activateGroup", groupId: a }, 2);
@@ -566,14 +638,17 @@ test("a group opens in a new window and the old window is left without a group",
     const service = f.service();
     let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
     const a = snap.groups.find((g) => g.title === "A").id;
+
     await service.dispatch({ type: "moveTab", tabId: 2, groupId: a }, 1);
     await service.dispatch({ type: "activateTab", tabId: 2 }, 1);
+
     const extra = await f.api.tabs.create({
         windowId: 1,
         active: false,
         hidden: true,
         index: 3,
     });
+
     f.tags.set(`${extra.id}:${GROUP}`, a);
     service.invalidate({ type: "tab", tabId: extra.id });
 
@@ -581,7 +656,9 @@ test("a group opens in a new window and the old window is left without a group",
         { type: "openGroupInNewWindow", groupId: a },
         1,
     );
+
     const moved = f.records.filter((tab) => tab.windowId === 3);
+
     assert.deepEqual(moved.map((tab) => tab.id).sort(), [2, extra.id].sort());
     assert.ok(moved.every((tab) => tab.hidden !== true));
     assert.equal(
@@ -591,9 +668,11 @@ test("a group opens in a new window and the old window is left without a group",
     );
     assert.equal(f.windows.get(`3:${ACTIVE}`), a);
     assert.equal(snap.activeGroupId, null);
+
     const placeholder = f.records.filter(
         (tab) => tab.windowId === 1 && !tab.hidden && !tab.pinned,
     );
+
     assert.equal(
         placeholder.length,
         1,
@@ -607,8 +686,11 @@ test("an empty group opens in a new window with a tab of its own", async () => {
     const service = f.service();
     let snap = await service.dispatch({ type: "createGroup", title: "A" }, 1);
     const a = snap.groups.find((g) => g.title === "A").id;
+
     await service.dispatch({ type: "openGroupInNewWindow", groupId: a }, 1);
+
     const tab = f.records.find((item) => item.windowId === 3);
+
     assert.equal(f.tags.get(`${tab.id}:${GROUP}`), a);
     assert.equal(f.windows.get(`3:${ACTIVE}`), a);
 });

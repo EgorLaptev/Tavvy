@@ -19,7 +19,9 @@ export function createWindowState({ api, store }) {
             windowId,
             WINDOW_ACTIVE_GROUP,
         );
+
         if (value === NO_GROUP) return null;
+
         return hasGroup(store.state.groups, value) ? value : undefined;
     }
 
@@ -30,7 +32,9 @@ export function createWindowState({ api, store }) {
      */
     async function activeGroupId(windowId) {
         const stored = await storedGroupId(windowId);
+
         if (stored !== undefined) return stored;
+
         const tabs = await api.tabs.query({ windowId });
         const selected = tabs.find((tab) => tab.active && !tab.pinned);
         const tagged =
@@ -43,6 +47,7 @@ export function createWindowState({ api, store }) {
             : store.firstRun
               ? INBOX_ID
               : null;
+
         // Decide once: later tag changes in this window must not silently change its group.
         if (tabs.length)
             await api.sessions
@@ -52,6 +57,7 @@ export function createWindowState({ api, store }) {
                     groupId ?? NO_GROUP,
                 )
                 .catch(() => {});
+
         return groupId;
     }
 
@@ -72,6 +78,7 @@ export function createWindowState({ api, store }) {
             windowId,
             WINDOW_EMPTY_SPACE,
         );
+
         return store.state.spaces.some((item) => item.id === value) &&
             !groupsInSpace(store.state.groups, value).length
             ? value
@@ -82,6 +89,7 @@ export function createWindowState({ api, store }) {
         api.sessions.setWindowValue(windowId, WINDOW_EMPTY_SPACE, spaceId);
     const lastGroupInSpace = (windowId, spaceId) =>
         api.sessions.getWindowValue(windowId, windowSpaceGroupKey(spaceId));
+
     const rememberGroupInSpace = async (windowId, spaceId, groupId) => {
         if (groupId)
             await api.sessions.setWindowValue(

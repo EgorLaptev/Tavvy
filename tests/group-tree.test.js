@@ -50,6 +50,7 @@ test("visible groups tolerate a corrupted cyclic tree", () => {
         { id: "x", parentId: "y" },
         { id: "y", parentId: "x" },
     ];
+
     assert.deepEqual([...visibleGroupIds(cyclic, "x", {})].sort(), ["x", "y"]);
 });
 
@@ -60,6 +61,7 @@ test("nesting a group into its own descendant is rejected", () => {
 
 test("placing and removing groups keeps order and reparents children", () => {
     const groups = tree();
+
     assert.deepEqual(
         placeGroup(groups, groups[4], "a").map((g) => g.id),
         ["inbox", "b", "a", "a1", "a11"],
@@ -68,7 +70,9 @@ test("placing and removing groups keeps order and reparents children", () => {
         placeGroup(groups, groups[0], "missing").map((g) => g.id),
         ["a", "a1", "a11", "b", "inbox"],
     );
+
     const remaining = removeGroup(tree(), "a1");
+
     assert.equal(remaining.find((g) => g.id === "a11").parentId, "a");
     assert.equal(
         remaining.some((g) => g.id === "a1"),
@@ -111,11 +115,13 @@ test("URL classification", () => {
             isTransferableUrl("about:blank") &&
             !isTransferableUrl("file:///x"),
     );
+
     const url = placeholderUrl(
         "moz-extension://x/local-file.html",
         "file:///a b",
         "A",
     );
+
     assert.deepEqual(readPlaceholder(url), { url: "file:///a b", title: "A" });
     assert.equal(readPlaceholder("https://a.b"), null);
 });

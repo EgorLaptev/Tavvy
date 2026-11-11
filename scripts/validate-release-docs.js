@@ -5,25 +5,30 @@ import { resolve } from "node:path";
 export function validateReleaseDocs(version, changelog, releases) {
     if (!/^\d+\.\d+\.\d+$/.test(version))
         throw new Error("Invalid release version");
+
     const section = (text) =>
         text
             .split(/\r?\n(?=## )/)
             .find((part) => part.startsWith(`## ${version} — `));
     const notes = section(changelog),
         metadata = section(releases);
+
     if (!notes)
         throw new Error(
             `CHANGELOG.md is missing the ${version} release section`,
         );
+
     const match = notes
         .split(/\r?\n/)[0]
         .match(/^## (\d+\.\d+\.\d+) — (.+) — (\d{4}-\d{2}-\d{2})$/);
+
     if (!match || !notes.split(/\r?\n/).some((line) => line.startsWith("- ")))
         throw new Error(`CHANGELOG.md has invalid notes for ${version}`);
     if (!metadata)
         throw new Error(
             `docs/releases.md is missing the ${version} release section`,
         );
+
     const lines = metadata.split(/\r?\n/);
     const required = [
         `## ${version} — ${match[2]}`,
@@ -33,6 +38,7 @@ export function validateReleaseDocs(version, changelog, releases) {
         `- Checksums: https://github.com/EgorLaptev/Tavvy/releases/download/v${version}/SHA256SUMS`,
         "- Signature: unsigned",
     ];
+
     if (
         !required.every((line) => lines.includes(line)) ||
         !lines.some(
@@ -42,6 +48,7 @@ export function validateReleaseDocs(version, changelog, releases) {
         throw new Error(
             `docs/releases.md has incomplete or mismatched metadata for ${version}`,
         );
+
     const table = releases
         .split(/\r?\n(?=## )/)
         .find(
@@ -56,6 +63,7 @@ export function validateReleaseDocs(version, changelog, releases) {
         ?.split("|")
         .slice(1, -1)
         .map((cell) => cell.trim());
+
     if (
         !cells ||
         cells.length !== 5 ||
@@ -76,6 +84,7 @@ if (
 ) {
     try {
         const version = process.argv[2]?.replace(/^v/, "") || "";
+
         validateReleaseDocs(
             version,
             await readFile("CHANGELOG.md", "utf8"),

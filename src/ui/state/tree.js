@@ -7,13 +7,16 @@
 /** A group is reachable when every ancestor is expanded (always, when nesting is off). */
 export function expandedPath(group, opened, groups, nested) {
     if (!nested) return true;
+
     let parent = group.parentId;
     const visited = new Set();
+
     while (parent && !visited.has(parent)) {
         visited.add(parent);
         if (!opened.has(parent)) return false;
         parent = groups.get(parent)?.parentId;
     }
+
     return true;
 }
 
@@ -21,10 +24,12 @@ export function expandedPath(group, opened, groups, nested) {
 export function pathToGroup(groupId, groups, nested) {
     const path = new Set();
     let current = groupId;
+
     while (current && !path.has(current)) {
         path.add(current);
         current = nested ? groups.get(current)?.parentId : null;
     }
+
     return path;
 }
 
@@ -36,11 +41,13 @@ export function collapseSubtree(opened, groupId, parentOf) {
     for (const id of [...opened]) {
         let current = id;
         const visited = new Set();
+
         while (current && !visited.has(current)) {
             if (current === groupId) {
                 opened.delete(id);
                 break;
             }
+
             visited.add(current);
             current = parentOf(current);
         }
@@ -54,11 +61,13 @@ export function collapseSubtree(opened, groupId, parentOf) {
  */
 export function toggleExpanded(opened, groupId, contains) {
     const closing = opened.has(groupId);
+
     for (const id of [...opened]) {
         if (closing) {
             if (id === groupId || contains(groupId, id)) opened.delete(id);
         } else if (!contains(id, groupId)) opened.delete(id);
     }
+
     if (!closing) opened.add(groupId);
 }
 
@@ -68,11 +77,14 @@ export function toggleExpanded(opened, groupId, contains) {
  */
 export function groupChildren(groups, index, nested) {
     const children = new Map();
+
     for (const group of groups) {
         const parent =
             nested && index.has(group.parentId) ? group.parentId : null;
+
         if (!children.has(parent)) children.set(parent, []);
         children.get(parent).push(group.id);
     }
+
     return children;
 }

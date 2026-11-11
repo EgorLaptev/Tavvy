@@ -30,11 +30,14 @@ export const demoGroups = [
 // Local SVG favicons keep the preview self-contained and avoid network requests.
 function favicon(letter, color) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="${color}"/><text x="16" y="22" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="white">${letter}</text></svg>`;
+
     return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
+
 function page(title, letter, color) {
     return { title, faviconUrl: favicon(letter, color) };
 }
+
 export const examples = {
     "Getting started": [
         page("Welcome to your workspace", "W", "#6485d9"),

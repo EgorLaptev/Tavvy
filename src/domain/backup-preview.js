@@ -8,10 +8,12 @@ export function previewBackup(data) {
         const plan = parseTavvyBackup(data);
         const counts = new Map(plan.groups.map((group) => [group.id, 0]));
         let pinned = 0;
+
         for (const tab of plan.tabs) {
             if (tab.pinned) pinned++;
             else counts.set(tab.groupId, (counts.get(tab.groupId) || 0) + 1);
         }
+
         return {
             groups: plan.groups.map((group) => ({
                 title: group.title,
@@ -23,7 +25,9 @@ export function previewBackup(data) {
             legacy: plan.archive.length,
         };
     }
+
     const plan = parseStgBackup(data);
+
     return {
         groups: plan.groups.map((group) => ({
             title: group.title,

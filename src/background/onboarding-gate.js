@@ -7,16 +7,19 @@ export function createOnboardingGate(storage) {
     const ready = storage.get(ONBOARDING_KEY).then((data) => {
         enabled = data[ONBOARDING_KEY] === true;
     });
+
     return {
         get enabled() {
             return enabled;
         },
         async isEnabled() {
             await ready;
+
             return enabled;
         },
         async confirm() {
             await ready;
+
             if (!enabled) {
                 await storage.set({ [ONBOARDING_KEY]: true });
                 enabled = true;

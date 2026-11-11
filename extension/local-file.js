@@ -1,3 +1,9 @@
 const input = document.querySelector('input');
-try { const data=JSON.parse(decodeURIComponent(location.hash.slice(1))); if (!data.url?.startsWith('file:')) throw new Error(); input.value=data.url; document.title=data.title || 'Локальный файл'; document.querySelector('h1').textContent=data.title || 'Локальный файл'; } catch { document.querySelector('[role=status]').textContent='Ссылка повреждена'; }
-document.querySelector('button').addEventListener('click',async()=>{ input.select();try{await navigator.clipboard.writeText(input.value);document.querySelector('[role=status]').textContent='Адрес скопирован';}catch{document.querySelector('[role=status]').textContent='Адрес выделен — нажмите Ctrl+C';} });
+
+try { const data=JSON.parse(decodeURIComponent(location.hash.slice(1)));
+
+ if (!data.url?.startsWith('file:')) throw new Error(); input.value=data.url; document.title=data.title || 'Локальный файл'; document.querySelector('h1').textContent=data.title || 'Локальный файл'; } catch { document.querySelector('[role=status]').textContent='Ссылка повреждена'; }
+
+document.querySelector('button').addEventListener('click',async()=>{ input.select();
+
+try{await navigator.clipboard.writeText(input.value);document.querySelector('[role=status]').textContent='Адрес скопирован';}catch{document.querySelector('[role=status]').textContent='Адрес выделен — нажмите Ctrl+C';} });

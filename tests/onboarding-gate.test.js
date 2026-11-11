@@ -18,8 +18,11 @@ test("onboarding gate enables only after acknowledgement is saved", async () => 
             await saved;
         },
     });
+
     assert.equal(await gate.isEnabled(), false);
+
     const confirmation = gate.confirm();
+
     await Promise.resolve();
     assert.equal(await gate.isEnabled(), false);
     finishSave();
@@ -37,6 +40,7 @@ test("previously acknowledged users stay enabled without writing their data", as
             writes++;
         },
     });
+
     assert.equal(await gate.isEnabled(), true);
     await gate.confirm();
     assert.equal(writes, 0);
@@ -49,6 +53,7 @@ test("a failed acknowledgement keeps onboarding disabled", async () => {
             throw new Error("storage unavailable");
         },
     });
+
     await assert.rejects(gate.confirm(), /storage unavailable/);
     assert.equal(await gate.isEnabled(), false);
 });

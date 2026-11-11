@@ -22,6 +22,7 @@ export function createGroupMenu(ctx) {
                     parentId: item.id,
                 }),
         }));
+
         if (current.parentId)
             entries.unshift({
                 label: t("groups.move_to_root"),

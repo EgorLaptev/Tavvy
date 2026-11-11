@@ -13,6 +13,7 @@ export const SPACE_ICONS = [
     "chill",
     "fence",
 ];
+
 export function spaceIcon(icon) {
     return SPACE_ICONS.includes(icon) ? icon : "fingerprint";
 }
@@ -26,6 +27,7 @@ export function groupSpaceId(group) {
 
 export function spaceForGroup(spaces, group) {
     const spaceId = groupSpaceId(group);
+
     return spaces.find((space) => space.id === spaceId);
 }
 

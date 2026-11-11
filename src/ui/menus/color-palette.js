@@ -6,10 +6,12 @@ import { t } from "../../locales/index.js";
 /** The colour swatch popover (`.group-color-palette`) opened from a group's colour button. */
 export function createColorPalette(ctx) {
     const palette = element("div", "group-color-palette");
+
     palette.hidden = true;
     palette.setAttribute("role", "group");
     palette.setAttribute("aria-label", t("groups.choose_group_color"));
     document.querySelector(".popup").append(palette);
+
     let anchor = null;
 
     function close(restoreFocus = false) {
@@ -18,6 +20,7 @@ export function createColorPalette(ctx) {
         if (restoreFocus) anchor?.focus();
         anchor = null;
     }
+
     function onPointerDown(event) {
         if (
             !palette.hidden &&
@@ -26,6 +29,7 @@ export function createColorPalette(ctx) {
         )
             close();
     }
+
     function onKeyDown(event) {
         if (event.key === "Escape" && !palette.hidden) {
             event.preventDefault();
@@ -33,6 +37,7 @@ export function createColorPalette(ctx) {
             close(true);
         }
     }
+
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
 
@@ -42,8 +47,10 @@ export function createColorPalette(ctx) {
         palette.setAttribute("aria-label", label);
         palette.classList.toggle("space-icon-palette", iconMode);
         palette.hidden = false;
+
         const anchorRect = nextAnchor.getBoundingClientRect();
         const paletteRect = palette.getBoundingClientRect();
+
         palette.style.left = `${clampToViewport(anchorRect.left, paletteRect.width, window.innerWidth, 4)}px`;
         palette.style.top = `${clampToViewport(anchorRect.bottom + 4, paletteRect.height, window.innerHeight, 4)}px`;
         palette.querySelector('[aria-pressed="true"]')?.focus();
@@ -53,12 +60,16 @@ export function createColorPalette(ctx) {
     function toggle(colorButton, groupId) {
         if (anchor === colorButton) {
             close();
+
             return;
         }
+
         close();
         palette.replaceChildren();
+
         const group = ctx.viewIndex.groups.get(groupId);
         const markerShape = groupMarker(groupId);
+
         palette.style.setProperty("--swatch-radius", markerShape.borderRadius);
         palette.style.setProperty(
             "--swatch-rotation",
@@ -72,7 +83,9 @@ export function createColorPalette(ctx) {
             "--swatch-label2",
             JSON.stringify(markerLetters(group?.title, 2)),
         );
+
         const selected = group?.color?.toLowerCase();
+
         for (const [name, color] of GROUP_COLOR_PRESETS) {
             const swatch = button(
                 t(name),
@@ -83,12 +96,14 @@ export function createColorPalette(ctx) {
                     ctx.run({ type: "setGroupColor", groupId, color });
                 },
             );
+
             swatch.style.setProperty("--swatch-color", color);
             swatch.setAttribute("aria-label", t(name));
             swatch.dataset.color = color;
             swatch.setAttribute("aria-pressed", String(selected === color));
             palette.append(swatch);
         }
+
         show(colorButton, t("groups.choose_group_color"));
     }
 

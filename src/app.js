@@ -5,6 +5,7 @@ import { createSettingsRepository } from "./platform/settings-repository.js";
 import { demoContainers, demoGroups, examples } from "./mocks/demo-data.js";
 import { version } from "../extension/manifest.json";
 import { previewSpaceIcon } from "./mocks/preview-icons.js";
+
 const repository = createSettingsRepository(localStorage);
 const groups = demoGroups.map((group, index) => ({
     id: index === 0 ? "inbox" : group.id,
@@ -37,12 +38,15 @@ const api = createMemoryBrowser({
     containers: demoContainers,
     onSettings: (settings) => repository.write(settings),
 });
+
 api.appVersion = version;
 api.previewExpandedGroupIds = demoGroups
     .filter((group) => group.expanded)
     .map((group) => group.id);
 api.spaceIconUrl = previewSpaceIcon;
+
 const activeIndex = demoGroups.findIndex((group) => group.active);
+
 if (activeIndex >= 0)
     api.sessions.setWindowValue(
         1,

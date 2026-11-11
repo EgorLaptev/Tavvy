@@ -34,8 +34,11 @@ export function createGroupCommands(ctx) {
             (command.parentId
                 ? groupSpaceId(findGroup(groups(), command.parentId))
                 : DEFAULT_SPACE_ID);
+
         ctx.space(spaceId);
+
         const id = ctx.newId();
+
         groups().push({
             id,
             title,
@@ -54,23 +57,29 @@ export function createGroupCommands(ctx) {
 
     async function clearGroup(command) {
         findGroup(groups(), command.groupId);
+
         const targets = ownedTabs(await ctx.scan(), command.groupId);
+
         // Keep a tab in every window where the group is selected, so the window stays open.
         for (const windowId of new Set(targets.map((tab) => tab.windowId))) {
             if (!targets.some((tab) => tab.windowId === windowId && tab.active))
                 continue;
+
             const replacement = await ctx.createTabInGroup(
                 windowId,
                 command.groupId,
             );
+
             await api.tabs.update(replacement.id, { active: true });
         }
+
         for (const tab of targets) await ctx.closeTab(tab.id);
     }
 
     async function renameGroup(command) {
         const title = normalizeRenamedTitle(command.title);
         const group = findGroup(groups(), command.groupId);
+
         group.title = title;
         await ctx.toolbar?.updateGroup?.(group).catch(console.error);
     }
@@ -78,6 +87,7 @@ export function createGroupCommands(ctx) {
     async function setGroupColor(command) {
         const color = normalizeGroupColor(command.color);
         const group = findGroup(groups(), command.groupId);
+
         group.color = color;
         await ctx.toolbar?.updateGroup?.(group).catch(console.error);
     }
@@ -88,6 +98,7 @@ export function createGroupCommands(ctx) {
             store.state.settings?.nestedGroups === false
                 ? moving.parentId
                 : command.parentId;
+
         if (command.beforeId) findGroup(groups(), command.beforeId);
         assertNoCycle(groups(), moving.id, parentId);
         moving.parentId = parentId || null;
@@ -100,6 +111,7 @@ export function createGroupCommands(ctx) {
             throw new Error(
                 "Основная группа нужна для несортированных вкладок",
             );
+
         const deleting = findGroup(groups(), command.groupId);
         const sourceSpaceId = groupSpaceId(deleting);
         const candidates = groupsInSpace(groups(), sourceSpaceId).filter(
@@ -111,13 +123,16 @@ export function createGroupCommands(ctx) {
             findGroup(groups(), INBOX_ID);
         const records = await ctx.scan();
         const windowGroups = new Map();
+
         for (const tab of records)
             if (!windowGroups.has(tab.windowId))
                 windowGroups.set(
                     tab.windowId,
                     await ctx.activeGroupId(tab.windowId),
                 );
+
         const targets = ownedTabs(records, deleting.id);
+
         if (store.state.settings?.closeTabsOnGroupDelete !== false) {
             // Switch first so closing the last visible tab cannot close the window.
             for (const [windowId, activeId] of windowGroups)
@@ -137,6 +152,7 @@ export function createGroupCommands(ctx) {
                     replacement.id,
                 );
         }
+
         // Global pinned tabs remain open and are no longer associated with the deleted group.
         if (!groupPinned())
             for (const tab of records)
@@ -149,6 +165,7 @@ export function createGroupCommands(ctx) {
         for (const entry of store.state.archive)
             if (entry.groupId === deleting.id) entry.groupId = replacement.id;
         store.state.groups = removeGroup(groups(), deleting.id);
+
         for (const [windowId, activeId] of windowGroups) {
             if (activeId === deleting.id)
                 await ctx.activate(windowId, replacement.id);

@@ -42,6 +42,7 @@ export function needsPlaceholder(url) {
 
 export function readPlaceholder(url) {
     if (!url?.includes(PLACEHOLDER_MARK)) return null;
+
     try {
         return JSON.parse(decodeURIComponent(url.split("#")[1]));
     } catch {
