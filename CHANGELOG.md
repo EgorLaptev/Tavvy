@@ -5,7 +5,7 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
-- Add JavaScript linting to local checks and CI.
+- Add JavaScript and CSS linting to local checks and CI.
 
 ## 0.3.1 — Nomadic Narwhal — 2026-11-10
 
