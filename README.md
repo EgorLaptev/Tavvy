@@ -73,3 +73,5 @@ The Git hooks check Conventional Commit subjects, staged whitespace, tests, and 
 ## License
 
 [GNU General Public License v3.0 only](LICENSE) · Copyright © 2026 Egor Laptev
+
+Run `npm run lint` to check JavaScript with ESLint. The pre-commit hook and CI run it automatically.

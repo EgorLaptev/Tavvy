@@ -15,10 +15,14 @@
     "lint:firefox": "npm run build:firefox && web-ext lint --source-dir build/firefox",
     "package:firefox": "npm run build:firefox && web-ext build --source-dir build/firefox --artifacts-dir build/packages --overwrite-dest",
     "smoke:firefox": "npm run build:firefox && node scripts/smoke-firefox.js",
-    "benchmark": "npm run build:firefox && node scripts/benchmark.js"
+    "benchmark": "npm run build:firefox && node scripts/benchmark.js",
+    "lint": "eslint ."
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "esbuild": "^0.25.0",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
     "jsdom": "^29.1.1",
     "prettier": "^3.6.0",
     "web-ext": "^10.8.0"

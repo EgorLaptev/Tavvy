@@ -2,5 +2,6 @@
 set -e
 
 git diff --cached --check
+npm run lint
 npm test
 npm run lint:firefox

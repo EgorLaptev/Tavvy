@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Add JavaScript linting to local checks and CI.
+
 ## 0.3.1 — Nomadic Narwhal — 2026-11-10
 
 - Show groups with their tabs in every Firefox window instead of only in the window where the tabs are. Picking a group whose tabs are hidden in another window moves them to the current window; picking a group shown in another window switches to that window.
