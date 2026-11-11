@@ -1,3 +1,5 @@
+$tab-transition-duration: 0.22s;
+
 button.group-header {
     width: 100%;
 
@@ -39,10 +41,13 @@ button.group-header {
 
     opacity: 1;
 
+    /* Stylelint validates CSS values before Sass substitutes this variable. */
+    /* stylelint-disable declaration-property-value-no-unknown */
     transition:
-        grid-template-rows 0.22s ease,
+        grid-template-rows $tab-transition-duration ease,
         opacity 0.18s ease,
-        padding 0.22s ease;
+        padding $tab-transition-duration ease;
+    /* stylelint-enable declaration-property-value-no-unknown */
 }
 
 .tabs.is-closed {
@@ -75,17 +80,17 @@ button.group-header {
 
     border-radius: 0;
     cursor: default;
-}
 
-.tabs .tabs-inner:hover {
-    color: inherit;
+    &:hover {
+        color: inherit;
 
-    background: transparent;
-}
+        background: transparent;
+    }
 
-.tabs .tabs-inner > div {
-    padding: 7px 0 7px 8px;
-    margin-left: -8px;
+    > div {
+        padding: 7px 0 7px 8px;
+        margin-left: -8px;
+    }
 }
 
 .tabs.is-closed .tabs-inner {
@@ -261,39 +266,39 @@ button.group-header {
     color: #555;
 
     border-radius: 10px;
-}
 
-.search:focus-within {
-    color: #888;
+    &:focus-within {
+        color: #888;
 
-    background: #0a0a0a;
-}
+        background: #0a0a0a;
+    }
 
-.search svg {
-    width: 14px;
-    height: 14px;
+    svg {
+        width: 14px;
+        height: 14px;
 
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.4;
-    stroke-linecap: round;
-}
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.4;
+        stroke-linecap: round;
+    }
 
-.search input {
-    width: 100%;
-    min-width: 0;
+    input {
+        width: 100%;
+        min-width: 0;
 
-    font: inherit;
-    font-size: 12px;
-    color: #ddd;
+        font: inherit;
+        font-size: 12px;
+        color: #ddd;
 
-    background: transparent;
-    border: 0;
-    outline: 0;
-}
+        background: transparent;
+        border: 0;
+        outline: 0;
 
-.search input::placeholder {
-    color: #555;
+        &::placeholder {
+            color: #555;
+        }
+    }
 }
 
 .bottom-bar .create {
@@ -318,20 +323,20 @@ button.group-header {
     border-radius: 12px;
 
     transition: background-color 0.15s;
-}
 
-.group-controls:hover {
-    background: #101010;
-}
+    &:hover {
+        background: #101010;
+    }
 
-.group-controls .group-header {
-    flex: 1;
+    .group-header {
+        flex: 1;
 
-    min-width: 0;
-}
+        min-width: 0;
 
-.group-controls .group-header:hover {
-    background: transparent;
+        &:hover {
+            background: transparent;
+        }
+    }
 }
 
 .group-toggle {
