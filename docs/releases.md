@@ -6,6 +6,15 @@ Release notes are in [CHANGELOG.md](../CHANGELOG.md). ZIPs produced by
 and therefore its size and hash. A later rebuild can also have a different hash,
 so these values identify the exact archive listed, not every build of a version.
 
+## 0.3.3 — Chummy Chinchilla
+
+- Release date: 2026-11-12
+- Release source: `v0.3.3`
+- Artifact: `tavvy_tabs_group-0.3.3.zip`
+- Checksums: https://github.com/EgorLaptev/Tavvy/releases/download/v0.3.3/SHA256SUMS
+- Verification: npm test, Firefox validation and isolated Firefox smoke test passed.
+- Signature: unsigned
+
 ## 0.3.2 — Faithful Beaver
 
 - Release date: 2026-11-11
@@ -121,6 +130,7 @@ the source used to build those local archives. Version 0.2.0 has no local tag.
 
 | Version | Release reference | Archive source | Size (bytes) | SHA-256 |
 | --- | --- | --- | ---: | --- |
+| 0.3.3 | `v0.3.3` | GitHub Release | pending | pending |
 | 0.3.2 | `v0.3.2` | GitHub Release | 123,569 | `04b5ab84d38d721cd3246301f7c66a170af01bc59b44432243e5e0c48f2d97d9` |
 | 0.3.1 | `v0.3.1` | GitHub Release | 122,740 | `8116f2d0ca92ef16f537c064c598c4b6dcd1a9c30c47754149eb45085bab3226` |
 | 0.3.0 | `v0.3.0` | GitHub Release | 120,979 | `1ab7b0ad880fd7c0b0ef97365a04b2d443bf71285ec48909b5438cecabca3b9d` |
