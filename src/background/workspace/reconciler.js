@@ -15,6 +15,15 @@ export function createReconciler(ctx) {
     const pendingRemovals = new Map();
     let removing;
 
+    async function windowShowing(groupId, exceptWindowId, records) {
+        for (const windowId of new Set(records.map((tab) => tab.windowId)))
+            if (
+                windowId !== exceptWindowId &&
+                (await ctx.storedGroupId(windowId)) === groupId
+            )
+                return windowId;
+    }
+
     async function reconcileWindow(windowId, records) {
         const selectedTab = records.find(
             (tab) => tab.windowId === windowId && tab.active && !tab.pinned,
@@ -37,6 +46,26 @@ export function createReconciler(ctx) {
                 decision.moveTabTo,
             );
             records = await ctx.scan();
+        }
+
+        // A group is never shown in two windows: a tab of a group shown elsewhere (e.g. reopened
+        // in that group's container) goes to that window, and this window keeps its group.
+        if (decision.groupId && decision.groupId !== currentGroupId) {
+            const shownIn = await windowShowing(
+                decision.groupId,
+                windowId,
+                records,
+            );
+
+            if (shownIn !== undefined) {
+                await ctx.bringTabs(shownIn, [selectedTab]);
+                await ctx.activate(shownIn, decision.groupId, selectedTab.id);
+                await api.windows
+                    .update(shownIn, { focused: true })
+                    .catch(() => {});
+
+                return true;
+            }
         }
 
         // Remember a switch the user made in Firefox (not the first group of a brand-new window).
@@ -109,9 +138,14 @@ export function createReconciler(ctx) {
                     records.map((tab) => tab.windowId),
                 )) {
                     // One window failing (e.g. a tab Firefox refuses to hide) must not block the others.
-                    await reconcileWindow(windowId, records).catch((error) =>
+                    const moved = await reconcileWindow(
+                        windowId,
+                        records,
+                    ).catch((error) =>
                         console.error("Tavvy window", windowId, error),
                     );
+
+                    if (moved) records = await ctx.scan();
                 }
 
                 store.endFirstRun();

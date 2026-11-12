@@ -572,6 +572,67 @@ test("a new tab that loads about:newtab after about:blank is treated like Ctrl+T
     );
 });
 
+test("a tab reopened in the container of a group shown in another window goes to that window", async () => {
+    const f = fixture();
+    const work = withContainers(f);
+    const home = {
+        name: "Home",
+        cookieStoreId: "firefox-container-2",
+        icon: "tree",
+    };
+
+    f.api.contextualIdentities = {
+        query: async () => [work, home],
+        get: async (id) => [work, home].find((i) => i.cookieStoreId === id),
+    };
+    for (const tab of f.records) tab.cookieStoreId = "firefox-default";
+
+    const service = f.service();
+    let snap = await service.dispatch(
+        { type: "activateSpace", spaceId: `container:${home.cookieStoreId}` },
+        2,
+    );
+
+    snap = await service.dispatch(
+        { type: "createGroup", title: "Home", spaceId: snap.activeSpaceId },
+        2,
+    );
+
+    const homeGroup = snap.groups.find((g) => g.title === "Home").id;
+
+    await service.dispatch({ type: "activateGroup", groupId: homeGroup }, 2);
+    await service.dispatch({ type: "activateGroup", groupId: "inbox" }, 1);
+
+    // Firefox "Reopen in Container": a copy next to the tab, then selected.
+    const copy = await f.api.tabs.create({
+        windowId: 1,
+        active: false,
+        url: "https://example.com",
+        cookieStoreId: home.cookieStoreId,
+    });
+
+    service.invalidate({ type: "tab", tabId: copy.id });
+    await service.created(copy);
+    await selectInFirefox(f, service, copy.id);
+
+    const moved = f.records.find((tab) => tab.id === copy.id);
+
+    assert.equal(f.tags.get(`${copy.id}:${GROUP}`), homeGroup);
+    assert.equal(moved.windowId, 2);
+    assert.equal(moved.hidden, false);
+    assert.equal(moved.active, true);
+    assert.equal(f.api.windows.focused, 2);
+    assert.equal(f.windows.get(`1:${ACTIVE}`), "inbox");
+    assert.equal(f.windows.get(`2:${ACTIVE}`), homeGroup);
+    assert.ok(
+        f.records.some(
+            (tab) => tab.windowId === 1 && tab.active && !tab.hidden,
+        ),
+        "the first window keeps a visible tab of its group",
+    );
+    assert.ok(!f.records.find((tab) => tab.id === 1).hidden);
+});
+
 test("every window lists the tabs of all groups, except other windows' global pinned tabs", async () => {
     const f = fixture();
     const service = f.service();

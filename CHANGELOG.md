@@ -5,6 +5,8 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
+- Keep a group from being shown in two windows when a tab is reopened in another container ("Reopen in Container"). If that container's group is already open in another window, the tab now moves to that window and focus follows it; the current window keeps its group. Previously the current window also switched to that group, and closing the reopened tab, which was then its only visible tab, made Firefox close the window together with the hidden tabs of all its groups.
+
 ## 0.3.2 — Faithful Beaver — 2026-11-11
 
 - Keep the tabs of a closed window, as in Simple Tab Groups. Closing a window used to close the hidden tabs of every group in it, so groups became empty, and Firefox restores only the last closed window at the next start. Grouped tabs of a closed window are now reopened unloaded in a remaining window (hidden unless their group is shown there), or at the next Firefox start if no window was left; tabs that Firefox restored itself are not duplicated.
