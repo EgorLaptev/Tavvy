@@ -1,10 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { fixture } from "./helpers/fake-browser.js";
-import {
-    chooseGroupForNewTab,
-    resolveSelection,
-} from "../src/domain/tab-assignment.js";
+import { resolveSelection } from "../src/domain/tab-assignment.js";
 
 const GROUP = "tavvy:group";
 const ACTIVE = "tavvy:active-group";
@@ -37,38 +34,6 @@ function withContainers(f) {
 
     return identity;
 }
-
-test("domain: tabs without a container stay in the current group", () => {
-    const groups = [
-        { id: "inbox", parentId: null },
-        { id: "work", parentId: null, spaceId: "s1" },
-    ];
-
-    assert.equal(
-        chooseGroupForNewTab({
-            groups,
-            windowGroupId: "work",
-            tabSpaceId: "default",
-        }),
-        "work",
-    );
-    assert.equal(
-        chooseGroupForNewTab({
-            groups,
-            windowGroupId: "inbox",
-            tabSpaceId: "s1",
-        }),
-        "work",
-    );
-    assert.equal(
-        chooseGroupForNewTab({
-            groups,
-            windowGroupId: "inbox",
-            tabSpaceId: "s2",
-        }),
-        "inbox",
-    );
-});
 
 test("domain: selecting a Firefox page from a hidden group moves the page, not the window", () => {
     const visibleGroups = new Set(["b"]);
@@ -572,35 +537,26 @@ test("a new tab that loads about:newtab after about:blank is treated like Ctrl+T
     );
 });
 
-test("a tab reopened in the container of a group shown in another window goes to that window", async () => {
+test("a tab reopened in another container stays in the current group", async () => {
     const f = fixture();
     const work = withContainers(f);
-    const home = {
-        name: "Home",
-        cookieStoreId: "firefox-container-2",
-        icon: "tree",
-    };
-
-    f.api.contextualIdentities = {
-        query: async () => [work, home],
-        get: async (id) => [work, home].find((i) => i.cookieStoreId === id),
-    };
-    for (const tab of f.records) tab.cookieStoreId = "firefox-default";
-
     const service = f.service();
     let snap = await service.dispatch(
-        { type: "activateSpace", spaceId: `container:${home.cookieStoreId}` },
+        { type: "activateSpace", spaceId: `container:${work.cookieStoreId}` },
         2,
     );
 
     snap = await service.dispatch(
-        { type: "createGroup", title: "Home", spaceId: snap.activeSpaceId },
+        { type: "createGroup", title: "Work", spaceId: snap.activeSpaceId },
         2,
     );
-
-    const homeGroup = snap.groups.find((g) => g.title === "Home").id;
-
-    await service.dispatch({ type: "activateGroup", groupId: homeGroup }, 2);
+    await service.dispatch(
+        {
+            type: "activateGroup",
+            groupId: snap.groups.find((g) => g.title === "Work").id,
+        },
+        2,
+    );
     await service.dispatch({ type: "activateGroup", groupId: "inbox" }, 1);
 
     // Firefox "Reopen in Container": a copy next to the tab, then selected.
@@ -608,22 +564,52 @@ test("a tab reopened in the container of a group shown in another window goes to
         windowId: 1,
         active: false,
         url: "https://example.com",
-        cookieStoreId: home.cookieStoreId,
+        cookieStoreId: work.cookieStoreId,
     });
 
     service.invalidate({ type: "tab", tabId: copy.id });
     await service.created(copy);
     await selectInFirefox(f, service, copy.id);
 
-    const moved = f.records.find((tab) => tab.id === copy.id);
+    const tab = f.records.find((item) => item.id === copy.id);
 
-    assert.equal(f.tags.get(`${copy.id}:${GROUP}`), homeGroup);
+    assert.equal(f.tags.get(`${copy.id}:${GROUP}`), "inbox");
+    assert.equal(tab.windowId, 1);
+    assert.equal(tab.cookieStoreId, work.cookieStoreId);
+    assert.equal(f.windows.get(`1:${ACTIVE}`), "inbox");
+});
+
+test("a tab of a group shown in another window goes to that window", async () => {
+    const f = fixture();
+    const service = f.service();
+    const snap = await service.dispatch(
+        { type: "createGroup", title: "Home" },
+        2,
+    );
+    const home = snap.groups.find((g) => g.title === "Home").id;
+
+    await service.dispatch({ type: "activateGroup", groupId: home }, 2);
+    await service.dispatch({ type: "activateGroup", groupId: "inbox" }, 1);
+
+    // Ctrl+Shift+T restores a tab that keeps its group.
+    const restored = await f.api.tabs.create({
+        windowId: 1,
+        active: false,
+        url: "https://example.com",
+    });
+
+    f.tags.set(`${restored.id}:${GROUP}`, home);
+    service.invalidate({ type: "tab", tabId: restored.id });
+    await selectInFirefox(f, service, restored.id);
+
+    const moved = f.records.find((tab) => tab.id === restored.id);
+
     assert.equal(moved.windowId, 2);
     assert.equal(moved.hidden, false);
     assert.equal(moved.active, true);
     assert.equal(f.api.windows.focused, 2);
     assert.equal(f.windows.get(`1:${ACTIVE}`), "inbox");
-    assert.equal(f.windows.get(`2:${ACTIVE}`), homeGroup);
+    assert.equal(f.windows.get(`2:${ACTIVE}`), home);
     assert.ok(
         f.records.some(
             (tab) => tab.windowId === 1 && tab.active && !tab.hidden,

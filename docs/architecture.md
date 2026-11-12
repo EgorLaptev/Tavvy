@@ -66,16 +66,23 @@ notify open popups; snapshot messages do not trigger another notification.
   Simple Tab Groups, a new window (Ctrl+N, a launch from another app) has no
   group, and its tabs get a `null` tag: they have no group in any window. The
   windows already open when Tavvy is installed join the default group instead.
-- A tab without a tag joins the group shown in its window. Only a tab the
-  user opened in another Firefox container joins a group of that container.
-  Tabs without a container, including Firefox pages and links from other apps,
-  stay in the current group even when it uses a container.
+- A tab without a tag joins the group shown in its window, whatever container
+  it uses. As in Simple Tab Groups, the container is a property of the tab: a
+  tab reopened in another container stays in its group, and tabs move between
+  groups of different containers without being reopened. A group's container
+  only applies to new tabs opened in it and to tabs reopened when the group's
+  container is changed.
 - A tab whose stored group no longer exists is shown in the current group but
   its tag is never overwritten.
 - When the user selects a tab of a hidden group, the window follows it, except
   for Firefox and extension pages: Firefox reuses an open about:preferences or
   about:addons tab even when it is hidden, so such a page moves into the current
   group instead.
+- A group is never shown in two windows: a selected tab of a group shown in
+  another window (e.g. restored with Ctrl+Shift+T) moves to that window, which
+  gets the focus. Firefox closes a window, hidden tabs included, when its last
+  visible tab is closed or moved away, so the source window first shows a tab
+  of its own group.
 - Closing a window closes all its tabs, hidden ones included. As in Simple Tab
   Groups, the grouped tabs of a closed window (`tabs.onRemoved` with
   `isWindowClosing`) are saved from their `known` records to

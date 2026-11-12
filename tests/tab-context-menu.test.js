@@ -147,7 +147,7 @@ test("a closed menu is not rebuilt after its snapshot arrives", async () => {
     assert.equal(calls.includes("refresh"), false);
 });
 
-test("tab destinations only include groups in the tab's container", async () => {
+test("tab destinations include groups of every container", async () => {
     const { handlers, items, state } = fixture();
 
     state.groups.push({
@@ -162,8 +162,10 @@ test("tab destinations only include groups in the tab's container", async () => 
         { id: 17, windowId: 3, pinned: false },
     );
     await tick();
-    assert.equal(items.get("tavvy-move-tab-0").title, "Private");
-    assert.equal(items.has("tavvy-move-tab-1"), false);
+    assert.deepEqual(
+        [0, 1, 2].map((index) => items.get(`tavvy-move-tab-${index}`).title),
+        ["Основная", "Work && More", "Private"],
+    );
 });
 
 test("menu markers follow the chosen style, including letters and no marker", async () => {

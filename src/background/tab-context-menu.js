@@ -74,17 +74,8 @@ export function mountTabContextMenu(
             destinations = new Map();
             if (generation !== current) return;
 
-            const sourceGroup = snapshot.groups.find(
-                (group) =>
-                    group.id ===
-                    snapshot.tabs?.find((item) => item.id === tab.id)?.groupId,
-            );
-            const sourceSpace = sourceGroup?.spaceId || "default";
-            const available = snapshot.groups.filter(
-                (group) => (group.spaceId || "default") === sourceSpace,
-            );
-
-            for (const [index, group] of available.entries()) {
+            // A tab keeps its container in any group, as in Simple Tab Groups.
+            for (const [index, group] of snapshot.groups.entries()) {
                 const id = `${rootId}-${index}`;
                 const title =
                     group.id === "inbox" && group.title === "Основная"

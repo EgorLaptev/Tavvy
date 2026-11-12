@@ -43,14 +43,9 @@ export function groupMoveTargets(groups, index, groupId) {
     });
 }
 
-/** Groups a tab can move to: any other group that uses the same container. */
-export function tabMoveTargets(groups, index, tab) {
-    const space = index.get(tab.groupId)?.spaceId || "default";
-
-    return groups.filter(
-        (item) =>
-            item.id !== tab.groupId && (item.spaceId || "default") === space,
-    );
+/** Groups a tab can move to: any other group; the tab keeps its container. */
+export function tabMoveTargets(groups, tab) {
+    return groups.filter((item) => item.id !== tab.groupId);
 }
 
 /**

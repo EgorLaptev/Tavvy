@@ -1,5 +1,4 @@
 import { findGroup } from "../../../domain/group-tree.js";
-import { groupSpaceId } from "../../../domain/spaces.js";
 import { TAB_GROUP, TAB_GROUP_PINNED } from "../keys.js";
 
 export function createTabCommands(ctx) {
@@ -114,23 +113,11 @@ export function createTabCommands(ctx) {
         await ctx.closeTab(tab.id);
     }
 
+    /** A tab keeps its container in any group, as in Simple Tab Groups. */
     async function moveTab(command, windowId) {
         const tab = await requireTab(command.tabId);
-        const destination = findGroup(store.state.groups, command.groupId);
-        const expected = ctx.space(groupSpaceId(destination));
-        // A tab without a group joins any group of the container it is in.
-        const sourceSpaceId = tab.groupId
-            ? groupSpaceId(findGroup(store.state.groups, tab.groupId))
-            : ctx.spaceIdForCookieStore(tab.cookieStoreId);
 
-        if (
-            (expected.cookieStoreId &&
-                tab.cookieStoreId !== expected.cookieStoreId) ||
-            sourceSpaceId !== groupSpaceId(destination)
-        )
-            throw new Error(
-                "Перенос вкладок между пространствами не поддерживается",
-            );
+        findGroup(store.state.groups, command.groupId);
         await api.sessions.setTabValue(tab.id, TAB_GROUP, command.groupId);
         if (Number.isInteger(command.index))
             await api.tabs.move(tab.id, { index: command.index });

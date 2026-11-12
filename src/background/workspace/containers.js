@@ -103,21 +103,11 @@ export function createContainers({ browserApi, store }) {
         return { cookieStoreId: selected.cookieStoreId };
     }
 
-    /** The space whose container a tab with `cookieStoreId` belongs to. */
-    function spaceIdForCookieStore(cookieStoreId) {
-        return (
-            store.state.spaces.find(
-                (item) => item.cookieStoreId === cookieStoreId,
-            )?.id || DEFAULT_SPACE_ID
-        );
-    }
-
     return {
         space,
         hasPermission,
         listContainers,
         tabOptionsForGroup,
-        spaceIdForCookieStore,
         get identitiesVersion() {
             return identitiesVersion;
         },

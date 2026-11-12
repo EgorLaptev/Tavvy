@@ -37,21 +37,19 @@ export function createTabMenu(ctx) {
                 run({ type: "pinTab", tabId }),
             );
 
-        const destinations = tabMoveTargets(
-            ctx.snapshot.groups,
-            ctx.viewIndex.groups,
-            current,
-        ).map((item) => ({
-            label: groupTitle(item, t),
-            group: item,
-            action: () =>
-                run({
-                    type: "moveTab",
-                    tabId,
-                    groupId: item.id,
-                    keepActiveGroup: true,
-                }),
-        }));
+        const destinations = tabMoveTargets(ctx.snapshot.groups, current).map(
+            (item) => ({
+                label: groupTitle(item, t),
+                group: item,
+                action: () =>
+                    run({
+                        type: "moveTab",
+                        tabId,
+                        groupId: item.id,
+                        keepActiveGroup: true,
+                    }),
+            }),
+        );
 
         menu.addSubmenu(
             t("groups.move_tab_to_group"),

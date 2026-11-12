@@ -1,4 +1,3 @@
-import { chooseGroupForNewTab } from "../../domain/tab-assignment.js";
 import { readPlaceholder } from "../../domain/urls.js";
 import { TAB_GROUP, TAB_GROUP_PINNED, TAB_IMPORT_METADATA } from "./keys.js";
 
@@ -40,22 +39,14 @@ export function createTabScanner(ctx) {
     }
 
     /**
-     * Group for a tab without a valid tag (see `chooseGroupForNewTab`); `null` in a window
-     * without a group, where new tabs stay without a group.
+     * Group for a tab without a valid tag: the group shown in its window, whatever container
+     * the tab uses (as in Simple Tab Groups); `null` in a window without a group.
      */
     async function inferGroup(tab, windowGroups) {
         if (!windowGroups.has(tab.windowId))
             windowGroups.set(tab.windowId, ctx.activeGroupId(tab.windowId));
 
-        const windowGroupId = await windowGroups.get(tab.windowId);
-
-        if (!windowGroupId) return null;
-
-        return chooseGroupForNewTab({
-            groups: store.state.groups,
-            windowGroupId,
-            tabSpaceId: ctx.spaceIdForCookieStore(tab.cookieStoreId),
-        });
+        return (await windowGroups.get(tab.windowId)) || null;
     }
 
     async function readRecord(tab, validGroups, windowGroups) {

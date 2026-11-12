@@ -1,7 +1,4 @@
-import {
-    chooseGroupForNewTab,
-    resolveSelection,
-} from "../../domain/tab-assignment.js";
+import { resolveSelection } from "../../domain/tab-assignment.js";
 import { TAB_GROUP } from "./keys.js";
 
 /**
@@ -112,13 +109,7 @@ export function createReconciler(ctx) {
                 return;
             }
 
-            const groupId = chooseGroupForNewTab({
-                groups: store.state.groups,
-                windowGroupId,
-                tabSpaceId: ctx.spaceIdForCookieStore(tab.cookieStoreId),
-            });
-
-            await api.sessions.setTabValue(tabId, TAB_GROUP, groupId);
+            await api.sessions.setTabValue(tabId, TAB_GROUP, windowGroupId);
         });
     }
 

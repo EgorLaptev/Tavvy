@@ -883,9 +883,24 @@ test("experimental spaces open new tabs in their container and preserve existing
         true,
     );
     assert.equal(f.records.find((tab) => tab.id === 1).hidden, false);
-    await assert.rejects(
-        service.dispatch({ type: "moveTab", tabId: 1, groupId: workGroup }, 1),
-        /пространств/,
+    // A tab keeps its container in a group of another container, as in Simple Tab Groups.
+    snap = await service.dispatch(
+        {
+            type: "moveTab",
+            tabId: 1,
+            groupId: workGroup,
+            keepActiveGroup: true,
+        },
+        1,
+    );
+    assert.equal(snap.tabs.find((tab) => tab.id === 1).groupId, workGroup);
+    assert.equal(
+        f.records.find((tab) => tab.id === 1).cookieStoreId,
+        undefined,
+    );
+    snap = await service.dispatch(
+        { type: "moveTab", tabId: 1, groupId: "inbox", keepActiveGroup: true },
+        1,
     );
     service = f.service();
     snap = await service.dispatch({ type: "activateSpace", spaceId }, 1);
@@ -1371,7 +1386,7 @@ test("each space remembers the last selected group in each window", async () => 
     assert.equal(snap.activeGroupId, project);
 });
 
-test("tabs opened in another container join its group; tabs without a container stay in the current group", async () => {
+test("tabs stay in the current group whatever container they are opened in", async () => {
     const f = fixture();
 
     f.api.permissions = { contains: async () => true };
@@ -1401,11 +1416,13 @@ test("tabs opened in another container join its group; tabs without a container 
     service.invalidate({ type: "tab", tabId: external.id });
     await service.refresh();
     snap = await service.dispatch({ type: "snapshot" }, 1);
-    assert.equal(snap.activeSpaceId, workId);
+    // As in Simple Tab Groups, the container is a property of the tab, not of its group.
+    assert.equal(snap.activeGroupId, "inbox");
     assert.equal(
         snap.tabs.find((tab) => tab.id === external.id).groupId,
-        workGroup,
+        "inbox",
     );
+    await service.dispatch({ type: "activateGroup", groupId: workGroup }, 1);
 
     const ordinary = await f.api.tabs.create({
         windowId: 1,

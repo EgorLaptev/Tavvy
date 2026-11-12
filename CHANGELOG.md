@@ -5,7 +5,9 @@ Notable changes to Tavvy are documented here. New changes are recorded under
 
 ## Unreleased
 
-- Keep a group from being shown in two windows when a tab is reopened in another container ("Reopen in Container"). If that container's group is already open in another window, the tab now moves to that window and focus follows it; the current window keeps its group. Previously the current window also switched to that group, and closing the reopened tab, which was then its only visible tab, made Firefox close the window together with the hidden tabs of all its groups.
+- Treat a tab's container as a property of the tab, as in Simple Tab Groups. A tab reopened in another container ("Reopen in Container") or opened in one explicitly stays in the current group instead of jumping to a group of that container, and tabs can be moved to groups of any container without being reopened. A group's container still applies to new tabs opened in it and to its tabs when the group's container is changed.
+
+- Never show a group in two windows. Selecting a tab of a group that is already shown in another window (for example, after reopening it in that group's container) used to switch the current window to that group as well; closing that tab, then the window's only visible tab, made Firefox close the window together with the hidden tabs of all its groups. The tab now moves to the window showing its group, and the current window keeps its own.
 
 ## 0.3.2 — Faithful Beaver — 2026-11-11
 

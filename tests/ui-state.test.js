@@ -195,14 +195,15 @@ test("a group moves only under same-level groups outside its own subtree", () =>
     );
 });
 
-test("a tab moves only to other groups of its container", () => {
+test("a tab moves to any other group, whatever its container", () => {
     assert.deepEqual(
-        tabMoveTargets(groups, index, { groupId: "a" }).map(
-            (group) => group.id,
-        ),
-        ["inbox", "a1", "a11", "b"],
+        tabMoveTargets(groups, { groupId: "a" }).map((group) => group.id),
+        ["inbox", "a1", "a11", "b", "c"],
     );
-    assert.deepEqual(tabMoveTargets(groups, index, { groupId: "c" }), []);
+    assert.deepEqual(
+        tabMoveTargets(groups, { groupId: "c" }).map((group) => group.id),
+        ["inbox", "a", "a1", "a11", "b"],
+    );
 });
 
 test("container choices offer reconnecting a missing container", () => {
